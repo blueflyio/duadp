@@ -1,35 +1,56 @@
 import type { Request, Response, Router } from 'express';
 import type {
-  UadpManifest, OssaSkill, OssaAgent, PaginatedResponse,
-  FederationResponse, ValidationResult, Peer
+  UadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
+  PaginatedResponse, FederationResponse, ValidationResult,
+  Peer, PublishResponse, WebFingerResponse
 } from './types.js';
 
 export interface UadpNodeConfig {
   /** Human-readable node name */
   nodeName: string;
+  /** Optional DID for this node (e.g., did:web:example.com) */
+  nodeId?: string;
   /** Optional description */
   nodeDescription?: string;
   /** Base URL where this node is hosted */
   baseUrl: string;
   /** Contact info */
   contact?: string;
-  /** PEM-encoded public key for signature verification */
-  publicKey?: string;
+  /** Node identity for signature verification */
+  identity?: { did?: string; public_key?: string };
   /** Supported OSSA versions */
   ossaVersions?: string[];
+  /** Federation config */
+  federation?: { gossip?: boolean; max_hops?: number };
 }
 
 export interface UadpDataProvider {
   /** Return paginated skills. Called on GET /uadp/v1/skills */
-  listSkills(params: { search?: string; category?: string; page: number; limit: number }): Promise<PaginatedResponse<OssaSkill>>;
+  listSkills?(params: { search?: string; category?: string; tag?: string; trust_tier?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaSkill>>;
+  /** Get single skill by name. Called on GET /uadp/v1/skills/:name */
+  getSkill?(name: string): Promise<OssaSkill | null>;
   /** Return paginated agents. Called on GET /uadp/v1/agents */
-  listAgents?(params: { search?: string; page: number; limit: number }): Promise<PaginatedResponse<OssaAgent>>;
+  listAgents?(params: { search?: string; category?: string; tag?: string; trust_tier?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaAgent>>;
+  /** Get single agent by name */
+  getAgent?(name: string): Promise<OssaAgent | null>;
+  /** Return paginated tools. Called on GET /uadp/v1/tools */
+  listTools?(params: { search?: string; category?: string; tag?: string; protocol?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaTool>>;
+  /** Get single tool by name */
+  getTool?(name: string): Promise<OssaTool | null>;
+  /** Publish a resource. Called on POST /uadp/v1/publish or POST /uadp/v1/{type} */
+  publishResource?(resource: OssaResource, token?: string): Promise<PublishResponse>;
+  /** Update a resource. Called on PUT /uadp/v1/{type}/:name */
+  updateResource?(kind: string, name: string, resource: OssaResource, token?: string): Promise<PublishResponse>;
+  /** Delete a resource. Called on DELETE /uadp/v1/{type}/:name */
+  deleteResource?(kind: string, name: string, token?: string): Promise<boolean>;
   /** Return federation peers. Called on GET /uadp/v1/federation */
   listPeers?(): Promise<Peer[]>;
   /** Handle incoming peer registration. Called on POST /uadp/v1/federation */
-  addPeer?(url: string, name: string): Promise<{ success: boolean; peer?: Peer }>;
-  /** Validate a manifest. Called on POST /uadp/v1/skills/validate */
+  addPeer?(url: string, name: string, nodeId?: string, hop?: number): Promise<{ success: boolean; peer?: Peer; peers?: Peer[] }>;
+  /** Validate a manifest. Called on POST /uadp/v1/validate */
   validateManifest?(manifest: string): Promise<ValidationResult>;
+  /** Resolve a GAID via WebFinger. Called on GET /.well-known/webfinger */
+  resolveWebFinger?(resource: string): Promise<WebFingerResponse | null>;
 }
 
 /**
@@ -41,7 +62,7 @@ export interface UadpDataProvider {
  * import { createUadpRouter } from '@ossa/uadp/server';
  *
  * const app = express();
- * app.use(createUadpRouter({ nodeName: 'My Node', baseUrl: 'https://my-node.com' }, myProvider));
+ * app.use(createUadpRouter(config, myProvider));
  * ```
  */
 export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvider): Router {
@@ -50,59 +71,221 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   const { Router: ExpressRouter } = require('express') as typeof import('express');
   const router = ExpressRouter();
 
-  const capabilities: string[] = ['skills'];
+  const capabilities: string[] = [];
+  if (provider.listSkills) capabilities.push('skills');
   if (provider.listAgents) capabilities.push('agents');
+  if (provider.listTools) capabilities.push('tools');
   if (provider.listPeers) capabilities.push('federation');
   if (provider.validateManifest) capabilities.push('validation');
+  if (provider.publishResource) capabilities.push('publishing');
+
+  // Helper to extract bearer token
+  const getToken = (req: Request): string | undefined => {
+    const auth = req.headers.authorization;
+    return auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
+  };
+
+  // Helper to parse list params
+  const parseListParams = (req: Request) => ({
+    search: req.query.search as string | undefined,
+    category: req.query.category as string | undefined,
+    tag: req.query.tag as string | undefined,
+    trust_tier: req.query.trust_tier as string | undefined,
+    federated: req.query.federated === 'true',
+    page: Math.max(1, parseInt(req.query.page as string) || 1),
+    limit: Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20)),
+  });
 
   // /.well-known/uadp.json
   router.get('/.well-known/uadp.json', (_req: Request, res: Response) => {
     const manifest: UadpManifest = {
-      protocol_version: '0.1.0',
+      protocol_version: '0.2.0',
+      node_id: config.nodeId,
       node_name: config.nodeName,
       node_description: config.nodeDescription,
       contact: config.contact,
       endpoints: {
-        skills: `${config.baseUrl}/uadp/v1/skills`,
+        ...(provider.listSkills ? { skills: `${config.baseUrl}/uadp/v1/skills` } : {}),
         ...(provider.listAgents ? { agents: `${config.baseUrl}/uadp/v1/agents` } : {}),
+        ...(provider.listTools ? { tools: `${config.baseUrl}/uadp/v1/tools` } : {}),
         ...(provider.listPeers ? { federation: `${config.baseUrl}/uadp/v1/federation` } : {}),
-        ...(provider.validateManifest ? { validate: `${config.baseUrl}/uadp/v1/skills/validate` } : {}),
+        ...(provider.validateManifest ? { validate: `${config.baseUrl}/uadp/v1/validate` } : {}),
+        ...(provider.publishResource ? { publish: `${config.baseUrl}/uadp/v1/publish` } : {}),
       },
       capabilities,
-      public_key: config.publicKey,
-      ossa_versions: config.ossaVersions ?? ['v0.4'],
+      identity: config.identity,
+      ossa_versions: config.ossaVersions ?? ['v0.4', 'v0.5'],
+      federation: config.federation,
     };
     res.json(manifest);
   });
 
-  // GET /uadp/v1/skills
-  router.get('/uadp/v1/skills', async (req: Request, res: Response) => {
-    try {
-      const params = {
-        search: req.query.search as string | undefined,
-        category: req.query.category as string | undefined,
-        page: Math.max(1, parseInt(req.query.page as string) || 1),
-        limit: Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20)),
-      };
-      const result = await provider.listSkills(params);
-      result.meta.node_name = config.nodeName;
-      res.json(result);
-    } catch (err) {
-      res.status(500).json({ error: String(err) });
-    }
-  });
+  // WebFinger
+  if (provider.resolveWebFinger) {
+    router.get('/.well-known/webfinger', async (req: Request, res: Response) => {
+      try {
+        const resource = req.query.resource as string;
+        if (!resource) { res.status(400).json({ error: 'Missing resource parameter' }); return; }
+        const result = await provider.resolveWebFinger!(resource);
+        if (!result) { res.status(404).json({ error: 'Resource not found' }); return; }
+        res.type('application/jrd+json').json(result);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
 
-  // GET /uadp/v1/agents
+  // --- Skills ---
+  if (provider.listSkills) {
+    router.get('/uadp/v1/skills', async (req: Request, res: Response) => {
+      try {
+        const result = await provider.listSkills!(parseListParams(req));
+        result.meta.node_name = config.nodeName;
+        if (config.nodeId) result.meta.node_id = config.nodeId;
+        res.json(result);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+  if (provider.getSkill) {
+    router.get('/uadp/v1/skills/:name', async (req: Request, res: Response) => {
+      try {
+        const skill = await provider.getSkill!(req.params.name);
+        if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
+        res.json(skill);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+
+  // --- Agents ---
   if (provider.listAgents) {
     router.get('/uadp/v1/agents', async (req: Request, res: Response) => {
       try {
-        const params = {
-          search: req.query.search as string | undefined,
-          page: Math.max(1, parseInt(req.query.page as string) || 1),
-          limit: Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20)),
-        };
-        const result = await provider.listAgents!(params);
+        const result = await provider.listAgents!(parseListParams(req));
         result.meta.node_name = config.nodeName;
+        if (config.nodeId) result.meta.node_id = config.nodeId;
+        res.json(result);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+  if (provider.getAgent) {
+    router.get('/uadp/v1/agents/:name', async (req: Request, res: Response) => {
+      try {
+        const agent = await provider.getAgent!(req.params.name);
+        if (!agent) { res.status(404).json({ error: 'Agent not found' }); return; }
+        res.json(agent);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+
+  // --- Tools ---
+  if (provider.listTools) {
+    router.get('/uadp/v1/tools', async (req: Request, res: Response) => {
+      try {
+        const params = {
+          ...parseListParams(req),
+          protocol: req.query.protocol as string | undefined,
+        };
+        const result = await provider.listTools!(params);
+        result.meta.node_name = config.nodeName;
+        if (config.nodeId) result.meta.node_id = config.nodeId;
+        res.json(result);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+  if (provider.getTool) {
+    router.get('/uadp/v1/tools/:name', async (req: Request, res: Response) => {
+      try {
+        const tool = await provider.getTool!(req.params.name);
+        if (!tool) { res.status(404).json({ error: 'Tool not found' }); return; }
+        res.json(tool);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+
+  // --- Publishing ---
+  if (provider.publishResource) {
+    // Generic publish
+    router.post('/uadp/v1/publish', async (req: Request, res: Response) => {
+      try {
+        const token = getToken(req);
+        if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
+        const result = await provider.publishResource!(req.body, token);
+        res.status(result.success ? 201 : 400).json(result);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+
+    // Type-specific publish
+    for (const kind of ['skills', 'agents', 'tools']) {
+      router.post(`/uadp/v1/${kind}`, async (req: Request, res: Response) => {
+        try {
+          const token = getToken(req);
+          if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
+          const result = await provider.publishResource!(req.body, token);
+          res.status(result.success ? 201 : 400).json(result);
+        } catch (err) {
+          res.status(500).json({ error: String(err) });
+        }
+      });
+    }
+  }
+
+  // Update
+  if (provider.updateResource) {
+    for (const kind of ['skills', 'agents', 'tools']) {
+      router.put(`/uadp/v1/${kind}/:name`, async (req: Request, res: Response) => {
+        try {
+          const token = getToken(req);
+          if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
+          const result = await provider.updateResource!(kind, req.params.name, req.body, token);
+          res.json(result);
+        } catch (err) {
+          res.status(500).json({ error: String(err) });
+        }
+      });
+    }
+  }
+
+  // Delete
+  if (provider.deleteResource) {
+    for (const kind of ['skills', 'agents', 'tools']) {
+      router.delete(`/uadp/v1/${kind}/:name`, async (req: Request, res: Response) => {
+        try {
+          const token = getToken(req);
+          if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
+          const deleted = await provider.deleteResource!(kind, req.params.name, token);
+          if (!deleted) { res.status(404).json({ error: 'Resource not found' }); return; }
+          res.status(204).end();
+        } catch (err) {
+          res.status(500).json({ error: String(err) });
+        }
+      });
+    }
+  }
+
+  // --- Validation ---
+  if (provider.validateManifest) {
+    router.post('/uadp/v1/validate', async (req: Request, res: Response) => {
+      try {
+        const { manifest } = req.body ?? {};
+        if (!manifest) {
+          res.status(400).json({ valid: false, errors: ['Missing manifest field'] });
+          return;
+        }
+        const result = await provider.validateManifest!(manifest);
         res.json(result);
       } catch (err) {
         res.status(500).json({ error: String(err) });
@@ -110,14 +293,17 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     });
   }
 
-  // GET /uadp/v1/federation
+  // --- Federation ---
   if (provider.listPeers) {
     router.get('/uadp/v1/federation', async (_req: Request, res: Response) => {
       try {
         const peers = await provider.listPeers!();
         const response: FederationResponse = {
-          protocol_version: '0.1.0',
+          protocol_version: '0.2.0',
+          node_id: config.nodeId,
           node_name: config.nodeName,
+          gossip: config.federation?.gossip,
+          max_hops: config.federation?.max_hops,
           peers,
         };
         res.json(response);
@@ -127,34 +313,16 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     });
   }
 
-  // POST /uadp/v1/federation
   if (provider.addPeer) {
     router.post('/uadp/v1/federation', async (req: Request, res: Response) => {
       try {
-        const { url, name } = req.body ?? {};
+        const { url, name, node_id, hop } = req.body ?? {};
         if (!url || !name) {
           res.status(400).json({ error: 'Missing required fields: url, name' });
           return;
         }
-        const result = await provider.addPeer!(url, name);
+        const result = await provider.addPeer!(url, name, node_id, hop ?? 0);
         res.status(result.success ? 201 : 400).json(result);
-      } catch (err) {
-        res.status(500).json({ error: String(err) });
-      }
-    });
-  }
-
-  // POST /uadp/v1/skills/validate
-  if (provider.validateManifest) {
-    router.post('/uadp/v1/skills/validate', async (req: Request, res: Response) => {
-      try {
-        const { manifest } = req.body ?? {};
-        if (!manifest) {
-          res.status(400).json({ valid: false, errors: ['Missing manifest field'] });
-          return;
-        }
-        const result = await provider.validateManifest!(manifest);
-        res.json(result);
       } catch (err) {
         res.status(500).json({ error: String(err) });
       }

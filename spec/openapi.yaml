@@ -1,10 +1,10 @@
 openapi: "3.1.0"
 info:
   title: Universal AI Discovery Protocol (UADP)
-  version: "0.1.0"
+  version: "0.2.0"
   description: |
     Decentralized, hybrid-federated protocol for the discovery, validation,
-    and exchange of AI Agents, Skills, Tools, and Marketplaces.
+    publishing, and exchange of AI Agents, Skills, Tools, and Marketplaces.
     Built on the Open Standard for Agent Systems (OSSA).
   license:
     name: Apache-2.0
@@ -35,6 +35,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/UadpManifest"
 
+  /.well-known/webfinger:
+    get:
+      operationId: resolveWebFinger
+      summary: WebFinger Resource Resolution
+      description: Resolves a GAID URI to UADP endpoint links.
+      tags: [Discovery]
+      parameters:
+        - name: resource
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "GAID URI (e.g., agent://acme.com/skills/code-review)"
+      responses:
+        "200":
+          description: WebFinger response with resource links
+          content:
+            application/jrd+json:
+              schema:
+                $ref: "#/components/schemas/WebFingerResponse"
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /uadp/v1/skills:
     get:
       operationId: listSkills
@@ -45,6 +72,8 @@ paths:
         - $ref: "#/components/parameters/Search"
         - $ref: "#/components/parameters/Category"
         - $ref: "#/components/parameters/TrustTier"
+        - $ref: "#/components/parameters/Tag"
+        - $ref: "#/components/parameters/Federated"
         - $ref: "#/components/parameters/Page"
         - $ref: "#/components/parameters/Limit"
       responses:
@@ -54,13 +83,271 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SkillsResponse"
-
-  /uadp/v1/skills/validate:
     post:
-      operationId: validateSkill
-      summary: Validate Skill Manifest
-      description: Validates an OSSA skill manifest and returns errors/warnings.
+      operationId: publishSkill
+      summary: Publish a Skill
+      description: Publish a new skill to this node.
       tags: [Skills]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OssaSkill"
+      responses:
+        "201":
+          description: Skill published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+        "400":
+          description: Invalid manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /uadp/v1/skills/{name}:
+    get:
+      operationId: getSkill
+      summary: Get Skill by Name
+      description: Returns a single skill by name.
+      tags: [Skills]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Skill resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OssaSkill"
+        "404":
+          description: Skill not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: updateSkill
+      summary: Update a Skill
+      tags: [Skills]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OssaSkill"
+      responses:
+        "200":
+          description: Skill updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+    delete:
+      operationId: deleteSkill
+      summary: Delete a Skill
+      tags: [Skills]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Skill deleted
+
+  /uadp/v1/agents:
+    get:
+      operationId: listAgents
+      summary: List Agents
+      description: Returns a paginated list of OSSA-compliant agent manifests.
+      tags: [Agents]
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/TrustTier"
+        - $ref: "#/components/parameters/Tag"
+        - $ref: "#/components/parameters/Federated"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Paginated agents list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentsResponse"
+    post:
+      operationId: publishAgent
+      summary: Publish an Agent
+      tags: [Agents]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OssaAgent"
+      responses:
+        "201":
+          description: Agent published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+
+  /uadp/v1/agents/{name}:
+    get:
+      operationId: getAgent
+      summary: Get Agent by Name
+      tags: [Agents]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OssaAgent"
+        "404":
+          description: Agent not found
+
+  /uadp/v1/tools:
+    get:
+      operationId: listTools
+      summary: List Tools
+      description: Returns a paginated list of OSSA-compliant tool manifests (MCP, A2A, function-calling).
+      tags: [Tools]
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/TrustTier"
+        - $ref: "#/components/parameters/Tag"
+        - $ref: "#/components/parameters/Federated"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: protocol
+          in: query
+          schema:
+            type: string
+            enum: [mcp, a2a, function, rest]
+          description: Filter by tool protocol type.
+      responses:
+        "200":
+          description: Paginated tools list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolsResponse"
+    post:
+      operationId: publishTool
+      summary: Publish a Tool
+      tags: [Tools]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OssaTool"
+      responses:
+        "201":
+          description: Tool published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+
+  /uadp/v1/tools/{name}:
+    get:
+      operationId: getTool
+      summary: Get Tool by Name
+      tags: [Tools]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tool resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OssaTool"
+        "404":
+          description: Tool not found
+
+  /uadp/v1/publish:
+    post:
+      operationId: publishResource
+      summary: Publish Any Resource
+      description: Generic publish endpoint — accepts any OSSA-formatted resource (Skill, Agent, Tool, or custom kind).
+      tags: [Publishing]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OssaResource"
+      responses:
+        "201":
+          description: Resource published
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublishResponse"
+        "400":
+          description: Invalid resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication required
+
+  /uadp/v1/validate:
+    post:
+      operationId: validateManifest
+      summary: Validate Manifest
+      description: Validates any OSSA manifest and returns errors/warnings.
+      tags: [Validation]
       requestBody:
         required: true
         content:
@@ -85,24 +372,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
-  /uadp/v1/agents:
-    get:
-      operationId: listAgents
-      summary: List Agents
-      description: Returns a paginated list of OSSA-compliant agent manifests.
-      tags: [Agents]
-      parameters:
-        - $ref: "#/components/parameters/Search"
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/Limit"
-      responses:
-        "200":
-          description: Paginated agents list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentsResponse"
 
   /uadp/v1/federation:
     get:
@@ -137,6 +406,13 @@ paths:
                 name:
                   type: string
                   description: Human-readable name of the registering node.
+                node_id:
+                  type: string
+                  description: DID of the registering node.
+                hop:
+                  type: integer
+                  description: Gossip hop count (0 = direct registration).
+                  default: 0
       responses:
         "201":
           description: Peer registered successfully
@@ -149,6 +425,11 @@ paths:
                     type: boolean
                   peer:
                     $ref: "#/components/schemas/Peer"
+                  peers:
+                    type: array
+                    description: This node's peer list (for gossip propagation).
+                    items:
+                      $ref: "#/components/schemas/Peer"
         "400":
           description: Invalid peer URL or unreachable node
           content:
@@ -157,6 +438,12 @@ paths:
                 $ref: "#/components/schemas/Error"
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token for write operations (publishing, updating, deleting).
+
   parameters:
     Search:
       name: search
@@ -177,6 +464,19 @@ components:
         type: string
         enum: [official, verified-signature, signed, community, experimental]
       description: Filter by trust tier.
+    Tag:
+      name: tag
+      in: query
+      schema:
+        type: string
+      description: Filter by tag (comma-separated for multiple).
+    Federated:
+      name: federated
+      in: query
+      schema:
+        type: boolean
+        default: false
+      description: Include results from federated peers.
     Page:
       name: page
       in: query
@@ -203,6 +503,9 @@ components:
         protocol_version:
           type: string
           pattern: "^\\d+\\.\\d+\\.\\d+$"
+        node_id:
+          type: string
+          description: "DID or URI uniquely identifying this node"
         node_name:
           type: string
         node_description:
@@ -214,29 +517,45 @@ components:
           properties:
             skills:
               type: string
-              format: uri
             agents:
               type: string
-              format: uri
+            tools:
+              type: string
             federation:
               type: string
-              format: uri
             validate:
               type: string
-              format: uri
+            publish:
+              type: string
+          additionalProperties:
+            type: string
           anyOf:
             - required: [skills]
             - required: [agents]
+            - required: [tools]
         capabilities:
           type: array
           items:
             type: string
-        public_key:
-          type: string
+        identity:
+          type: object
+          properties:
+            did:
+              type: string
+            public_key:
+              type: string
         ossa_versions:
           type: array
           items:
             type: string
+        federation:
+          type: object
+          properties:
+            gossip:
+              type: boolean
+            max_hops:
+              type: integer
+              default: 2
 
     OssaMetadata:
       type: object
@@ -256,42 +575,77 @@ components:
         trust_tier:
           type: string
           enum: [official, verified-signature, signed, community, experimental]
+        tags:
+          type: array
+          items:
+            type: string
         created:
           type: string
           format: date-time
         updated:
           type: string
           format: date-time
+      additionalProperties: true
+
+    ResourceSignature:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          enum: [Ed25519, ES256]
+        value:
+          type: string
+          description: Base64url-encoded signature
+        signer:
+          type: string
+          description: DID of the signer
+        timestamp:
+          type: string
+          format: date-time
+
+    OssaResource:
+      type: object
+      required: [apiVersion, kind, metadata]
+      description: Generic OSSA resource — can be Skill, Agent, Tool, or custom kind.
+      properties:
+        apiVersion:
+          type: string
+          pattern: "^ossa/v\\d+\\.\\d+$"
+        kind:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/OssaMetadata"
+        spec:
+          type: object
+        signature:
+          $ref: "#/components/schemas/ResourceSignature"
 
     OssaSkill:
-      type: object
-      required: [apiVersion, kind, metadata]
-      properties:
-        apiVersion:
-          type: string
-          pattern: "^ossa/v\\d+\\.\\d+$"
-        kind:
-          type: string
-          const: Skill
-        metadata:
-          $ref: "#/components/schemas/OssaMetadata"
-        spec:
-          type: object
+      allOf:
+        - $ref: "#/components/schemas/OssaResource"
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: Skill
 
     OssaAgent:
-      type: object
-      required: [apiVersion, kind, metadata]
-      properties:
-        apiVersion:
-          type: string
-          pattern: "^ossa/v\\d+\\.\\d+$"
-        kind:
-          type: string
-          const: Agent
-        metadata:
-          $ref: "#/components/schemas/OssaMetadata"
-        spec:
-          type: object
+      allOf:
+        - $ref: "#/components/schemas/OssaResource"
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: Agent
+
+    OssaTool:
+      allOf:
+        - $ref: "#/components/schemas/OssaResource"
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: Tool
 
     PaginationMeta:
       type: object
@@ -305,6 +659,21 @@ components:
           type: integer
         node_name:
           type: string
+        node_id:
+          type: string
+        federated:
+          type: boolean
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+              node_name:
+                type: string
+              count:
+                type: integer
 
     SkillsResponse:
       type: object
@@ -328,14 +697,31 @@ components:
         meta:
           $ref: "#/components/schemas/PaginationMeta"
 
+    ToolsResponse:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/OssaTool"
+        meta:
+          $ref: "#/components/schemas/PaginationMeta"
+
     FederationResponse:
       type: object
       required: [protocol_version, node_name, peers]
       properties:
         protocol_version:
           type: string
+        node_id:
+          type: string
         node_name:
           type: string
+        gossip:
+          type: boolean
+        max_hops:
+          type: integer
         peers:
           type: array
           items:
@@ -348,6 +734,8 @@ components:
         url:
           type: string
           format: uri
+        node_id:
+          type: string
         name:
           type: string
         status:
@@ -357,10 +745,49 @@ components:
           type: string
           format: date-time
           nullable: true
+        capabilities:
+          type: array
+          items:
+            type: string
         skill_count:
           type: integer
         agent_count:
           type: integer
+        tool_count:
+          type: integer
+
+    PublishResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        resource:
+          $ref: "#/components/schemas/OssaResource"
+
+    WebFingerResponse:
+      type: object
+      required: [subject, links]
+      properties:
+        subject:
+          type: string
+          description: The queried GAID URI
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              rel:
+                type: string
+              type:
+                type: string
+              href:
+                type: string
+                format: uri
+        properties:
+          type: object
+          additionalProperties:
+            type: string
 
     ValidationResult:
       type: object

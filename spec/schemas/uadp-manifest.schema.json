@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openstandardagents.org/spec/uadp/v0.1/schemas/uadp-manifest.schema.json",
+  "$id": "https://openstandardagents.org/spec/uadp/v0.2/schemas/uadp-manifest.schema.json",
   "title": "UADP Node Manifest",
   "description": "Schema for /.well-known/uadp.json — the discovery manifest for a UADP node.",
   "type": "object",
@@ -10,6 +10,10 @@
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
       "description": "Semantic version of the UADP protocol this node implements."
+    },
+    "node_id": {
+      "type": "string",
+      "description": "DID or URI uniquely identifying this node (e.g., did:web:example.com)."
     },
     "node_name": {
       "type": "string",
@@ -28,55 +32,95 @@
     },
     "endpoints": {
       "type": "object",
-      "description": "Map of capability name to absolute URL.",
+      "description": "Map of capability name to relative or absolute URL.",
       "properties": {
-        "skills": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL for GET /uadp/v1/skills"
-        },
-        "agents": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL for GET /uadp/v1/agents"
-        },
-        "federation": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL for GET/POST /uadp/v1/federation"
-        },
-        "validate": {
-          "type": "string",
-          "format": "uri",
-          "description": "URL for POST /uadp/v1/skills/validate"
-        }
+        "skills": { "type": "string", "description": "URL for /uadp/v1/skills" },
+        "agents": { "type": "string", "description": "URL for /uadp/v1/agents" },
+        "tools": { "type": "string", "description": "URL for /uadp/v1/tools" },
+        "federation": { "type": "string", "description": "URL for /uadp/v1/federation" },
+        "validate": { "type": "string", "description": "URL for /uadp/v1/validate" },
+        "publish": { "type": "string", "description": "URL for /uadp/v1/publish" }
       },
       "anyOf": [
         { "required": ["skills"] },
-        { "required": ["agents"] }
+        { "required": ["agents"] },
+        { "required": ["tools"] }
       ],
-      "additionalProperties": {
-        "type": "string",
-        "format": "uri"
-      }
+      "additionalProperties": { "type": "string" }
     },
     "capabilities": {
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["skills", "agents", "federation", "validation"]
+        "enum": ["skills", "agents", "tools", "federation", "validation", "publishing"]
       },
       "description": "List of supported UADP capabilities."
     },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "did": { "type": "string", "description": "Decentralized Identifier (did:web: recommended)" },
+        "public_key": { "type": "string", "description": "PEM-encoded public key" }
+      },
+      "description": "Node identity for signature verification."
+    },
     "public_key": {
       "type": "string",
-      "description": "PEM-encoded public key for signature verification."
+      "description": "DEPRECATED. Use identity.public_key instead."
     },
     "ossa_versions": {
       "type": "array",
       "items": { "type": "string", "pattern": "^v\\d+\\.\\d+$" },
       "description": "Supported OSSA specification versions."
+    },
+    "federation": {
+      "type": "object",
+      "properties": {
+        "gossip": { "type": "boolean", "description": "Whether this node supports gossip protocol." },
+        "max_hops": { "type": "integer", "minimum": 0, "default": 2, "description": "Max peer propagation depth." }
+      },
+      "description": "Federation configuration."
     }
   },
-  "additionalProperties": false
+  "$defs": {
+    "OssaMetadata": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "uri": { "type": "string", "description": "GAID — agent://namespace/type/name" },
+        "category": { "type": "string" },
+        "trust_tier": { "type": "string", "enum": ["official", "verified-signature", "signed", "community", "experimental"] },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "created": { "type": "string", "format": "date-time" },
+        "updated": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": true
+    },
+    "PaginationMeta": {
+      "type": "object",
+      "required": ["total", "page", "limit", "node_name"],
+      "properties": {
+        "total": { "type": "integer" },
+        "page": { "type": "integer" },
+        "limit": { "type": "integer" },
+        "node_name": { "type": "string" },
+        "node_id": { "type": "string" },
+        "federated": { "type": "boolean" },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "node_id": { "type": "string" },
+              "node_name": { "type": "string" },
+              "count": { "type": "integer" }
+            }
+          }
+        }
+      }
+    }
+  }
 }
