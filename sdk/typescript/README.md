@@ -175,7 +175,7 @@ npm test
 
 | Language | Package | Registry |
 |----------|---------|----------|
-| Python | `bluefly-duadp` | PyPI |
+| Python | `uadp` | PyPI |
 | Go | `github.com/blueflyio/uapd/sdk/go` | Go modules |
 
 ## License

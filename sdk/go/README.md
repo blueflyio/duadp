@@ -204,7 +204,7 @@ The SDK exports 80+ types covering:
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Python | `bluefly-duadp` | PyPI |
+| Python | `uadp` | PyPI |
 
 ## License
 

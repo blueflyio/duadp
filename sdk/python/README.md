@@ -2,7 +2,7 @@
 
 **The official Python SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 
-[![PyPI](https://img.shields.io/pypi/v/bluefly-duadp)](https://pypi.org/project/bluefly-duadp/)
+[![PyPI](https://img.shields.io/pypi/v/uadp)](https://pypi.org/project/uadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 
 > **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
@@ -10,9 +10,9 @@
 ## Install
 
 ```bash
-pip install bluefly-duadp
+pip install uadp
 # or
-uv add bluefly-duadp
+uv add uadp
 ```
 
 ## Quick Start — Client

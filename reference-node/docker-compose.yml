@@ -1,8 +1,8 @@
 services:
   duadp-node:
     build:
-      context: ..
-      dockerfile: reference-node/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: duadp-reference-node
     restart: unless-stopped
     ports:

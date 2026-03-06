@@ -9,15 +9,15 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@bluefly/duadp": "^0.1.2",
+    "@bluefly/duadp": "^0.1.0",
     "better-sqlite3": "^11.0.0",
-    "express": "^5.0.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^5.0.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
-    "@types/express": "^5.0.0",
     "@types/cors": "^2.8.0",
+    "@types/express": "^5.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   }

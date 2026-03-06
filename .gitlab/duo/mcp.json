@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "duadp": {
+      "type": "http",
+      "url": "https://duadp.blueflyagents.com/mcp",
+      "approvedTools": true
+    }
+  }
+}

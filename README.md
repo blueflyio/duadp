@@ -121,7 +121,7 @@ spec/                    # The normative specification
   schemas/               # JSON Schema validation files
 sdk/
   typescript/            # @bluefly/duadp npm package
-  python/                # bluefly-duadp (PyPI)
+  python/                # uadp (PyPI)
   go/                    # duadp-go module
 ```
 
@@ -352,10 +352,18 @@ cd sdk/typescript && npm test
 |----------|--------|-------------|
 | [OSSA Reference Node](https://duadp.blueflyagents.com/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
-| `@bluefly/duadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| `bluefly-duadp` Python SDK | Available | Client + FastAPI server |
+| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
+| [`uadp`](https://pypi.org/project/uadp/) Python SDK | Available | Client + FastAPI server |
 | DUADP Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
+
+## Also Available
+
+| Language | Package | Registry |
+|----------|---------|----------|
+| TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
+| Python | [`uadp`](https://pypi.org/project/uadp/) | PyPI |
+| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## Seeded Data
 

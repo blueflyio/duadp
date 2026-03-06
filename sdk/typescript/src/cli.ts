@@ -8,10 +8,12 @@
  *   npx @bluefly/duadp verify agent://acme.com/agents/my-agent
  */
 
-import { DuadpClient } from './client.js';
-import { runConformanceTests, formatConformanceResults } from './conformance.js';
-import { resolveDID, didWebToUrl } from './did.js';
-import { resolveGaid } from './client.js';
+import * as fs from 'fs';
+import * as yaml from 'js-yaml';
+import * as path from 'path';
+import { DuadpClient, resolveGaid } from './client.js';
+import { formatConformanceResults, runConformanceTests } from './conformance.js';
+import { didWebToUrl, resolveDID } from './did.js';
 
 const [,, command, target, ...flags] = process.argv;
 
@@ -26,13 +28,15 @@ Commands:
   resolve <gaid>       Resolve a GAID URI to node + resource
   did <did>            Resolve a DID document
   search <url> <q>     Search skills/agents/tools on a node
+  init                 Scaffold .agents/ossa.config.yaml in the current directory
+  publish <dir>        Scan directory for OSSA manifests and publish to a node
 
 Examples:
   npx @bluefly/duadp conformance https://marketplace.example.com
   npx @bluefly/duadp discover https://skills.sh
-  npx @bluefly/duadp resolve agent://acme.com/skills/code-review
-  npx @bluefly/duadp did did:web:acme.com
   npx @bluefly/duadp search https://skills.sh "code review"
+  npx @bluefly/duadp init
+  npx @bluefly/duadp publish .agents/ --node=https://blueflyagents.com --token=myToken
 `);
     process.exit(0);
   }
@@ -119,6 +123,96 @@ Examples:
           console.log(`  ${t.metadata.name} — ${t.metadata.description || '(no description)'}`);
         }
       }
+      break;
+    }
+
+    case 'init': {
+      const dir = target || '.agents';
+      const configPath = path.join(dir, 'ossa.config.yaml');
+      if (fs.existsSync(configPath)) {
+        console.error(`Error: ${configPath} already exists.`);
+        process.exit(1);
+      }
+      fs.mkdirSync(dir, { recursive: true });
+      const config = {
+        apiVersion: 'ossa/v0.4.3',
+        kind: 'ProjectConfiguration',
+        spec: {
+          duadp: {
+            publish_to: ['https://duadp.blueflyagents.com'],
+            discover_from: ['https://duadp.blueflyagents.com'],
+            auto_publish: true,
+            identity: 'did:web:example.com'
+          }
+        }
+      };
+      fs.writeFileSync(configPath, yaml.dump(config));
+      console.log(`Created DUADP configuration at ${configPath}`);
+      break;
+    }
+
+    case 'publish': {
+      const dir = target || '.agents';
+      const nodeUrl = flags.find(f => f.startsWith('--node='))?.split('=')[1];
+      const token = flags.find(f => f.startsWith('--token='))?.split('=')[1] || '';
+
+      if (!nodeUrl) {
+        console.error('Usage: duadp publish <dir> --node=<url> [--token=<token>]');
+        process.exit(1);
+      }
+      if (!fs.existsSync(dir)) {
+        console.error(`Error: Directory ${dir} does not exist.`);
+        process.exit(1);
+      }
+
+      console.log(`Scanning ${dir} for OSSA manifests...`);
+      const files = fs.readdirSync(dir);
+      const manifests = files.filter(f => f.endsWith('.ossa.yaml') || f.endsWith('.ossa.json'));
+
+      if (manifests.length === 0) {
+        console.log(`No OSSA manifests found in ${dir}.`);
+        process.exit(0);
+      }
+
+      const client = new DuadpClient(nodeUrl, { token, timeout: 15000 });
+      console.log(`Publishing to node: ${nodeUrl}`);
+
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const file of manifests) {
+        const filePath = path.join(dir, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        let resource: any;
+        try {
+          if (file.endsWith('.yaml')) {
+             resource = yaml.load(content);
+          } else {
+             resource = JSON.parse(content);
+          }
+        } catch (e: any) {
+          console.error(`Error parsing ${file}: ${e.message}`);
+          failCount++;
+          continue;
+        }
+
+        if (!resource || !resource.kind || !resource.metadata) {
+          console.error(`Skipping ${file}: Invalid OSSA manifest structure.`);
+          failCount++;
+          continue;
+        }
+
+        try {
+           console.log(`Publishing ${resource.kind} '${resource.metadata.name}'...`);
+           const res = await client.publish(resource);
+           console.log(`  -> Success! URI: ${res.resource?.metadata?.uri || 'Published'}`);
+           successCount++;
+        } catch (e: any) {
+           console.error(`  -> Failed to publish ${resource.metadata.name}: ${e.message}`);
+           failCount++;
+        }
+      }
+      console.log(`\nPublish complete. Success: ${successCount}, Failed: ${failCount}`);
       break;
     }
 

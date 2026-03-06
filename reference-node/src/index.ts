@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { initDb } from './db.js';
 import { createGovernanceRouter } from './governance.js';
+import { createMcpRouter } from './mcp.js';
 import { createSqliteProvider } from './provider.js';
 
 const PORT = parseInt(process.env.PORT || '4200');
@@ -29,8 +30,12 @@ app.use(createUadpRouter({
 // Mount governance/analytics/feedback routes
 app.use(createGovernanceRouter(db, NODE_NAME));
 
+// Mount the MCP Streaming Server for GitLab duo compatibility
+app.use('/mcp', createMcpRouter(BASE_URL));
+
 app.listen(PORT, () => {
   console.log(`DUADP Reference Node "${NODE_NAME}" running at ${BASE_URL}`);
   console.log(`Discovery: ${BASE_URL}/.well-known/duadp.json`);
   console.log(`Health:    ${BASE_URL}/api/v1/health`);
+  console.log(`MCP Tool:  ${BASE_URL}/mcp`);
 });
