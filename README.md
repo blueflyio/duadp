@@ -354,7 +354,7 @@ cd sdk/typescript && npm test
 | Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
 | `@bluefly/duadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
 | `bluefly-duadp` Python SDK | Available | Client + FastAPI server |
-| `duadp-go` Go SDK | Available | Client + net/http handler |
+| DUADP Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
 
 ## Seeded Data

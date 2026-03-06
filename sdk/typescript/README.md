@@ -1,4 +1,4 @@
-# @bluefly/duadp
+# DUADP — TypeScript SDK
 
 **The official TypeScript SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 

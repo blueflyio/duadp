@@ -1,4 +1,4 @@
-# bluefly-duadp — Python SDK
+# DUADP — Python SDK
 
 **The official Python SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 

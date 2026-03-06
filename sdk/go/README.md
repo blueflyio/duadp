@@ -1,4 +1,4 @@
-# duadp-go — Go SDK
+# DUADP — Go SDK
 
 **The official Go SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 
