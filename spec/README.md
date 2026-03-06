@@ -623,6 +623,102 @@ Resources MAY include a `signature` object for cryptographic verification:
 
 The signature is computed over the canonical JSON serialization of the resource (excluding the `signature` field itself). Consuming nodes SHOULD verify signatures by resolving the signer's DID and extracting the public key.
 
+### 7.4 Agent and Resource Identity
+
+Every agent, skill, or tool published to a UADP node SHOULD have its own identity consisting of:
+
+1. **DNS Record** — A TXT record binding the resource to a domain
+2. **DID** — A Decentralized Identifier for the resource itself
+3. **Service Account** — A bot/service account for authenticated operations
+
+#### 7.4.1 Per-Resource DNS Records
+
+Each resource MAY have a DNS TXT record under the node's domain:
+
+```
+_uadp-agent.security-auditor.acme.com.  IN TXT "v=uadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
+_uadp-skill.code-review.acme.com.       IN TXT "v=uadp1 kind=Skill did=did:web:acme.com:skills:code-review"
+_uadp-tool.web-search.skills.sh.        IN TXT "v=uadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
+```
+
+This enables DNS-level verification: given a resource claiming to be from `acme.com`, a consumer can verify via DNS that `acme.com` actually publishes it.
+
+#### 7.4.2 Per-Resource DIDs
+
+Resources SHOULD have their own DIDs using the `did:web` path syntax:
+
+```
+did:web:acme.com:agents:security-auditor
+did:web:acme.com:skills:code-review
+did:web:skills.sh:tools:web-search
+```
+
+These resolve to DID documents at:
+```
+https://acme.com/agents/security-auditor/did.json
+https://acme.com/skills/code-review/did.json
+```
+
+The DID document for a resource SHOULD include:
+
+```json
+{
+  "id": "did:web:acme.com:agents:security-auditor",
+  "controller": "did:web:acme.com",
+  "verificationMethod": [{
+    "id": "did:web:acme.com:agents:security-auditor#key-1",
+    "type": "Ed25519VerificationKey2020",
+    "controller": "did:web:acme.com:agents:security-auditor",
+    "publicKeyMultibase": "z6Mkf5..."
+  }],
+  "service": [{
+    "id": "did:web:acme.com:agents:security-auditor#uadp",
+    "type": "UadpResource",
+    "serviceEndpoint": "https://acme.com/uadp/v1/agents/security-auditor"
+  }]
+}
+```
+
+The `controller` field links the resource DID to the node DID, establishing that `acme.com` is the authority for this agent.
+
+#### 7.4.3 Service Accounts (Bot Accounts)
+
+Agents that perform autonomous operations (federation sync, peer registration, publishing to other nodes) MUST use a dedicated service account / bot account, NOT a human user's credentials.
+
+The resource's `spec` SHOULD declare its service account identity:
+
+```json
+{
+  "apiVersion": "ossa/v0.5",
+  "kind": "Agent",
+  "metadata": {
+    "name": "security-auditor",
+    "uri": "agent://acme.com/agents/security-auditor"
+  },
+  "spec": {
+    "identity": {
+      "did": "did:web:acme.com:agents:security-auditor",
+      "service_account": "security-auditor@acme.com",
+      "scopes": ["read:skills", "read:agents", "write:federation"]
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `spec.identity.did` | The agent's own DID |
+| `spec.identity.service_account` | Email or identifier for the bot account |
+| `spec.identity.scopes` | OAuth-style scopes the agent is authorized for |
+
+Nodes SHOULD:
+- Issue unique API tokens per service account (not shared human tokens)
+- Audit operations by service account identity
+- Allow revoking service accounts independently of human users
+- Rate-limit per service account
+
+This ensures every agent is independently identifiable, auditable, and revocable — critical for NIST AI RMF compliance (AC-6 least privilege, AU-2 audit events, IA-9 service identification).
+
 ## 8. Agent Identifiers (GAID)
 
 Skills, agents, and tools MAY include a Global Agent Identifier (GAID) using the `agent://` URI scheme:
