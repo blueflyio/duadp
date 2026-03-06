@@ -17,6 +17,10 @@ stages:
   - publish
   - deploy
 
+default:
+  tags:
+    - oracle
+
 variables:
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE/reference-node
 
@@ -166,6 +170,8 @@ publish:pypi:
 deploy:k8s:
   stage: deploy
   image: bitnami/kubectl:latest
+  tags:
+    - oracle-deploy
   needs:
     - container_build
   before_script:
@@ -186,8 +192,8 @@ deploy:k8s:
         duadp-reference-node=$CONTAINER_IMAGE:$CI_COMMIT_SHA \
         --namespace=${K8S_NAMESPACE:-duadp} || echo "Deployment not found - apply manifests first"
   environment:
-    name: ${DEPLOY_ENV_NAME:-production/duadp}
-    url: ${DEPLOY_HEALTH_URL:-http://localhost:4200/api/v1/health}
+    name: production/duadp
+    url: https://duadp.duadp.org/api/v1/health
   when: manual
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
