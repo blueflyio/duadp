@@ -202,7 +202,7 @@ from bluefly_uadp.types import (
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/uadp`](https://www.npmjs.com/package/@bluefly/uadp) | npm |
-| Go | `github.com/openstandardagents/uadp-go` | Go modules |
+| Go | `github.com/blueflyio/uadp/sdk/go` | Go modules |
 
 ## License
 

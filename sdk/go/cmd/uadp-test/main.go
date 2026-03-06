@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	uadp "github.com/openstandardagents/uadp-go"
+	uadp "github.com/blueflyio/uadp/sdk/go"
 )
 
 type testResult struct {

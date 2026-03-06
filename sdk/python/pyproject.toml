@@ -11,14 +11,15 @@ license = "Apache-2.0"
 requires-python = ">=3.10"
 keywords = ["uadp", "duadp", "ossa", "agent", "discovery", "federation", "ai"]
 
-[project.urls]
-Homepage = "https://duadp.org"
-Repository = "https://gitlab.com/blueflyio/ossa/lab/duadp"
-Issues = "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
 dependencies = [
     "httpx>=0.27.0",
     "pydantic>=2.0.0",
 ]
+
+[project.urls]
+Homepage = "https://duadp.org"
+Repository = "https://gitlab.com/blueflyio/ossa/lab/duadp"
+Issues = "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
 
 [project.optional-dependencies]
 crypto = ["cryptography>=43.0"]

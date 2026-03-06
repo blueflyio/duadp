@@ -1,3 +1,3 @@
-module github.com/openstandardagents/uadp-go
+module github.com/blueflyio/uadp/sdk/go
 
 go 1.22

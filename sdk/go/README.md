@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-go get github.com/openstandardagents/uadp-go
+go get github.com/blueflyio/uadp/sdk/go
 ```
 
 ## Quick Start — Client
@@ -20,7 +20,7 @@ package main
 import (
     "context"
     "fmt"
-    uadp "github.com/openstandardagents/uadp-go"
+    uadp "github.com/blueflyio/uadp/sdk/go"
 )
 
 func main() {
