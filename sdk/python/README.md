@@ -1,22 +1,24 @@
-# ossa-uadp — Python SDK
+# bluefly-uadp — Python SDK
 
-**UADP client and server SDK for Python.**
+**The official Python SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
 
-[![PyPI](https://img.shields.io/pypi/v/ossa-uadp)](https://pypi.org/project/ossa-uadp/)
+[![PyPI](https://img.shields.io/pypi/v/bluefly-uadp)](https://pypi.org/project/bluefly-uadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
+
+> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ## Install
 
 ```bash
-pip install ossa-uadp
+pip install bluefly-uadp
 # or
-uv add ossa-uadp
+uv add bluefly-uadp
 ```
 
 ## Quick Start — Client
 
 ```python
-from ossa_uadp import UadpClient, resolve_gaid
+from bluefly_uadp import UadpClient, resolve_gaid
 
 async with UadpClient("https://skills.sh", token="my-api-key") as client:
     # Discovery
@@ -181,13 +183,13 @@ The SDK exports 103 Pydantic models covering:
 ## Modules
 
 ```python
-from ossa_uadp.client import UadpClient, UadpError, resolve_gaid
-from ossa_uadp.server import create_uadp_router
-from ossa_uadp.crypto import sign_resource, verify_signature, generate_key_pair
-from ossa_uadp.did import resolve_did, build_did_web, verify_resource_identity
-from ossa_uadp.validate import validate_manifest, validate_response
-from ossa_uadp.conformance import run_conformance_tests
-from ossa_uadp.types import (
+from bluefly_uadp.client import UadpClient, UadpError, resolve_gaid
+from bluefly_uadp.server import create_uadp_router
+from bluefly_uadp.crypto import sign_resource, verify_signature, generate_key_pair
+from bluefly_uadp.did import resolve_did, build_did_web, verify_resource_identity
+from bluefly_uadp.validate import validate_manifest, validate_response
+from bluefly_uadp.conformance import run_conformance_tests
+from bluefly_uadp.types import (
     OssaResource, UadpManifest, ContextNegotiation, TokenAnalytics,
     AgentFeedback, RewardEvent, DelegationRequest, OrchestrationPlan,
     CapabilityFingerprint, OutcomeAttestation, AgentReputation,
@@ -195,6 +197,13 @@ from ossa_uadp.types import (
 )
 ```
 
+## Also Available
+
+| Language | Package | Registry |
+|----------|---------|----------|
+| TypeScript | [`@bluefly/uadp`](https://www.npmjs.com/package/@bluefly/uadp) | npm |
+| Go | `github.com/openstandardagents/uadp-go` | Go modules |
+
 ## License
 
-Apache License 2.0
+Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)

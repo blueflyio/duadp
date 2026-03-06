@@ -1,4 +1,4 @@
-# Decentralized Universal Agent Discovery Protocol (DUADP)
+# Decentralized Universal AI Discovery Protocol (DUADP)
 
 **Decentralized, federated discovery and publishing for AI Agents, Skills, Tools, and Marketplaces.**
 
@@ -7,7 +7,7 @@
 [![npm](https://img.shields.io/npm/v/@bluefly/uadp)](https://www.npmjs.com/package/@bluefly/uadp)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
-> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org](https://openstandardagents.org)** for more on the OSSA ecosystem.
+> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** for protocol details and the **[OSSA ecosystem](https://openstandardagents.org)**.
 
 ## What is DUADP?
 
@@ -58,7 +58,7 @@ const skill = await c.getSkill(name);
 
 **Python:**
 ```python
-from ossa_uadp import UadpClient, resolve_gaid
+from bluefly_uadp import UadpClient, resolve_gaid
 
 async with UadpClient("https://skills.sh") as client:
     skills = await client.list_skills(search="code review")
@@ -121,7 +121,7 @@ spec/                    # The normative specification
   schemas/               # JSON Schema validation files
 sdk/
   typescript/            # @bluefly/uadp npm package
-  python/                # ossa-uadp PyPI package
+  python/                # bluefly-uadp (PyPI)
   go/                    # uadp-go module
 ```
 
@@ -343,7 +343,7 @@ cd sdk/typescript && npm test
 | [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
 | `@bluefly/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| `ossa-uadp` Python SDK | Available | Client + FastAPI server |
+| `bluefly-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
 

@@ -1,12 +1,12 @@
 # Contributing to UADP
 
-Thank you for your interest in contributing to the Universal Agent Discovery Protocol (UADP).
+Thank you for your interest in contributing to the Universal AI Discovery Protocol (UADP).
 
 ## Getting Started
 
 ```bash
 git clone <this-repo>
-cd openstandard-uadp
+cd duadp
 
 # Build SDK
 cd sdk/typescript && npm install && npm run build && cd ../..

@@ -1,8 +1,10 @@
 # uadp-go — Go SDK
 
-**UADP client and server SDK for Go.**
+**The official Go SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
+
+> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ## Install
 
@@ -197,6 +199,13 @@ The SDK exports 80+ types covering:
 - **MCP Interop**: `McpServerManifest`
 - **Query**: `StructuredQuery`, `QueryFilter`, `QuerySort`
 
+## Also Available
+
+| Language | Package | Registry |
+|----------|---------|----------|
+| TypeScript | [`@bluefly/uadp`](https://www.npmjs.com/package/@bluefly/uadp) | npm |
+| Python | `bluefly-uadp` | PyPI |
+
 ## License
 
-Apache License 2.0
+Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
