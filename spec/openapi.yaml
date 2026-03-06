@@ -437,6 +437,240 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # ─── Governance (NIST AI RMF) ────────────────────────────────
+  /uadp/v1/governance:
+    get:
+      operationId: getGovernance
+      summary: Node Governance Declaration
+      description: |
+        Returns this node's governance policies, compliance frameworks,
+        and NIST AI RMF alignment. GOVERN 1.1, GOVERN 1.2.
+      tags: [Governance]
+      responses:
+        "200":
+          description: Governance declaration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeGovernance"
+
+  /uadp/v1/governance/risk/{gaid}:
+    get:
+      operationId: getRiskAssessment
+      summary: Get Risk Assessment for Resource
+      description: |
+        NIST-aligned risk assessment for an agent, skill, or tool.
+        MAP 5.1 (impact), MEASURE 1.1 (metrics).
+      tags: [Governance]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceRisk"
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /uadp/v1/governance/audit:
+    get:
+      operationId: getAuditLog
+      summary: Audit Log
+      description: |
+        Governance-relevant audit trail. NIST AU-2, AU-3.
+      tags: [Governance]
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [publish, revoke, update, peer_added, peer_removed, access, validation, risk_change]
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  # ─── Provenance ─────────────────────────────────────────────
+  /uadp/v1/provenance/{gaid}:
+    get:
+      operationId: getProvenance
+      summary: Get Provenance Chain
+      description: |
+        Full supply chain provenance — publisher, signature, SBOM, build info.
+        NIST SP 800-218A, EO 14110 Section 4.1.
+      tags: [Provenance]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Provenance chain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceProvenance"
+        "404":
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ─── Revocations ────────────────────────────────────────────
+  /uadp/v1/revocations:
+    get:
+      operationId: listRevocations
+      summary: List Revoked Resources
+      description: |
+        Revoked GAIDs with reason and timestamp.
+        Peers SHOULD check during sync. NIST SI-7, CM-3.
+      tags: [Governance]
+      parameters:
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Revocation list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Revocation"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  # ─── Incremental Sync ──────────────────────────────────────
+  /uadp/v1/federation/sync:
+    get:
+      operationId: incrementalSync
+      summary: Incremental Sync
+      description: |
+        Resources changed since timestamp. Efficient peer-to-peer sync.
+        NIST MANAGE 4.1 (post-deployment monitoring).
+      tags: [Federation]
+      parameters:
+        - name: since
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [skills, agents, tools, revocations]
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Changed resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
+
+  # ─── Event Subscriptions ────────────────────────────────────
+  /uadp/v1/events/subscribe:
+    post:
+      operationId: subscribe
+      summary: Subscribe to Events
+      description: |
+        Webhook subscription for resource changes. NIST MANAGE 4.1.
+      tags: [Events]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookSubscription"
+      responses:
+        "201":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    const: active
+
+  # ─── Agent Identity ─────────────────────────────────────────
+  /uadp/v1/identity/{gaid}:
+    get:
+      operationId: getAgentIdentity
+      summary: Get Agent Identity
+      description: |
+        Returns the identity record for an agent — DID, DNS records,
+        service accounts, and key material. Each agent gets a unique
+        identity tied to a domain via did:web and DNS TXT records.
+      tags: [Identity]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentIdentity"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -556,6 +790,9 @@ components:
             max_hops:
               type: integer
               default: 2
+        governance:
+          $ref: "#/components/schemas/NodeGovernance"
+          description: "Inline governance summary (NIST GOVERN 1.1)."
 
     OssaMetadata:
       type: object
@@ -603,6 +840,261 @@ components:
           type: string
           format: date-time
 
+    ResourceIdentity:
+      type: object
+      required: [did, gaid]
+      description: |
+        Comprehensive agent/resource identity. Covers DID, DNS binding,
+        cryptographic keys, service accounts, provenance, lifecycle,
+        operational context, relationships, compliance, and reputation.
+      properties:
+        did:
+          type: string
+          description: "W3C DID for this resource (e.g., did:web:example.com:agents:my-agent)."
+        gaid:
+          type: string
+          description: "Global Agent Identifier (agent://namespace/type/name)."
+        dns:
+          type: object
+          properties:
+            record:
+              type: string
+              description: "DNS TXT record name."
+            verified:
+              type: boolean
+        keys:
+          type: object
+          properties:
+            signing:
+              type: object
+              required: [id, type, public_key_multibase]
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                public_key_multibase:
+                  type: string
+            encryption:
+              type: object
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                public_key_multibase:
+                  type: string
+            rotation:
+              type: object
+              properties:
+                next_key_hash:
+                  type: string
+                rotation_policy:
+                  type: string
+        service_account:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum: [bot, service, system]
+            provider:
+              type: string
+            scopes:
+              type: array
+              items:
+                type: string
+            token_endpoint:
+              type: string
+              format: uri
+            client_id:
+              type: string
+        provenance:
+          type: object
+          properties:
+            creator:
+              type: string
+            publisher:
+              type: string
+            created:
+              type: string
+              format: date-time
+            published:
+              type: string
+              format: date-time
+            source_repository:
+              type: string
+              format: uri
+            commit_hash:
+              type: string
+            build_system:
+              type: string
+            attestations:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  uri:
+                    type: string
+                    format: uri
+        lifecycle:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [draft, active, suspended, deprecated, revoked]
+            activated:
+              type: string
+              format: date-time
+            expires:
+              type: string
+              format: date-time
+              nullable: true
+            suspended:
+              type: string
+              format: date-time
+              nullable: true
+            revoked:
+              type: string
+              format: date-time
+              nullable: true
+            deprecation:
+              type: string
+              format: date-time
+              nullable: true
+            successor:
+              type: string
+              nullable: true
+        operational:
+          type: object
+          properties:
+            endpoint:
+              type: string
+              format: uri
+            protocol:
+              type: string
+              enum: [mcp, a2a, rest, grpc, websocket]
+            transport:
+              type: string
+              enum: [https, sse, stdio, websocket]
+            health_check:
+              type: string
+              format: uri
+            rate_limit:
+              type: object
+              properties:
+                requests_per_minute:
+                  type: integer
+                concurrent_sessions:
+                  type: integer
+            availability:
+              type: object
+              properties:
+                sla:
+                  type: string
+                regions:
+                  type: array
+                  items:
+                    type: string
+        relationships:
+          type: object
+          properties:
+            parent_agent:
+              type: string
+            skills:
+              type: array
+              items:
+                type: string
+            tools:
+              type: array
+              items:
+                type: string
+            depends_on:
+              type: array
+              items:
+                type: string
+            delegates_to:
+              type: array
+              items:
+                type: string
+            registered_nodes:
+              type: array
+              items:
+                type: string
+        compliance:
+          type: object
+          properties:
+            nist_controls:
+              type: array
+              items:
+                type: string
+            safety:
+              type: object
+              properties:
+                human_oversight:
+                  type: string
+                  enum: [none, optional, recommended, required]
+                max_autonomy_level:
+                  type: string
+                  enum: [autonomous, supervised, human-in-loop, view-only]
+                restricted_actions:
+                  type: array
+                  items:
+                    type: string
+                safety_policy:
+                  type: string
+            data_handling:
+              type: object
+              properties:
+                pii_access:
+                  type: boolean
+                data_retention:
+                  type: string
+                  enum: [none, session, 30d, 365d, permanent]
+                data_residency:
+                  type: array
+                  items:
+                    type: string
+                encryption_at_rest:
+                  type: boolean
+                encryption_in_transit:
+                  type: boolean
+            audit:
+              type: object
+              properties:
+                log_endpoint:
+                  type: string
+                  format: uri
+                log_format:
+                  type: string
+                  enum: [OTEL, CEF, JSON, syslog]
+                retention_days:
+                  type: integer
+        reputation:
+          type: object
+          properties:
+            trust_tier:
+              type: string
+              enum: [official, verified-signature, signed, community, experimental]
+            verification_date:
+              type: string
+              format: date-time
+            verified_by:
+              type: string
+            attestations_count:
+              type: integer
+            usage_count:
+              type: integer
+            nodes_registered:
+              type: integer
+            community_rating:
+              type: number
+            incidents:
+              type: integer
+
     OssaResource:
       type: object
       required: [apiVersion, kind, metadata]
@@ -615,10 +1107,22 @@ components:
           type: string
         metadata:
           $ref: "#/components/schemas/OssaMetadata"
+        identity:
+          $ref: "#/components/schemas/ResourceIdentity"
+          description: "Comprehensive resource identity (DID, keys, service account, lifecycle)."
         spec:
           type: object
         signature:
           $ref: "#/components/schemas/ResourceSignature"
+        provenance:
+          $ref: "#/components/schemas/ResourceProvenance"
+          description: "Supply chain provenance (NIST SP 800-218A)."
+        risk:
+          $ref: "#/components/schemas/ResourceRisk"
+          description: "Risk assessment (NIST AI RMF MAP 5.1)."
+        content_hash:
+          type: string
+          description: "SHA-256 of canonical manifest. Content-addressed dedup."
 
     OssaSkill:
       allOf:
@@ -812,3 +1316,348 @@ components:
           type: string
         code:
           type: string
+
+    # ─── NIST AI RMF Aligned Types (v0.2.1) ──────────────────
+
+    NodeGovernance:
+      type: object
+      description: |
+        Governance declarations for a UADP node.
+        Maps to NIST AI RMF GOVERN function.
+      properties:
+        compliance_frameworks:
+          type: array
+          items:
+            type: string
+          description: "Frameworks: NIST-AI-RMF, SOC2, FedRAMP, ISO-42001, EU-AI-Act"
+        risk_tolerance:
+          type: string
+          enum: [strict, moderate, permissive]
+          description: "NIST GOVERN 1.2 — risk tolerance level."
+        data_classification:
+          type: string
+          enum: [public, internal, confidential, restricted]
+        review_policy:
+          type: string
+          enum: [manual, automated, hybrid]
+          description: "How resources are reviewed before publication."
+        audit_retention_days:
+          type: integer
+          description: "Audit log retention in days (NIST AU-11)."
+
+    ResourceProvenance:
+      type: object
+      description: |
+        Supply chain provenance. Maps to NIST SP 800-218A and EO 14110.
+      properties:
+        publisher:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            organization:
+              type: string
+            verified:
+              type: boolean
+        build:
+          type: object
+          description: "Build provenance (SLSA-style)."
+          properties:
+            builder:
+              type: string
+            source_repo:
+              type: string
+              format: uri
+            commit_sha:
+              type: string
+            build_time:
+              type: string
+              format: date-time
+            reproducible:
+              type: boolean
+        sbom:
+          type: object
+          description: "Software Bill of Materials (NIST SP 800-218A)."
+          properties:
+            format:
+              type: string
+              enum: [spdx, cyclonedx]
+            components:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  version:
+                    type: string
+                  type:
+                    type: string
+                    enum: [model, library, framework, tool, dataset, runtime]
+                  supplier:
+                    type: string
+                  license:
+                    type: string
+                  hash:
+                    type: string
+        attestations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attestation"
+
+    Attestation:
+      type: object
+      description: |
+        Third-party attestation. Maps to NIST GOVERN 1.7.
+      properties:
+        type:
+          type: string
+          enum: [security-audit, compliance-review, performance-test, safety-evaluation, red-team]
+        issuer:
+          type: string
+        issued_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        result:
+          type: string
+          enum: [pass, conditional-pass, fail]
+        details_url:
+          type: string
+          format: uri
+
+    ResourceRisk:
+      type: object
+      description: |
+        NIST AI RMF risk assessment. Maps to MAP 5.1, MEASURE 1.1.
+      properties:
+        level:
+          type: string
+          enum: [critical, high, moderate, low, minimal]
+        impact:
+          type: object
+          description: "NIST MAP 5.1 impact categories."
+          properties:
+            people:
+              type: string
+              enum: [critical, high, moderate, low, none]
+            organizations:
+              type: string
+              enum: [critical, high, moderate, low, none]
+            ecosystems:
+              type: string
+              enum: [critical, high, moderate, low, none]
+        autonomy_level:
+          type: string
+          enum: [fully-autonomous, supervised, human-in-the-loop, advisory]
+          description: "NIST GOVERN 1.3 — human oversight level."
+        data_sensitivity:
+          type: string
+          enum: [public, internal, confidential, restricted]
+        known_limitations:
+          type: array
+          items:
+            type: string
+          description: "NIST MAP 2.3 — known failure modes."
+        mitigations:
+          type: array
+          items:
+            type: string
+          description: "NIST MANAGE 2.2 — risk mitigations."
+        nist_controls:
+          type: array
+          items:
+            type: object
+            properties:
+              control_id:
+                type: string
+                description: "e.g., AC-6, SA-4, SR-3"
+              status:
+                type: string
+                enum: [implemented, partially-implemented, planned, not-applicable]
+              evidence:
+                type: string
+
+    Revocation:
+      type: object
+      required: [gaid, reason, revoked_at]
+      description: "NIST SI-7 (integrity), CM-3 (change control)."
+      properties:
+        gaid:
+          type: string
+        resource_name:
+          type: string
+        reason:
+          type: string
+          enum: [security-vulnerability, policy-violation, publisher-request, expired, superseded]
+        severity:
+          type: string
+          enum: [critical, high, moderate, low]
+        revoked_at:
+          type: string
+          format: date-time
+        revoked_by:
+          type: string
+        superseded_by:
+          type: string
+          description: "GAID of replacement resource."
+
+    AuditEvent:
+      type: object
+      required: [event_type, timestamp]
+      description: "NIST AU-2, AU-3 audit trail."
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum: [publish, revoke, update, peer_added, peer_removed, access, validation, risk_change]
+        timestamp:
+          type: string
+          format: date-time
+        actor:
+          type: string
+        gaid:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    SyncChange:
+      type: object
+      required: [action, resource_type, gaid, timestamp]
+      properties:
+        action:
+          type: string
+          enum: [created, updated, revoked, deleted]
+        resource_type:
+          type: string
+          enum: [skill, agent, tool]
+        gaid:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        content_hash:
+          type: string
+        resource:
+          $ref: "#/components/schemas/OssaResource"
+
+    SyncResponse:
+      type: object
+      required: [changes]
+      properties:
+        changes:
+          type: array
+          items:
+            $ref: "#/components/schemas/SyncChange"
+        sync_token:
+          type: string
+          description: "Opaque token for next incremental sync."
+        has_more:
+          type: boolean
+
+    WebhookSubscription:
+      type: object
+      required: [callback_url, events]
+      properties:
+        callback_url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+            enum: [resource.published, resource.updated, resource.revoked, peer.added, peer.removed]
+        secret:
+          type: string
+          description: "HMAC-SHA256 shared secret."
+        filter:
+          type: object
+          properties:
+            resource_types:
+              type: array
+              items:
+                type: string
+                enum: [skill, agent, tool]
+            trust_tiers:
+              type: array
+              items:
+                type: string
+
+    AgentIdentity:
+      type: object
+      required: [gaid, did]
+      description: |
+        Agent identity record. Each agent gets a unique DID (did:web),
+        DNS TXT record, and optional service account for authenticated operations.
+      properties:
+        gaid:
+          type: string
+          description: "Global Agent Identifier (agent://namespace/type/name)."
+        did:
+          type: string
+          description: "Decentralized Identifier (did:web:domain:path)."
+        dns_record:
+          type: object
+          description: "DNS TXT record for domain-level identity binding."
+          properties:
+            domain:
+              type: string
+            record_name:
+              type: string
+              description: "TXT record name (e.g., _uadp.agent-name.example.com)."
+            record_value:
+              type: string
+              description: "TXT record value (uadp=v1;gaid=agent://...;key=...)."
+        service_account:
+          type: object
+          description: "Bot/service account for authenticated operations."
+          properties:
+            type:
+              type: string
+              enum: [bot, service-account, machine-identity]
+            provider:
+              type: string
+              description: "Identity provider (e.g., gitlab, github, entra-id, okta)."
+            username:
+              type: string
+            scopes:
+              type: array
+              items:
+                type: string
+              description: "Granted permissions/scopes."
+        keys:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "Key identifier (kid)."
+              type:
+                type: string
+                enum: [Ed25519, ES256, RSA]
+              public_key:
+                type: string
+                description: "PEM or JWK encoded public key."
+              purpose:
+                type: string
+                enum: [signing, authentication, encryption]
+              created:
+                type: string
+                format: date-time
+              expires:
+                type: string
+                format: date-time
+        verification_methods:
+          type: array
+          items:
+            type: string
+          description: "DID verification methods (e.g., did:web resolution, DNS TXT lookup)."

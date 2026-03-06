@@ -1,8 +1,25 @@
 import type {
-  UadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
-  PaginatedResponse, FederationResponse, ValidationResult,
-  ListParams, ToolListParams, Peer, PublishResponse,
-  PeerRegistration, PeerRegistrationResponse, WebFingerResponse
+    FederationResponse,
+    ListParams,
+    OssaAgent,
+    OssaResource,
+    OssaSkill,
+    OssaTool,
+    PaginatedResponse,
+    PeerRegistration, PeerRegistrationResponse,
+    PublishResponse,
+    ToolListParams,
+    UadpManifest,
+    ValidationResult,
+    WebFingerResponse,
+    NodeGovernance,
+    ResourceRisk,
+    ResourceProvenance,
+    AuditEvent,
+    Revocation,
+    SyncResponse,
+    WebhookSubscription,
+    AgentIdentity
 } from './types.js';
 
 export interface UadpClientOptions {
@@ -188,6 +205,104 @@ export class UadpClient {
     }) as Promise<ValidationResult>;
   }
 
+  // --- Governance (NIST AI RMF) ---
+
+  /** Get node governance declarations */
+  async getGovernance(): Promise<NodeGovernance> {
+    const endpoint = await this.resolveEndpoint('governance');
+    return this.request(endpoint) as Promise<NodeGovernance>;
+  }
+
+  /** Get risk assessment for a resource by GAID */
+  async getResourceRisk(gaid: string): Promise<ResourceRisk> {
+    const endpoint = await this.resolveEndpoint('governance');
+    return this.request(`${endpoint}/risk/${encodeURIComponent(gaid)}`) as Promise<ResourceRisk>;
+  }
+
+  /** Get audit log entries */
+  async getAuditLog(params?: {
+    event_type?: string;
+    gaid?: string;
+    since?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<AuditEvent[]> {
+    let endpoint: string;
+    try {
+      endpoint = await this.resolveEndpoint('audit_log');
+    } catch {
+      endpoint = (await this.resolveEndpoint('governance')) + '/audit';
+    }
+    const url = new URL(endpoint);
+    if (params?.event_type) url.searchParams.set('event_type', params.event_type);
+    if (params?.gaid) url.searchParams.set('gaid', params.gaid);
+    if (params?.since) url.searchParams.set('since', params.since);
+    if (params?.page) url.searchParams.set('page', String(params.page));
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<AuditEvent[]>;
+  }
+
+  // --- Provenance (NIST SP 800-218A) ---
+
+  /** Get supply chain provenance for a resource */
+  async getProvenance(gaid: string): Promise<ResourceProvenance> {
+    const endpoint = await this.resolveEndpoint('provenance');
+    return this.request(`${endpoint}/${encodeURIComponent(gaid)}`) as Promise<ResourceProvenance>;
+  }
+
+  // --- Revocations (NIST SI-7, CM-3) ---
+
+  /** Get list of revoked resources */
+  async getRevocations(params?: {
+    severity?: string;
+    since?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<Revocation[]> {
+    const endpoint = await this.resolveEndpoint('revocations');
+    const url = new URL(endpoint);
+    if (params?.severity) url.searchParams.set('severity', params.severity);
+    if (params?.since) url.searchParams.set('since', params.since);
+    if (params?.page) url.searchParams.set('page', String(params.page));
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<Revocation[]>;
+  }
+
+  // --- Federation Sync ---
+
+  /** Get incremental changes since a timestamp or sync token */
+  async federationSync(params?: {
+    since?: string;
+    sync_token?: string;
+    limit?: number;
+  }): Promise<SyncResponse> {
+    const endpoint = await this.resolveEndpoint('federation');
+    const url = new URL(`${endpoint}/sync`);
+    if (params?.since) url.searchParams.set('since', params.since);
+    if (params?.sync_token) url.searchParams.set('sync_token', params.sync_token);
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<SyncResponse>;
+  }
+
+  // --- Events (Webhooks) ---
+
+  /** Subscribe to webhook events */
+  async subscribeWebhook(subscription: WebhookSubscription): Promise<void> {
+    const endpoint = await this.resolveEndpoint('events');
+    await this.request(`${endpoint}/subscribe`, {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    });
+  }
+
+  // --- Agent Identity ---
+
+  /** Get agent identity record by GAID */
+  async getAgentIdentity(gaid: string): Promise<AgentIdentity> {
+    const endpoint = await this.resolveEndpoint('identity');
+    return this.request(`${endpoint}/${encodeURIComponent(gaid)}`) as Promise<AgentIdentity>;
+  }
+
   // --- Internals ---
 
   private async resolveEndpoint(name: string): Promise<string> {
@@ -266,8 +381,8 @@ export function resolveGaid(gaid: string, options?: UadpClientOptions): {
   kind: string;
   name: string;
 } {
-  const match = gaid.match(/^agent:\/\/([^/]+)\/([^/]+)\/(.+)$/);
-  if (!match) throw new UadpError(`Invalid GAID: ${gaid}`);
+  const match = gaid.match(/^(?:agent|uadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (!match) throw new UadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or uadp://domain/kind/name`);
   const [, domain, kind, name] = match;
   const client = new UadpClient(`https://${domain}`, options);
   return { client, kind, name };

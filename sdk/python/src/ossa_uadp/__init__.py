@@ -2,6 +2,7 @@
 from .types import (
     UadpManifest, NodeIdentity, FederationConfig, UadpEndpoints,
     OssaSkill, OssaAgent, OssaTool, OssaResource, OssaMetadata, ResourceSignature,
+    ResourceIdentity,
     PaginationMeta, FederatedSource, PaginatedResponse,
     Peer, FederationResponse,
     PublishResponse, ValidationResult,
@@ -18,6 +19,7 @@ __all__ = [
     "UadpClient", "UadpError", "resolve_gaid",
     "UadpManifest", "NodeIdentity", "FederationConfig", "UadpEndpoints",
     "OssaSkill", "OssaAgent", "OssaTool", "OssaResource", "OssaMetadata", "ResourceSignature",
+    "ResourceIdentity",
     "PaginationMeta", "FederatedSource", "PaginatedResponse",
     "Peer", "FederationResponse",
     "PublishResponse", "ValidationResult",

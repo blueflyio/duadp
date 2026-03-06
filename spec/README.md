@@ -623,17 +623,288 @@ Resources MAY include a `signature` object for cryptographic verification:
 
 The signature is computed over the canonical JSON serialization of the resource (excluding the `signature` field itself). Consuming nodes SHOULD verify signatures by resolving the signer's DID and extracting the public key.
 
-### 7.4 Agent and Resource Identity
+### 7.4 Agent Identity (Comprehensive)
 
-Every agent, skill, or tool published to a UADP node SHOULD have its own identity consisting of:
+Every agent, skill, or tool published to a UADP node MUST have a complete identity. Agent identity is not a single field — it is a structured object encompassing all attributes needed for discovery, authentication, authorization, cryptographic verification, provenance, lifecycle management, operational context, compliance, and reputation.
 
-1. **DNS Record** — A TXT record binding the resource to a domain
-2. **DID** — A Decentralized Identifier for the resource itself
-3. **Service Account** — A bot/service account for authenticated operations
+**The `identity` object is a top-level field on every OSSA resource, alongside `apiVersion`, `kind`, `metadata`, and `spec`.**
 
-#### 7.4.1 Per-Resource DNS Records
+#### 7.4.1 Identity Object — Full Schema
 
-Each resource MAY have a DNS TXT record under the node's domain:
+```json
+{
+  "apiVersion": "ossa/v0.5",
+  "kind": "Agent",
+  "metadata": {
+    "name": "security-auditor",
+    "version": "2.0.0",
+    "description": "Audits infrastructure for security vulnerabilities",
+    "uri": "agent://acme.com/agents/security-auditor",
+    "trust_tier": "verified-signature",
+    "tags": ["security", "audit", "infrastructure"]
+  },
+  "identity": {
+    "did": "did:web:acme.com:agents:security-auditor",
+    "gaid": "agent://acme.com/agents/security-auditor",
+    "dns": {
+      "record": "_uadp-agent.security-auditor.acme.com",
+      "verified": true
+    },
+    "keys": {
+      "signing": {
+        "id": "did:web:acme.com:agents:security-auditor#key-1",
+        "type": "Ed25519VerificationKey2020",
+        "public_key_multibase": "z6Mkf5rGMoatrSj1f3YdB1..."
+      },
+      "encryption": {
+        "id": "did:web:acme.com:agents:security-auditor#enc-1",
+        "type": "X25519KeyAgreementKey2020",
+        "public_key_multibase": "z6LSbysY2xFMR..."
+      },
+      "rotation": {
+        "next_key_hash": "sha256:abc123...",
+        "rotation_policy": "90d"
+      }
+    },
+    "service_account": {
+      "id": "security-auditor@acme.com",
+      "type": "bot",
+      "provider": "acme-iam",
+      "scopes": [
+        "read:skills",
+        "read:agents",
+        "read:tools",
+        "write:federation",
+        "execute:skills"
+      ],
+      "token_endpoint": "https://auth.acme.com/oauth/token",
+      "client_id": "agent-security-auditor"
+    },
+    "provenance": {
+      "creator": "did:web:acme.com:users:jane",
+      "publisher": "did:web:acme.com",
+      "created": "2026-01-15T10:30:00Z",
+      "published": "2026-01-16T08:00:00Z",
+      "source_repository": "https://gitlab.com/acme/agents/security-auditor",
+      "commit_hash": "a1b2c3d4e5f6...",
+      "build_system": "gitlab-ci",
+      "attestations": [
+        {
+          "type": "SLSA-L2",
+          "uri": "https://acme.com/.well-known/slsa/security-auditor.json"
+        }
+      ]
+    },
+    "lifecycle": {
+      "status": "active",
+      "activated": "2026-01-16T08:00:00Z",
+      "expires": "2027-01-16T08:00:00Z",
+      "suspended": null,
+      "revoked": null,
+      "deprecation": null,
+      "successor": null
+    },
+    "operational": {
+      "endpoint": "https://agents.acme.com/security-auditor",
+      "protocol": "a2a",
+      "transport": "https",
+      "health_check": "https://agents.acme.com/security-auditor/health",
+      "rate_limit": {
+        "requests_per_minute": 60,
+        "concurrent_sessions": 5
+      },
+      "availability": {
+        "sla": "99.9%",
+        "regions": ["us-east-1", "eu-west-1"]
+      }
+    },
+    "relationships": {
+      "parent_agent": null,
+      "skills": [
+        "agent://acme.com/skills/code-review",
+        "agent://acme.com/skills/dependency-scan"
+      ],
+      "tools": [
+        "agent://acme.com/tools/git-analyzer",
+        "agent://skills.sh/tools/web-search"
+      ],
+      "depends_on": [
+        "agent://acme.com/agents/code-analyzer"
+      ],
+      "delegates_to": [],
+      "registered_nodes": [
+        "did:web:skills.sh",
+        "did:web:marketplace.openstandardagents.org"
+      ]
+    },
+    "compliance": {
+      "nist_controls": ["AC-6", "AU-2", "IA-9", "SI-10", "SC-7"],
+      "safety": {
+        "human_oversight": "required",
+        "max_autonomy_level": "supervised",
+        "restricted_actions": ["delete", "financial", "pii-access"],
+        "safety_policy": "https://acme.com/policies/ai-safety.html"
+      },
+      "data_handling": {
+        "pii_access": false,
+        "data_retention": "none",
+        "data_residency": ["US", "EU"],
+        "encryption_at_rest": true,
+        "encryption_in_transit": true
+      },
+      "audit": {
+        "log_endpoint": "https://audit.acme.com/agents/security-auditor",
+        "log_format": "OTEL",
+        "retention_days": 365
+      }
+    },
+    "reputation": {
+      "trust_tier": "verified-signature",
+      "verification_date": "2026-01-15T10:00:00Z",
+      "verified_by": "did:web:openstandardagents.org",
+      "attestations_count": 3,
+      "usage_count": 12500,
+      "nodes_registered": 8,
+      "community_rating": 4.7,
+      "incidents": 0
+    }
+  },
+  "spec": {
+    "role": "You are a security auditor...",
+    "skills": ["code-review", "dependency-scan"],
+    "llm": { "provider": "anthropic", "model": "claude-sonnet-4-5-20250514" }
+  },
+  "signature": {
+    "algorithm": "Ed25519",
+    "value": "base64url-signature...",
+    "signer": "did:web:acme.com:agents:security-auditor",
+    "timestamp": "2026-03-06T10:00:00Z"
+  }
+}
+```
+
+#### 7.4.2 Identity Object — Field Reference
+
+**Core Identity**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.did` | string | MUST | W3C DID for this resource (`did:web:` recommended) |
+| `identity.gaid` | string | MUST | Global Agent Identifier (`agent://` URI) |
+| `identity.dns.record` | string | SHOULD | DNS TXT record name binding resource to domain |
+| `identity.dns.verified` | boolean | MAY | Whether DNS verification has been performed |
+
+**Cryptographic Keys**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.keys.signing.id` | string | MUST | Key ID within the DID document |
+| `identity.keys.signing.type` | string | MUST | Key type (`Ed25519VerificationKey2020`, `JsonWebKey2020`) |
+| `identity.keys.signing.public_key_multibase` | string | MUST | Public key in multibase encoding |
+| `identity.keys.encryption` | object | MAY | Encryption key for secure agent-to-agent communication |
+| `identity.keys.rotation.next_key_hash` | string | MAY | Hash of the next key for pre-rotation |
+| `identity.keys.rotation.rotation_policy` | string | MAY | Key rotation interval (e.g., `90d`, `365d`) |
+
+**Service Account**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.service_account.id` | string | MUST | Unique identifier (email, URN, or handle) |
+| `identity.service_account.type` | string | MUST | `bot`, `service`, `system` |
+| `identity.service_account.provider` | string | MAY | IAM provider managing this account |
+| `identity.service_account.scopes` | string[] | MUST | OAuth-style scopes the account is authorized for |
+| `identity.service_account.token_endpoint` | string | MAY | OAuth token endpoint for credential exchange |
+| `identity.service_account.client_id` | string | MAY | OAuth client ID |
+
+**Provenance (Supply Chain)**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.provenance.creator` | string | SHOULD | DID of the human or system that created this resource |
+| `identity.provenance.publisher` | string | MUST | DID of the node/organization that published it |
+| `identity.provenance.created` | string | MUST | ISO 8601 creation timestamp |
+| `identity.provenance.published` | string | MUST | ISO 8601 publication timestamp |
+| `identity.provenance.source_repository` | string | MAY | URL to source code repository |
+| `identity.provenance.commit_hash` | string | MAY | Git commit hash of the published version |
+| `identity.provenance.build_system` | string | MAY | CI/CD system that built the artifact |
+| `identity.provenance.attestations` | object[] | MAY | SLSA, Sigstore, or other supply chain attestations |
+
+**Lifecycle**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.lifecycle.status` | string | MUST | `draft`, `active`, `suspended`, `deprecated`, `revoked` |
+| `identity.lifecycle.activated` | string | MAY | When the resource became active |
+| `identity.lifecycle.expires` | string | MAY | Expiration date (null = never expires) |
+| `identity.lifecycle.suspended` | string | MAY | When suspended (null = not suspended) |
+| `identity.lifecycle.revoked` | string | MAY | When revoked (null = not revoked) |
+| `identity.lifecycle.deprecation` | string | MAY | Deprecation notice message |
+| `identity.lifecycle.successor` | string | MAY | GAID of the replacement resource |
+
+Lifecycle status transitions:
+
+```
+draft → active → suspended → active  (re-activation)
+                           → revoked (permanent)
+               → deprecated → revoked
+               → revoked (permanent)
+```
+
+Nodes MUST NOT serve resources with `status: revoked`. Nodes SHOULD warn consumers about `deprecated` resources and point to `successor`.
+
+**Operational**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.operational.endpoint` | string | MAY | Live invocation endpoint for this resource |
+| `identity.operational.protocol` | string | MAY | `mcp`, `a2a`, `rest`, `grpc`, `websocket` |
+| `identity.operational.transport` | string | MAY | `https`, `sse`, `stdio`, `websocket` |
+| `identity.operational.health_check` | string | MAY | Health check URL |
+| `identity.operational.rate_limit` | object | MAY | Rate limiting parameters |
+| `identity.operational.availability` | object | MAY | SLA and region availability |
+
+**Relationships**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.relationships.parent_agent` | string | MAY | GAID of the parent agent (for sub-agents) |
+| `identity.relationships.skills` | string[] | MAY | GAIDs of skills this agent uses |
+| `identity.relationships.tools` | string[] | MAY | GAIDs of tools this agent depends on |
+| `identity.relationships.depends_on` | string[] | MAY | GAIDs of other resources this depends on |
+| `identity.relationships.delegates_to` | string[] | MAY | GAIDs this agent can delegate tasks to |
+| `identity.relationships.registered_nodes` | string[] | MAY | DIDs of nodes where this resource is published |
+
+**Compliance**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.compliance.nist_controls` | string[] | MAY | NIST SP 800-53 controls this resource satisfies |
+| `identity.compliance.safety.human_oversight` | string | SHOULD | `none`, `optional`, `recommended`, `required` |
+| `identity.compliance.safety.max_autonomy_level` | string | SHOULD | `autonomous`, `supervised`, `human-in-loop`, `view-only` |
+| `identity.compliance.safety.restricted_actions` | string[] | MAY | Actions this resource MUST NOT perform |
+| `identity.compliance.safety.safety_policy` | string | MAY | URL to safety policy document |
+| `identity.compliance.data_handling.pii_access` | boolean | SHOULD | Whether resource accesses PII |
+| `identity.compliance.data_handling.data_retention` | string | MAY | `none`, `session`, `30d`, `365d`, `permanent` |
+| `identity.compliance.data_handling.data_residency` | string[] | MAY | Countries where data is stored |
+| `identity.compliance.audit.log_endpoint` | string | MAY | URL where audit logs are accessible |
+| `identity.compliance.audit.log_format` | string | MAY | `OTEL`, `CEF`, `JSON`, `syslog` |
+
+**Reputation**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `identity.reputation.trust_tier` | string | SHOULD | Current trust tier (mirrors metadata.trust_tier) |
+| `identity.reputation.verification_date` | string | MAY | When trust was last verified |
+| `identity.reputation.verified_by` | string | MAY | DID of the verifying authority |
+| `identity.reputation.attestations_count` | integer | MAY | Number of third-party attestations |
+| `identity.reputation.usage_count` | integer | MAY | Number of times this resource has been invoked |
+| `identity.reputation.nodes_registered` | integer | MAY | Number of UADP nodes carrying this resource |
+| `identity.reputation.community_rating` | number | MAY | Aggregate rating (0.0-5.0) |
+| `identity.reputation.incidents` | integer | MAY | Number of reported security/safety incidents |
+
+#### 7.4.3 Per-Resource DNS Records
+
+Each resource SHOULD have a DNS TXT record under the node's domain:
 
 ```
 _uadp-agent.security-auditor.acme.com.  IN TXT "v=uadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
@@ -641,9 +912,19 @@ _uadp-skill.code-review.acme.com.       IN TXT "v=uadp1 kind=Skill did=did:web:a
 _uadp-tool.web-search.skills.sh.        IN TXT "v=uadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
 ```
 
-This enables DNS-level verification: given a resource claiming to be from `acme.com`, a consumer can verify via DNS that `acme.com` actually publishes it.
+DNS TXT record fields:
 
-#### 7.4.2 Per-Resource DIDs
+| Field | Required | Description |
+|-------|----------|-------------|
+| `v` | MUST | Version tag. Current: `uadp1` |
+| `kind` | MUST | Resource kind: `Agent`, `Skill`, `Tool` |
+| `did` | MUST | DID of the resource |
+| `status` | MAY | `active`, `suspended`, `deprecated`, `revoked` |
+| `exp` | MAY | Expiration date (ISO 8601) |
+
+This enables DNS-level verification: given a resource claiming to be from `acme.com`, a consumer can verify via DNS that `acme.com` actually publishes it. Revocation can propagate via DNS TTL.
+
+#### 7.4.4 Per-Resource DID Documents
 
 Resources SHOULD have their own DIDs using the `did:web` path syntax:
 
@@ -659,65 +940,114 @@ https://acme.com/agents/security-auditor/did.json
 https://acme.com/skills/code-review/did.json
 ```
 
-The DID document for a resource SHOULD include:
+The DID document for a resource MUST include:
 
 ```json
 {
+  "@context": ["https://www.w3.org/ns/did/v1", "https://w3id.org/security/suites/ed25519-2020/v1"],
   "id": "did:web:acme.com:agents:security-auditor",
   "controller": "did:web:acme.com",
   "verificationMethod": [{
     "id": "did:web:acme.com:agents:security-auditor#key-1",
     "type": "Ed25519VerificationKey2020",
     "controller": "did:web:acme.com:agents:security-auditor",
-    "publicKeyMultibase": "z6Mkf5..."
+    "publicKeyMultibase": "z6Mkf5rGMoatrSj1f3YdB1..."
   }],
-  "service": [{
-    "id": "did:web:acme.com:agents:security-auditor#uadp",
-    "type": "UadpResource",
-    "serviceEndpoint": "https://acme.com/uadp/v1/agents/security-auditor"
-  }]
+  "authentication": ["did:web:acme.com:agents:security-auditor#key-1"],
+  "assertionMethod": ["did:web:acme.com:agents:security-auditor#key-1"],
+  "keyAgreement": [{
+    "id": "did:web:acme.com:agents:security-auditor#enc-1",
+    "type": "X25519KeyAgreementKey2020",
+    "publicKeyMultibase": "z6LSbysY2xFMR..."
+  }],
+  "service": [
+    {
+      "id": "did:web:acme.com:agents:security-auditor#uadp",
+      "type": "UadpResource",
+      "serviceEndpoint": "https://acme.com/uadp/v1/agents/security-auditor"
+    },
+    {
+      "id": "did:web:acme.com:agents:security-auditor#invoke",
+      "type": "AgentInvocation",
+      "serviceEndpoint": "https://agents.acme.com/security-auditor"
+    }
+  ]
 }
 ```
 
 The `controller` field links the resource DID to the node DID, establishing that `acme.com` is the authority for this agent.
 
-#### 7.4.3 Service Accounts (Bot Accounts)
+#### 7.4.5 Service Accounts and Authentication
 
-Agents that perform autonomous operations (federation sync, peer registration, publishing to other nodes) MUST use a dedicated service account / bot account, NOT a human user's credentials.
+Agents that perform autonomous operations MUST use a dedicated service account / bot account, NOT a human user's credentials.
 
-The resource's `spec` SHOULD declare its service account identity:
+**Rules for service accounts:**
 
-```json
-{
-  "apiVersion": "ossa/v0.5",
-  "kind": "Agent",
-  "metadata": {
-    "name": "security-auditor",
-    "uri": "agent://acme.com/agents/security-auditor"
-  },
-  "spec": {
-    "identity": {
-      "did": "did:web:acme.com:agents:security-auditor",
-      "service_account": "security-auditor@acme.com",
-      "scopes": ["read:skills", "read:agents", "write:federation"]
-    }
-  }
-}
+1. **One agent = one service account** — never share credentials between agents
+2. **Least privilege** — scopes MUST be minimal for the agent's function
+3. **Independently revocable** — revoking one agent's account MUST NOT affect others
+4. **Auditable** — every operation MUST be logged with the service account identity
+5. **Time-bounded** — tokens SHOULD have expiration; refresh via `token_endpoint`
+6. **Rate-limited** — per-account rate limits prevent abuse
+
+**Standard UADP scopes:**
+
+| Scope | Description |
+|-------|-------------|
+| `read:skills` | Read skills from any UADP endpoint |
+| `read:agents` | Read agents from any UADP endpoint |
+| `read:tools` | Read tools from any UADP endpoint |
+| `write:skills` | Publish/update/delete skills |
+| `write:agents` | Publish/update/delete agents |
+| `write:tools` | Publish/update/delete tools |
+| `write:federation` | Register as peer, gossip |
+| `execute:skills` | Invoke skills at runtime |
+| `execute:tools` | Invoke tools at runtime |
+| `admin:node` | Full node administration |
+
+#### 7.4.6 Identity Verification Flow
+
+When a consumer encounters a resource, it SHOULD verify identity through this chain:
+
+```
+1. Parse GAID → extract domain (e.g., acme.com)
+2. DNS TXT lookup → _uadp-agent.security-auditor.acme.com
+   → Confirms domain claims this resource
+   → Gets DID
+3. DID resolution → did:web:acme.com:agents:security-auditor
+   → https://acme.com/agents/security-auditor/did.json
+   → Gets public key
+4. Signature verification → verify resource.signature using public key
+   → Confirms resource hasn't been tampered with
+5. Lifecycle check → identity.lifecycle.status == "active"
+   → Confirms resource isn't revoked/expired
+6. Trust tier check → identity.reputation.trust_tier
+   → Display appropriate badge to user
 ```
 
-| Field | Description |
-|-------|-------------|
-| `spec.identity.did` | The agent's own DID |
-| `spec.identity.service_account` | Email or identifier for the bot account |
-| `spec.identity.scopes` | OAuth-style scopes the agent is authorized for |
+Each step is optional but adds confidence. A fully verified resource has:
+- DNS binding (domain claims it)
+- DID document (keys are published)
+- Valid signature (content is authentic)
+- Active lifecycle (not revoked)
+- Trust tier (reputation established)
 
-Nodes SHOULD:
-- Issue unique API tokens per service account (not shared human tokens)
-- Audit operations by service account identity
-- Allow revoking service accounts independently of human users
-- Rate-limit per service account
+#### 7.4.7 NIST AI RMF Alignment
 
-This ensures every agent is independently identifiable, auditable, and revocable — critical for NIST AI RMF compliance (AC-6 least privilege, AU-2 audit events, IA-9 service identification).
+The identity model satisfies the following NIST requirements:
+
+| NIST Control | How UADP Identity Addresses It |
+|-------------|-------------------------------|
+| **AC-6** (Least Privilege) | Scoped service accounts with minimal permissions |
+| **AU-2** (Audit Events) | Per-agent audit logs with service account attribution |
+| **IA-2** (Identification) | DID + GAID uniquely identify every resource |
+| **IA-5** (Authenticator Management) | Key rotation policy, expiration, revocation |
+| **IA-8** (Non-org User ID) | Cross-organization identity via DIDs |
+| **IA-9** (Service Identification) | Service accounts with client IDs and scopes |
+| **PM-30** (Supply Chain Risk) | Provenance with source repo, commit hash, SLSA attestations |
+| **SC-7** (Boundary Protection) | Per-agent rate limits, restricted actions, safety boundaries |
+| **SI-10** (Information Accuracy) | Signature verification ensures manifest integrity |
+| **SR-3** (Supply Chain Controls) | Attestations, build provenance, publisher identity |
 
 ## 8. Agent Identifiers (GAID)
 

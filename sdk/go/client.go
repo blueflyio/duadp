@@ -302,6 +302,199 @@ func (c *Client) Validate(ctx context.Context, manifest string) (*ValidationResu
 	return &result, nil
 }
 
+// --- Governance (NIST AI RMF) ---
+
+// GetGovernance queries GET /uadp/v1/governance.
+func (c *Client) GetGovernance(ctx context.Context) (*NodeGovernance, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Governance")
+	if err != nil {
+		return nil, err
+	}
+	var gov NodeGovernance
+	if err := c.doGet(ctx, endpoint, &gov); err != nil {
+		return nil, err
+	}
+	return &gov, nil
+}
+
+// GetResourceRisk queries GET /uadp/v1/governance/risk/{gaid}.
+func (c *Client) GetResourceRisk(ctx context.Context, gaid string) (*ResourceRisk, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Governance")
+	if err != nil {
+		return nil, err
+	}
+	var risk ResourceRisk
+	if err := c.doGet(ctx, endpoint+"/risk/"+url.PathEscape(gaid), &risk); err != nil {
+		return nil, err
+	}
+	return &risk, nil
+}
+
+// AuditParams for querying audit logs.
+type AuditParams struct {
+	EventType string
+	GAID      string
+	Since     string
+	Page      int
+	Limit     int
+}
+
+// GetAuditLog queries GET /uadp/v1/governance/audit.
+func (c *Client) GetAuditLog(ctx context.Context, params *AuditParams) ([]AuditEvent, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "AuditLog")
+	if err != nil {
+		// Fallback: try governance + /audit
+		govEndpoint, govErr := c.resolveEndpoint(ctx, "Governance")
+		if govErr != nil {
+			return nil, err
+		}
+		endpoint = govEndpoint + "/audit"
+	}
+	u, _ := url.Parse(endpoint)
+	q := u.Query()
+	if params != nil {
+		if params.EventType != "" {
+			q.Set("event_type", params.EventType)
+		}
+		if params.GAID != "" {
+			q.Set("gaid", params.GAID)
+		}
+		if params.Since != "" {
+			q.Set("since", params.Since)
+		}
+		if params.Page > 0 {
+			q.Set("page", strconv.Itoa(params.Page))
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+	}
+	u.RawQuery = q.Encode()
+	var events []AuditEvent
+	if err := c.doGet(ctx, u.String(), &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+// --- Provenance (NIST SP 800-218A) ---
+
+// GetProvenance queries GET /uadp/v1/provenance/{gaid}.
+func (c *Client) GetProvenance(ctx context.Context, gaid string) (*ResourceProvenance, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Provenance")
+	if err != nil {
+		return nil, err
+	}
+	var prov ResourceProvenance
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(gaid), &prov); err != nil {
+		return nil, err
+	}
+	return &prov, nil
+}
+
+// --- Revocations (NIST SI-7, CM-3) ---
+
+// RevocationParams for querying revocations.
+type RevocationParams struct {
+	Severity string
+	Since    string
+	Page     int
+	Limit    int
+}
+
+// GetRevocations queries GET /uadp/v1/revocations.
+func (c *Client) GetRevocations(ctx context.Context, params *RevocationParams) ([]Revocation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Revocations")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint)
+	q := u.Query()
+	if params != nil {
+		if params.Severity != "" {
+			q.Set("severity", params.Severity)
+		}
+		if params.Since != "" {
+			q.Set("since", params.Since)
+		}
+		if params.Page > 0 {
+			q.Set("page", strconv.Itoa(params.Page))
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+	}
+	u.RawQuery = q.Encode()
+	var revocations []Revocation
+	if err := c.doGet(ctx, u.String(), &revocations); err != nil {
+		return nil, err
+	}
+	return revocations, nil
+}
+
+// --- Federation Sync ---
+
+// SyncParams for incremental sync.
+type SyncParams struct {
+	Since     string
+	SyncToken string
+	Limit     int
+}
+
+// FederationSync queries GET /uadp/v1/federation/sync.
+func (c *Client) FederationSync(ctx context.Context, params *SyncParams) (*SyncResponse, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Federation")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint + "/sync")
+	q := u.Query()
+	if params != nil {
+		if params.Since != "" {
+			q.Set("since", params.Since)
+		}
+		if params.SyncToken != "" {
+			q.Set("sync_token", params.SyncToken)
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+	}
+	u.RawQuery = q.Encode()
+	var resp SyncResponse
+	if err := c.doGet(ctx, u.String(), &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// --- Events (Webhooks) ---
+
+// SubscribeWebhook sends POST /uadp/v1/events/subscribe.
+func (c *Client) SubscribeWebhook(ctx context.Context, sub *WebhookSubscription) error {
+	endpoint, err := c.resolveEndpoint(ctx, "Events")
+	if err != nil {
+		return err
+	}
+	body, _ := json.Marshal(sub)
+	return c.doPost(ctx, endpoint+"/subscribe", string(body), nil)
+}
+
+// --- Agent Identity ---
+
+// GetAgentIdentity queries GET /uadp/v1/identity/{gaid}.
+func (c *Client) GetAgentIdentity(ctx context.Context, gaid string) (*AgentIdentity, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Identity")
+	if err != nil {
+		return nil, err
+	}
+	var identity AgentIdentity
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(gaid), &identity); err != nil {
+		return nil, err
+	}
+	return &identity, nil
+}
+
 // --- Internals ---
 
 func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, error) {
@@ -323,6 +516,18 @@ func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, erro
 		endpoint = m.Endpoints.Validate
 	case "Publish":
 		endpoint = m.Endpoints.Publish
+	case "Governance":
+		endpoint = m.Endpoints.Governance
+	case "Provenance":
+		endpoint = m.Endpoints.Provenance
+	case "Revocations":
+		endpoint = m.Endpoints.Revocations
+	case "AuditLog":
+		endpoint = m.Endpoints.AuditLog
+	case "Events":
+		endpoint = m.Endpoints.Events
+	case "Identity":
+		endpoint = m.Endpoints.Identity
 	}
 	if endpoint == "" {
 		return "", &UadpError{Message: fmt.Sprintf("node does not expose a %s endpoint", strings.ToLower(name))}

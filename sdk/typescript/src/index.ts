@@ -1,4 +1,5 @@
+export { UadpClient, UadpError, resolveGaid, type UadpClientOptions } from './client.js';
+export { createUadpRouter, type UadpDataProvider, type UadpNodeConfig } from './server.js';
 export * from './types.js';
-export { UadpClient, UadpError, type UadpClientOptions } from './client.js';
-export { createUadpRouter, type UadpNodeConfig, type UadpDataProvider } from './server.js';
-export { validateManifest, validateResponse, isUadpManifest } from './validate.js';
+export { isUadpManifest, validateManifest, validateResponse } from './validate.js';
+

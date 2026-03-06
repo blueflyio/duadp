@@ -6,7 +6,9 @@ from .types import (
     UadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
     PaginatedResponse, FederationResponse, ValidationResult,
     ListParams, ToolListParams, PublishResponse, PeerRegistration,
-    WebFingerResponse,
+    WebFingerResponse, NodeGovernance, ResourceRisk, ResourceProvenance,
+    AuditEvent, Revocation, SyncResponse, WebhookSubscription,
+    AgentIdentity,
 )
 
 
@@ -194,6 +196,127 @@ class UadpClient:
         resp = await self._client.post(endpoint, json={"manifest": manifest_str})
         resp.raise_for_status()
         return ValidationResult.model_validate(resp.json())
+
+    # --- Governance (NIST AI RMF) ---
+
+    async def get_governance(self) -> NodeGovernance:
+        """Get node governance declarations."""
+        endpoint = await self._resolve_endpoint("governance")
+        resp = await self._client.get(endpoint)
+        resp.raise_for_status()
+        return NodeGovernance.model_validate(resp.json())
+
+    async def get_resource_risk(self, gaid: str) -> ResourceRisk:
+        """Get risk assessment for a resource by GAID."""
+        endpoint = await self._resolve_endpoint("governance")
+        resp = await self._client.get(f"{endpoint}/risk/{gaid}")
+        resp.raise_for_status()
+        return ResourceRisk.model_validate(resp.json())
+
+    async def get_audit_log(
+        self,
+        *,
+        event_type: str | None = None,
+        gaid: str | None = None,
+        since: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> list[AuditEvent]:
+        """Get audit log entries."""
+        try:
+            endpoint = await self._resolve_endpoint("audit_log")
+        except UadpError:
+            endpoint = (await self._resolve_endpoint("governance")) + "/audit"
+        params: dict[str, str] = {}
+        if event_type:
+            params["event_type"] = event_type
+        if gaid:
+            params["gaid"] = gaid
+        if since:
+            params["since"] = since
+        if page:
+            params["page"] = str(page)
+        if limit:
+            params["limit"] = str(limit)
+        resp = await self._client.get(endpoint, params=params)
+        resp.raise_for_status()
+        return [AuditEvent.model_validate(e) for e in resp.json()]
+
+    # --- Provenance (NIST SP 800-218A) ---
+
+    async def get_provenance(self, gaid: str) -> ResourceProvenance:
+        """Get supply chain provenance for a resource."""
+        endpoint = await self._resolve_endpoint("provenance")
+        resp = await self._client.get(f"{endpoint}/{gaid}")
+        resp.raise_for_status()
+        return ResourceProvenance.model_validate(resp.json())
+
+    # --- Revocations (NIST SI-7, CM-3) ---
+
+    async def get_revocations(
+        self,
+        *,
+        severity: str | None = None,
+        since: str | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+    ) -> list[Revocation]:
+        """Get list of revoked resources."""
+        endpoint = await self._resolve_endpoint("revocations")
+        params: dict[str, str] = {}
+        if severity:
+            params["severity"] = severity
+        if since:
+            params["since"] = since
+        if page:
+            params["page"] = str(page)
+        if limit:
+            params["limit"] = str(limit)
+        resp = await self._client.get(endpoint, params=params)
+        resp.raise_for_status()
+        return [Revocation.model_validate(r) for r in resp.json()]
+
+    # --- Federation Sync ---
+
+    async def federation_sync(
+        self,
+        *,
+        since: str | None = None,
+        sync_token: str | None = None,
+        limit: int | None = None,
+    ) -> SyncResponse:
+        """Get incremental changes since a timestamp or sync token."""
+        endpoint = await self._resolve_endpoint("federation")
+        params: dict[str, str] = {}
+        if since:
+            params["since"] = since
+        if sync_token:
+            params["sync_token"] = sync_token
+        if limit:
+            params["limit"] = str(limit)
+        resp = await self._client.get(f"{endpoint}/sync", params=params)
+        resp.raise_for_status()
+        return SyncResponse.model_validate(resp.json())
+
+    # --- Events (Webhooks) ---
+
+    async def subscribe_webhook(self, subscription: WebhookSubscription) -> None:
+        """Subscribe to webhook events."""
+        endpoint = await self._resolve_endpoint("events")
+        resp = await self._client.post(
+            f"{endpoint}/subscribe",
+            json=subscription.model_dump(),
+        )
+        resp.raise_for_status()
+
+    # --- Agent Identity ---
+
+    async def get_agent_identity(self, gaid: str) -> AgentIdentity:
+        """Get agent identity record by GAID."""
+        endpoint = await self._resolve_endpoint("identity")
+        resp = await self._client.get(f"{endpoint}/{gaid}")
+        resp.raise_for_status()
+        return AgentIdentity.model_validate(resp.json())
 
     # --- Internals ---
 

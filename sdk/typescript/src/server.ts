@@ -1,8 +1,15 @@
 import type { Request, Response, Router } from 'express';
 import type {
-  UadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
-  PaginatedResponse, FederationResponse, ValidationResult,
-  Peer, PublishResponse, WebFingerResponse
+    FederationResponse,
+    OssaAgent,
+    OssaResource,
+    OssaSkill,
+    OssaTool,
+    PaginatedResponse,
+    Peer, PublishResponse,
+    UadpManifest,
+    ValidationResult,
+    WebFingerResponse
 } from './types.js';
 
 export interface UadpNodeConfig {
@@ -87,13 +94,14 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // Helper to parse list params
   const parseListParams = (req: Request) => ({
-    search: req.query.search as string | undefined,
-    category: req.query.category as string | undefined,
-    tag: req.query.tag as string | undefined,
-    trust_tier: req.query.trust_tier as string | undefined,
-    federated: req.query.federated === 'true',
-    page: Math.max(1, parseInt(req.query.page as string) || 1),
-    limit: Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20)),
+    start: ((((req.query as any)).start as string) && new Date(((req.query as any)).start as string)) || undefined,
+    search: ((req.query as any)).search as string | undefined,
+    category: ((req.query as any)).category as string | undefined,
+    tag: ((req.query as any)).tag as string | undefined,
+    trust_tier: ((req.query as any)).trust_tier as string | undefined,
+    federated: ((req.query as any)).federated === 'true',
+    page: Math.max(1, parseInt(((req.query as any)).page as string) || 1),
+    limit: Math.min(100, parseInt((((req.query as any)).limit as string) || '50', 10)),
   });
 
   // /.well-known/uadp.json
@@ -124,7 +132,8 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   if (provider.resolveWebFinger) {
     router.get('/.well-known/webfinger', async (req: Request, res: Response) => {
       try {
-        const resource = req.query.resource as string;
+        const resource = ((req.query as any)).resource as string;
+        const includeGaid = (((req.query as any)).include_gaid as string) === 'true';
         if (!resource) { res.status(400).json({ error: 'Missing resource parameter' }); return; }
         const result = await provider.resolveWebFinger!(resource);
         if (!result) { res.status(404).json({ error: 'Resource not found' }); return; }
@@ -151,7 +160,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   if (provider.getSkill) {
     router.get('/uadp/v1/skills/:name', async (req: Request, res: Response) => {
       try {
-        const skill = await provider.getSkill!(req.params.name);
+        const skill = await provider.getSkill!(req.params.name as string);
         if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
         res.json(skill);
       } catch (err) {
@@ -176,7 +185,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   if (provider.getAgent) {
     router.get('/uadp/v1/agents/:name', async (req: Request, res: Response) => {
       try {
-        const agent = await provider.getAgent!(req.params.name);
+        const agent = await provider.getAgent!(req.params.name as string);
         if (!agent) { res.status(404).json({ error: 'Agent not found' }); return; }
         res.json(agent);
       } catch (err) {
@@ -191,7 +200,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
       try {
         const params = {
           ...parseListParams(req),
-          protocol: req.query.protocol as string | undefined,
+          protocol: ((req.query as any)).protocol as string | undefined,
         };
         const result = await provider.listTools!(params);
         result.meta.node_name = config.nodeName;
@@ -205,7 +214,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   if (provider.getTool) {
     router.get('/uadp/v1/tools/:name', async (req: Request, res: Response) => {
       try {
-        const tool = await provider.getTool!(req.params.name);
+        const tool = await provider.getTool!(req.params.name as string);
         if (!tool) { res.status(404).json({ error: 'Tool not found' }); return; }
         res.json(tool);
       } catch (err) {
@@ -250,7 +259,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
         try {
           const token = getToken(req);
           if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
-          const result = await provider.updateResource!(kind, req.params.name, req.body, token);
+          const result = await provider.updateResource!(kind, req.params.name as string, req.body, token);
           res.json(result);
         } catch (err) {
           res.status(500).json({ error: String(err) });
@@ -266,7 +275,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
         try {
           const token = getToken(req);
           if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
-          const deleted = await provider.deleteResource!(kind, req.params.name, token);
+          const deleted = await provider.deleteResource!(kind, req.params.name as string, token);
           if (!deleted) { res.status(404).json({ error: 'Resource not found' }); return; }
           res.status(204).end();
         } catch (err) {

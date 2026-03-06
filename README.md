@@ -1,17 +1,17 @@
-# Universal AI Discovery Protocol (UADP)
+# Decentralized Universal Agent Discovery Protocol (DUADP)
 
 **Decentralized, federated discovery and publishing for AI Agents, Skills, Tools, and Marketplaces.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
 
-## What is UADP?
+## What is DUADP?
 
-UADP is an open protocol that lets any system discover, publish, and exchange AI capabilities across organizational boundaries. Like DNS for websites or ActivityPub for social networks, UADP provides a standard way for AI registries, marketplaces, and tools to find each other.
+DUADP is an open protocol that lets any system discover, publish, and exchange AI capabilities across organizational boundaries. Like DNS for websites or ActivityPub for social networks, DUADP provides a standard way for AI registries, marketplaces, and tools to find each other.
 
-**UADP is THE API.** Your Skills API, Marketplace API, Tool Registry — they all speak UADP. Consumers don't need to know what platform powers a node. A Drupal marketplace, a Flask registry, a static JSON site, and a Kubernetes operator all expose the same endpoints.
+**DUADP is THE API.** Your Skills API, Marketplace API, Tool Registry — they all speak DUADP. Consumers don't need to know what platform powers a node. A Drupal marketplace, a Flask registry, a static JSON site, and a Kubernetes operator all expose the same endpoints.
 
-**Any system that implements a few HTTP endpoints is a UADP node.** There is no required language, framework, or database.
+**Any system that implements a few HTTP endpoints is a DUADP node.** There is no required language, framework, or database. Agents are distributed using the `.ajson` / `.jsona` (Agent JSON) payload format.
 
 ```
               DNS TXT: _uadp.skills.sh → "v=uadp1 url=..."
@@ -141,40 +141,42 @@ sdk/
 
 ## Key Features (v0.2)
 
+## Key Features (v0.2)
+
 - **Tools as first-class resources** — MCP servers, A2A tools, function-calling tools alongside skills and agents
 - **Publishing API** — Authenticated write operations for community contributions
 - **DNS TXT discovery** — `_uadp.<domain>` for zero-configuration node finding
-- **WebFinger resolution** — Resolve any GAID URI to its UADP endpoint
+- **WebFinger resolution** — Resolve any GAID URI (like `uadp://`) to its DUADP endpoint
 - **Gossip federation** — Automatic peer propagation with hop limits
-- **DID-based identity** — `did:web:` for verifiable, decentralized node identity
+- **DID-based identity** — `did:web:` and `did:wba:` for verifiable, decentralized node identity
 - **Resource signatures** — Ed25519/ES256 cryptographic signatures on resources
 - **Federated search** — `?federated=true` queries peers and merges results
-- **Extensible kinds** — `Skill`, `Agent`, `Tool`, or any custom resource type
+- **Extensible kinds** — `Skill`, `Agent` (via `.ajson`), `Tool`, or any custom resource type
 
 ## Design Principles
 
-1. **Decentralized** — No central registry. Any domain can be a UADP node. DNS TXT records enable zero-config discovery.
+1. **Decentralized** — No central registry. Any domain can be a DUADP node. DNS TXT records enable zero-config discovery.
 2. **Federated** — Gossip protocol propagates peers automatically. No coordinator needed.
-3. **Simple** — Two static JSON files = valid UADP node. Complexity is optional.
+3. **Simple** — Two static JSON files = valid DUADP node. Complexity is optional.
 4. **Open** — Apache 2.0 license. No vendor lock-in. Community-governed spec.
-5. **UADP IS the API** — No separate "marketplace API" or "skills API". Everything speaks UADP.
-6. **Interoperable** — Built on OSSA payload format, works with any AI framework.
+5. **DUADP IS the API** — No separate "marketplace API" or "skills API". Everything speaks DUADP.
+6. **Interoperable** — Built on the `.ajson` payload format, works with any AI framework.
 7. **Secure** — Trust tiers, DID-based identity, cryptographic signatures, circuit breakers.
 
 ## Relationship to OSSA
 
-UADP is the **transport, discovery, and publishing layer**. [OSSA](https://openstandardagents.org) is the **payload format**.
+DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://openstandardagents.org) provides the semantic **payload format** (via `.ajson`).
 
-- UADP defines HOW to find, publish, and exchange AI capabilities
-- OSSA defines WHAT those capabilities look like (apiVersion, kind, metadata, spec)
-- You can use OSSA without UADP (local manifests)
-- You can use UADP with any payload format (but OSSA is recommended)
+- DUADP defines HOW to find, publish, and exchange AI capabilities
+- The OSSA `.ajson` specification defines WHAT those capabilities look like (apiVersion, kind, metadata, spec)
+- You can use `.ajson` without DUADP (local manifests)
+- You can use DUADP with any payload format (but `.ajson` is recommended)
 
 ## Reference Implementations
 
 | Platform | Status | Description |
 |----------|--------|-------------|
-| [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full UADP node with federation |
+| [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
 | `@ossa/uadp` TypeScript SDK | Available | Client + Express server |
 | `ossa-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
