@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { UadpDataProvider } from '@ossa/uadp/server';
+import type { UadpDataProvider } from '@bluefly/uadp/server';
 import type {
   OssaSkill,
   OssaAgent,
@@ -10,7 +10,7 @@ import type {
   PublishResponse,
   ValidationResult,
   WebFingerResponse,
-} from '@ossa/uadp';
+} from '@bluefly/uadp';
 
 // Map plural route names to singular Kind values
 const PLURAL_TO_KIND: Record<string, string> = {

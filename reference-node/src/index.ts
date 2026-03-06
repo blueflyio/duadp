@@ -1,4 +1,4 @@
-import { createUadpRouter } from '@ossa/uadp/server';
+import { createUadpRouter } from '@bluefly/uadp/server';
 import cors from 'cors';
 import express from 'express';
 import { initDb } from './db.js';

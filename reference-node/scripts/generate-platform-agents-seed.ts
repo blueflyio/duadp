@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 
 const AGENTS_DIR = resolve(
   process.env.PLATFORM_AGENTS_DIR ||
-    join(__dirname, '../../../../worktrees/platform-agents/release-v0.1.x/.agents/@ossa'),
+    join(__dirname, '../../.agents/@ossa'),
 );
 const OUTPUT = resolve(__dirname, '../src/platform-agents-seed.json');
 
@@ -105,7 +105,7 @@ function manifestToUadpAgent(manifest: OssaManifest): UadpAgent | null {
     },
     identity: {
       gaid: `agent://agents/${meta.name}`,
-      did: `did:web:blueflyagents.com:agents:${meta.name}`,
+      did: `did:web:example.uadp.dev:agents:${meta.name}`,
     },
     spec: {
       agent_type: labels.tier ?? 'worker',

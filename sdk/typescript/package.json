@@ -1,6 +1,6 @@
 {
-  "name": "@ossa/uadp",
-  "version": "0.2.0",
+  "name": "@bluefly/uadp",
+  "version": "0.1.0",
   "description": "Universal AI Discovery Protocol (UADP) client and server SDK",
   "type": "module",
   "main": "dist/index.js",
@@ -8,6 +8,26 @@
     "uadp": "dist/cli.js"
   },
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/blueflyio/ossa/lab/openstandard-uadp.git",
+    "directory": "sdk/typescript"
+  },
+  "homepage": "https://duadp.org",
+  "bugs": {
+    "url": "https://gitlab.com/blueflyio/ossa/lab/openstandard-uadp/-/issues"
+  },
+  "author": "Bluefly <hello@bluefly.io>",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist",
+    "!dist/__tests__",
+    "LICENSE",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -41,7 +61,8 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "uadp",

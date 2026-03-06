@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "openstandard-uadp",
+  "description": "DUADP monorepo — spec, SDK, and reference node",
+  "scripts": {
+    "build": "npm run build --prefix sdk/typescript",
+    "test": "npm test --prefix sdk/typescript",
+    "publish": "cd sdk/typescript && npm publish --access public",
+    "publish:ts": "cd sdk/typescript && npm publish --access public",
+    "publish:py": "cd sdk/python && python -m build && twine upload dist/*",
+    "publish:all": "npm run publish:ts && npm run publish:py",
+    "seed": "npm run seed --prefix reference-node",
+    "start": "npm run dev --prefix reference-node"
+  }
+}

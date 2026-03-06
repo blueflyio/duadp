@@ -1,145 +1,103 @@
-# @ossa/uadp — TypeScript SDK
+# @bluefly/uadp
 
-**UADP client and server SDK for Node.js and TypeScript.**
+TypeScript SDK for the **[Decentralized Universal Agent Discovery Protocol (DUADP)](https://duadp.org)** — discover, publish, and federate AI agents, skills, and tools across decentralized registries.
 
-[![npm](https://img.shields.io/npm/v/@ossa/uadp)](https://www.npmjs.com/package/@ossa/uadp)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
+> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org](https://openstandardagents.org)** for more on the OSSA ecosystem.
 
 ## Install
 
 ```bash
-npm install @ossa/uadp
-# or
-pnpm add @ossa/uadp
+npm install @bluefly/uadp
 ```
 
-## Quick Start — Client
+## Quick Start
+
+### Client — discover resources from any UADP node
 
 ```typescript
-import { UadpClient, resolveGaid } from '@ossa/uadp';
+import { UadpClient } from '@bluefly/uadp/client';
 
-const client = new UadpClient('https://skills.sh');
+const client = new UadpClient('https://your-uadp-node.example.com');
 
-// Discovery
-const manifest = await client.getManifest();
-const skills = await client.listSkills({ search: 'code review' });
-const tools = await client.listTools({ protocol: 'mcp' });
-const agents = await client.listAgents();
+// Discover the node
+const manifest = await client.discover();
+console.log(manifest.node_name, manifest.protocol_version);
 
-// Resolve a GAID URI from any node
-const { client: c, name } = resolveGaid('agent://skills.sh/skills/web-search');
-const skill = await c.getSkill(name);
+// List skills
+const skills = await client.listSkills({ limit: 10 });
+console.log(skills.data);
 
-// Publish (requires auth token)
-const published = await client.publishSkill(mySkill, 'Bearer token...');
+// Search agents
+const agents = await client.listAgents({ search: 'orchestrator' });
 ```
 
-## Quick Start — Server
-
-Build a UADP node with Express:
+### Server — add UADP endpoints to your Express app
 
 ```typescript
 import express from 'express';
-import { createUadpRouter } from '@ossa/uadp/server';
+import { createUadpRouter } from '@bluefly/uadp/server';
 
 const app = express();
-app.use(createUadpRouter({
-  nodeName: 'My AI Hub',
-  nodeId: 'did:web:my-hub.com',
-  baseUrl: 'https://my-hub.com',
-  federation: { gossip: true, max_hops: 3 },
-}, {
-  listSkills: async (params) => { /* query your store */ },
-  listTools: async (params) => { /* query your store */ },
-  publishResource: async (resource, token) => { /* validate + save */ },
-}));
 
-app.listen(3000);
+const router = createUadpRouter({
+  nodeName: 'My Node',
+  nodeId: 'did:web:mynode.example.com',
+  baseUrl: 'https://mynode.example.com',
+}, myDataProvider);
+
+app.use(router);
+app.listen(4200);
 ```
 
-## CLI
-
-```bash
-npx @ossa/uadp discover https://skills.sh
-npx @ossa/uadp conformance https://your-node.com
-```
-
-## Features
-
-### Core Discovery
-- **Client** — `UadpClient` with automatic manifest discovery, circuit breaker, deduplication
-- **Server** — `createUadpRouter()` Express middleware for building UADP nodes
-- **GAID resolution** — `resolveGaid('agent://host/kind/name')` for cross-node lookups
-- **WebFinger** — Standard resource resolution with protocol-specific links
-
-### Identity & Security
-- **DID resolution** — `did:web:` and `did:key:` via DIF standard resolvers (`did-resolver`, `web-did-resolver`, `key-did-resolver`)
-- **Cryptographic signatures** — Ed25519 signing/verification with Web Crypto API
-- **RFC 8785 canonicalization** — Deterministic JSON via the `canonicalize` npm package
-- **Resource identity verification** — Full chain: DID resolve -> extract key -> verify signature -> check lifecycle
-
-### Context & Analytics
-- **Context negotiation** — `client.negotiateContext()` for layered context delivery with priority tiers
-- **Token analytics** — `client.reportTokenUsage()` / `client.getTokenAnalytics()` for per-execution tracking
-- **Capability fingerprints** — `client.getCapabilityFingerprint()` for empirical performance data
-
-### Feedback & Rewards
-- **360 feedback** — `client.submitFeedback()` with multi-source dimensions (quality, efficiency, reliability, creativity, collaboration)
-- **Agent reputation** — `client.getAgentReputation()` with composite scoring
-- **Reward events** — `client.recordReward()` for reputation boosts, capability unlocks, token credits, badges
-- **Outcome attestations** — `client.submitAttestation()` for signed, verifiable task outcome records
-
-### Multi-Agent Orchestration
-- **Delegation** — `client.delegate()` with compressed context transfer, budget constraints, depth limits
-- **Orchestration plans** — `client.createOrchestrationPlan()` for DAG/parallel/sequential/adaptive execution
-- **OSSA agent types** — `orchestrator | worker | specialist | critic | monitor | gateway`
-
-### Batch & Interop
-- **Batch publish** — `client.batchPublish()` for atomic multi-resource publish with dry-run support
-- **A2A Agent Card** — `client.getA2ACard()` for Google A2A protocol interop
-- **MCP Server Manifest** — `client.getMcpManifest()` to expose tools as MCP-compatible
-- **Structured query** — `client.query()` with compound filters, sort, field projection, cursor pagination
-
-### Validation & Conformance
-- **Manifest validation** — `validateManifest()` / `validateResponse()` for UADP payloads
-- **Conformance testing** — `runConformanceTests()` against any UADP node endpoint
-- **OSSA schema validation** — Validates against OSSA `.ajson` format
-
-## Exports
+### Validate OSSA manifests
 
 ```typescript
-// Main entry point
-import { UadpClient, resolveGaid, CircuitBreaker, deduplicateResources } from '@ossa/uadp';
+import { validateResource } from '@bluefly/uadp/validate';
 
-// Sub-path exports
-import { createUadpRouter } from '@ossa/uadp/server';
-import { validateManifest, validateResponse } from '@ossa/uadp/validate';
-import { canonicalize, signResource, verifySignature, generateKeyPair } from '@ossa/uadp/crypto';
-import { resolveDID, buildDidWeb, verifyResourceIdentity } from '@ossa/uadp/did';
-import { runConformanceTests, formatConformanceResults } from '@ossa/uadp/conformance';
-
-// All types
-import type { OssaResource, UadpManifest, ContextNegotiation, TokenAnalytics,
-  AgentFeedback, RewardEvent, DelegationRequest, OrchestrationPlan } from '@ossa/uadp';
+const result = validateResource(skillManifest);
+if (!result.valid) console.error(result.errors);
 ```
 
-## Dependencies
+### Cryptographic signing & verification
 
-| Package | Purpose |
-|---------|---------|
-| [`canonicalize`](https://www.npmjs.com/package/canonicalize) | RFC 8785 JSON Canonicalization Scheme |
-| [`did-resolver`](https://www.npmjs.com/package/did-resolver) | DIF standard DID resolution framework |
-| [`web-did-resolver`](https://www.npmjs.com/package/web-did-resolver) | `did:web` method resolver |
-| [`key-did-resolver`](https://www.npmjs.com/package/key-did-resolver) | `did:key` method resolver (Ed25519, secp256k1) |
-| `express` (peer, optional) | Only needed for `createUadpRouter()` server mode |
+```typescript
+import { generateKeyPair, signResource, verifyResource } from '@bluefly/uadp/crypto';
 
-## Building
+const keys = await generateKeyPair();
+const signed = await signResource(resource, keys.privateKey);
+const verified = await verifyResource(signed, keys.publicKey);
+```
+
+### DID resolution
+
+```typescript
+import { resolveDid } from '@bluefly/uadp/did';
+
+const doc = await resolveDid('did:web:example.com');
+```
+
+## Subpath Exports
+
+| Import | Description |
+|--------|-------------|
+| `@bluefly/uadp` | Types and core exports |
+| `@bluefly/uadp/client` | `UadpClient` for consuming UADP nodes |
+| `@bluefly/uadp/server` | `createUadpRouter` Express middleware |
+| `@bluefly/uadp/validate` | OSSA manifest validation |
+| `@bluefly/uadp/crypto` | Ed25519 signing & verification |
+| `@bluefly/uadp/did` | DID resolution (did:web, did:key) |
+| `@bluefly/uadp/conformance` | Protocol conformance test suite |
+
+## Reference Node
+
+A complete reference implementation using this SDK is at [`reference-node/`](https://gitlab.com/blueflyio/ossa/lab/openstandard-uadp/-/tree/main/reference-node) — Express + SQLite with all 26 UADP endpoints.
+
+## Tests
 
 ```bash
-npm run build    # TypeScript compilation
-npm test         # Vitest test suite
+npm test   # 136 tests across 7 test files
 ```
 
 ## License
 
-Apache License 2.0
+Apache-2.0

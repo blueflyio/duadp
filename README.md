@@ -4,6 +4,10 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
+[![npm](https://img.shields.io/npm/v/@bluefly/uadp)](https://www.npmjs.com/package/@bluefly/uadp)
+[![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
+
+> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org](https://openstandardagents.org)** for more on the OSSA ecosystem.
 
 ## What is DUADP?
 
@@ -41,7 +45,7 @@ Your App                              skills.sh (UADP node)
 
 **TypeScript:**
 ```typescript
-import { UadpClient, resolveGaid } from '@ossa/uadp';
+import { UadpClient, resolveGaid } from '@bluefly/uadp';
 
 const client = new UadpClient('https://skills.sh');
 const skills = await client.listSkills({ search: 'code review' });
@@ -94,7 +98,7 @@ Or use an SDK to build a dynamic node with publishing, federation, and tools:
 
 **TypeScript (Express):**
 ```typescript
-import { createUadpRouter } from '@ossa/uadp/server';
+import { createUadpRouter } from '@bluefly/uadp/server';
 
 app.use(createUadpRouter({
   nodeName: 'My AI Hub',
@@ -116,7 +120,7 @@ spec/                    # The normative specification
   openapi.yaml           # OpenAPI 3.1 definition
   schemas/               # JSON Schema validation files
 sdk/
-  typescript/            # @ossa/uadp npm package
+  typescript/            # @bluefly/uadp npm package
   python/                # ossa-uadp PyPI package
   go/                    # uadp-go module
 ```
@@ -338,7 +342,7 @@ cd sdk/typescript && npm test
 |----------|--------|-------------|
 | [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
-| `@ossa/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
+| `@bluefly/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
 | `ossa-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |

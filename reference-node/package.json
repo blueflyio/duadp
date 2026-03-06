@@ -1,6 +1,6 @@
 {
-  "name": "@ossa/uadp-reference-node",
-  "version": "0.2.0",
+  "name": "@bluefly/uadp-reference-node",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "start": "node dist/index.js",
@@ -9,7 +9,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@ossa/uadp": "file:../sdk/typescript",
+    "@bluefly/uadp": "file:../sdk/typescript",
     "better-sqlite3": "^11.0.0",
     "express": "^5.0.0",
     "cors": "^2.8.5"
