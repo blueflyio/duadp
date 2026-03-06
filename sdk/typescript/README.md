@@ -94,6 +94,12 @@ npx @ossa/uadp conformance https://your-node.com
 - **Orchestration plans** — `client.createOrchestrationPlan()` for DAG/parallel/sequential/adaptive execution
 - **OSSA agent types** — `orchestrator | worker | specialist | critic | monitor | gateway`
 
+### Batch & Interop
+- **Batch publish** — `client.batchPublish()` for atomic multi-resource publish with dry-run support
+- **A2A Agent Card** — `client.getA2ACard()` for Google A2A protocol interop
+- **MCP Server Manifest** — `client.getMcpManifest()` to expose tools as MCP-compatible
+- **Structured query** — `client.query()` with compound filters, sort, field projection, cursor pagination
+
 ### Validation & Conformance
 - **Manifest validation** — `validateManifest()` / `validateResponse()` for UADP payloads
 - **Conformance testing** — `runConformanceTests()` against any UADP node endpoint

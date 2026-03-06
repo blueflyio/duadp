@@ -32,6 +32,14 @@ import type {
     DelegationResult,
     OrchestrationPlan,
     RewardEvent,
+    NodeHealth,
+    SearchResponse,
+    AgentIndexRecord,
+    BatchPublishRequest,
+    BatchPublishResponse,
+    A2AAgentCard,
+    McpServerManifest,
+    StructuredQuery,
 } from './types.js';
 
 // --- Circuit Breaker ---
@@ -383,6 +391,91 @@ export class UadpClient {
   async getAgentIdentity(gaid: string): Promise<AgentIdentity> {
     const endpoint = await this.resolveEndpoint('identity');
     return this.request(`${endpoint}/${encodeURIComponent(gaid)}`) as Promise<AgentIdentity>;
+  }
+
+  // --- Health ---
+
+  /** Get node health status */
+  async getHealth(): Promise<NodeHealth> {
+    let endpoint: string;
+    try {
+      endpoint = await this.resolveEndpoint('health');
+    } catch {
+      endpoint = new URL('/uadp/v1/health', this.baseUrl).toString();
+    }
+    return this.request(endpoint) as Promise<NodeHealth>;
+  }
+
+  // --- Unified Search ---
+
+  /** Search across all resource types (skills, agents, tools) */
+  async search(params?: {
+    q?: string;
+    kind?: string;
+    category?: string;
+    trust_tier?: string;
+    tag?: string;
+    federated?: boolean;
+    page?: number;
+    limit?: number;
+    facets?: boolean;
+  }): Promise<SearchResponse> {
+    const endpoint = await this.resolveEndpoint('search');
+    const url = new URL(endpoint);
+    if (params?.q) url.searchParams.set('q', params.q);
+    if (params?.kind) url.searchParams.set('kind', params.kind);
+    if (params?.category) url.searchParams.set('category', params.category);
+    if (params?.trust_tier) url.searchParams.set('trust_tier', params.trust_tier);
+    if (params?.tag) url.searchParams.set('tag', params.tag);
+    if (params?.federated) url.searchParams.set('federated', 'true');
+    if (params?.page) url.searchParams.set('page', String(params.page));
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    if (params?.facets) url.searchParams.set('facets', 'true');
+    return this.request(url.toString()) as Promise<SearchResponse>;
+  }
+
+  // --- Agent Index (.ajson) ---
+
+  /** Get the .ajson index card for an agent by GAID */
+  async getAgentIndex(gaid: string): Promise<AgentIndexRecord> {
+    const endpoint = await this.resolveEndpoint('index');
+    return this.request(`${endpoint}/${encodeURIComponent(gaid)}`) as Promise<AgentIndexRecord>;
+  }
+
+  // --- Batch Operations ---
+
+  /** Batch publish multiple resources */
+  async batchPublish(request: BatchPublishRequest): Promise<BatchPublishResponse> {
+    const endpoint = await this.resolveEndpoint('publish');
+    return this.request(`${endpoint}/batch`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }) as Promise<BatchPublishResponse>;
+  }
+
+  // --- Protocol Compatibility (A2A, MCP) ---
+
+  /** Get an A2A-compatible Agent Card for an agent */
+  async getA2ACard(name: string): Promise<A2AAgentCard> {
+    const endpoint = await this.resolveEndpoint('agents');
+    return this.request(`${endpoint}/${encodeURIComponent(name)}/card`) as Promise<A2AAgentCard>;
+  }
+
+  /** Get MCP-compatible server manifest listing all MCP tools */
+  async getMcpManifest(): Promise<McpServerManifest> {
+    const endpoint = await this.resolveEndpoint('tools');
+    return this.request(`${endpoint}/mcp-manifest`) as Promise<McpServerManifest>;
+  }
+
+  // --- Structured Query ---
+
+  /** Advanced structured query with filters, sorting, and field selection */
+  async query(q: StructuredQuery): Promise<PaginatedResponse<OssaResource>> {
+    const url = new URL('/uadp/v1/query', this.baseUrl);
+    return this.request(url.toString(), {
+      method: 'POST',
+      body: JSON.stringify(q),
+    }) as Promise<PaginatedResponse<OssaResource>>;
   }
 
   // --- Context Negotiation ---

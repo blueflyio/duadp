@@ -149,6 +149,12 @@ sdk/
 | `/uadp/v1/attestations` | POST | MAY | Submit outcome attestation |
 | `/uadp/v1/delegate` | POST | MAY | Multi-agent delegation |
 | `/uadp/v1/orchestration` | POST | MAY | Create orchestration plan |
+| `/uadp/v1/publish/batch` | POST | MAY | Atomic batch publish (CI/CD) |
+| `/uadp/v1/validate/batch` | POST | MAY | Batch validation |
+| `/uadp/v1/agents/{name}/card` | GET | MAY | A2A Agent Card (Google A2A interop) |
+| `/uadp/v1/tools/mcp-manifest` | GET | MAY | MCP Server Manifest |
+| `/.well-known/mcp` | GET | MAY | MCP well-known discovery |
+| `/uadp/v1/query` | POST | MAY | Structured query with compound filters |
 
 *At least one of skills, agents, or tools MUST be implemented.
 
@@ -170,6 +176,11 @@ sdk/
 - **Outcome attestations** — Signed, verifiable task outcome records for portable reputation
 - **Multi-agent orchestration** — DAG/parallel/sequential/adaptive execution across OSSA agent types
 - **Capability fingerprints** — Empirical performance data by domain, task type, and model affinity
+- **Batch operations** — Atomic batch publish/validate for CI/CD pipelines with dry-run support
+- **A2A Agent Card** — Google A2A protocol interop via `/agents/{name}/card`
+- **MCP Server Manifest** — Expose tools as MCP-compatible server at `/.well-known/mcp`
+- **Structured query** — Compound filters, sort, field projection, cursor-based pagination
+- **OAuth2/OIDC** — Authorization code + client credentials flows for secure agent auth
 
 ## Design Principles
 

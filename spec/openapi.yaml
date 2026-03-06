@@ -1138,12 +1138,204 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrchestrationPlan"
 
+  # ─── Batch Operations ────────────────────────────────────────
+
+  /uadp/v1/publish/batch:
+    post:
+      operationId: batchPublish
+      summary: Batch Publish Resources
+      description: |
+        Publish multiple resources in a single request. Supports atomic mode
+        (all-or-nothing) for CI/CD pipelines. Maximum 100 resources per batch.
+      tags: [Publishing]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resources]
+              properties:
+                resources:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/OssaResource"
+                  maxItems: 100
+                atomic:
+                  type: boolean
+                  default: false
+                  description: If true, all resources must succeed or the entire batch fails.
+      responses:
+        "200":
+          description: Batch publish results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchPublishResponse"
+        "207":
+          description: Partial success (non-atomic mode)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchPublishResponse"
+        "400":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /uadp/v1/validate/batch:
+    post:
+      operationId: batchValidate
+      summary: Batch Validate Manifests
+      description: Validate multiple manifests in a single request. Maximum 100 manifests per batch.
+      tags: [Validation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [manifests]
+              properties:
+                manifests:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 100
+      responses:
+        "200":
+          description: Batch validation results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ValidationResult"
+
+  # ─── Protocol Compatibility Endpoints ───────────────────────
+
+  /uadp/v1/agents/{name}/card:
+    get:
+      operationId: getA2AAgentCard
+      summary: A2A Agent Card
+      description: |
+        Returns a Google A2A-compatible Agent Card for the named agent.
+        Maps UADP agent data to the A2A Agent Card schema, enabling
+        interoperability with A2A-native clients and infrastructure.
+      tags: [Interop]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A2A Agent Card
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/A2AAgentCard"
+        "404":
+          description: Agent not found
+
+  /uadp/v1/tools/mcp-manifest:
+    get:
+      operationId: getMcpManifest
+      summary: MCP Server Manifest
+      description: |
+        Returns an MCP-compatible server manifest listing all tools
+        with protocol=mcp. Enables MCP clients to discover UADP-registered
+        tools natively without UADP-specific client code.
+      tags: [Interop]
+      responses:
+        "200":
+          description: MCP server manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/McpServerManifest"
+
+  /.well-known/mcp:
+    get:
+      operationId: getMcpWellKnown
+      summary: MCP Well-Known Manifest
+      description: Alias for /uadp/v1/tools/mcp-manifest for MCP client auto-discovery.
+      tags: [Interop]
+      responses:
+        "200":
+          description: MCP server manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/McpServerManifest"
+
+  # ─── Structured Query ──────────────────────────────────────
+
+  /uadp/v1/query:
+    post:
+      operationId: structuredQuery
+      summary: Structured Query
+      description: |
+        Advanced query endpoint supporting structured filters, sorting, and field
+        selection. Use this for complex discovery queries that can't be expressed
+        with simple search parameters.
+      tags: [Discovery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StructuredQuery"
+      responses:
+        "200":
+          description: Query results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OssaResource"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       description: Bearer token for write operations (publishing, updating, deleting).
+    oauth2AuthorizationCode:
+      type: oauth2
+      description: OAuth2 authorization code flow for user-delegated operations.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.example.com/authorize
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            read: Read access to resources
+            write: Publish and update resources
+            admin: Administrative operations
+    oauth2ClientCredentials:
+      type: oauth2
+      description: OAuth2 client credentials flow for service-to-service (agent-to-agent) operations.
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.com/token
+          scopes:
+            read: Read access to resources
+            write: Publish and update resources
+            federation: Federation peer operations
 
   parameters:
     Search:
@@ -1662,6 +1854,12 @@ components:
                 type: string
               count:
                 type: integer
+        next_cursor:
+          type: string
+          description: Cursor for the next page (cursor-based pagination).
+        prev_cursor:
+          type: string
+          description: Cursor for the previous page (cursor-based pagination).
 
     SkillsResponse:
       type: object
@@ -3027,3 +3225,208 @@ components:
           enum: [pending, running, completed, failed, skipped]
         result:
           $ref: "#/components/schemas/DelegationResult"
+
+    # ─── Batch Operations ──────────────────────────────────────
+
+    BatchPublishResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              success:
+                type: boolean
+              resource:
+                $ref: "#/components/schemas/OssaResource"
+              error:
+                type: string
+
+    # ─── Protocol Compatibility ────────────────────────────────
+
+    A2AAgentCard:
+      type: object
+      description: |
+        Google A2A-compatible Agent Card generated from UADP agent data.
+        Enables interoperability with A2A clients and infrastructure.
+      required: [name, url]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        version:
+          type: string
+        provider:
+          type: object
+          properties:
+            organization:
+              type: string
+            url:
+              type: string
+              format: uri
+        capabilities:
+          type: object
+          properties:
+            streaming:
+              type: boolean
+            pushNotifications:
+              type: boolean
+            stateTransitionHistory:
+              type: boolean
+        authentication:
+          type: object
+          properties:
+            schemes:
+              type: array
+              items:
+                type: string
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+              tags:
+                type: array
+                items:
+                  type: string
+              examples:
+                type: array
+                items:
+                  type: string
+        defaultInputModes:
+          type: array
+          items:
+            type: string
+            enum: [text, file, data]
+        defaultOutputModes:
+          type: array
+          items:
+            type: string
+            enum: [text, file, data]
+        _uadp:
+          type: object
+          description: UADP-specific extensions (prefixed per A2A convention).
+          properties:
+            gaid:
+              type: string
+            trust_tier:
+              type: string
+            content_hash:
+              type: string
+            node_name:
+              type: string
+
+    McpServerManifest:
+      type: object
+      description: |
+        MCP-compatible server manifest listing tools with protocol=mcp.
+        Served at both /uadp/v1/tools/mcp-manifest and /.well-known/mcp.
+      required: [name, version, tools]
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        tools:
+          type: array
+          items:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              inputSchema:
+                type: object
+                additionalProperties: true
+              _uadp:
+                type: object
+                properties:
+                  gaid:
+                    type: string
+                  trust_tier:
+                    type: string
+                  content_hash:
+                    type: string
+
+    # ─── Structured Query ──────────────────────────────────────
+
+    StructuredQuery:
+      type: object
+      description: |
+        Structured query for advanced resource discovery. Supports
+        compound filters, sorting, and field selection without requiring
+        a full GraphQL implementation.
+      properties:
+        filters:
+          type: array
+          items:
+            type: object
+            required: [field, operator, value]
+            properties:
+              field:
+                type: string
+                description: "Dot-notation field path (e.g., metadata.category, risk.level)"
+              operator:
+                type: string
+                enum: [eq, ne, gt, gte, lt, lte, in, contains, exists, not_exists]
+              value:
+                description: Filter value (type depends on field and operator)
+        sort:
+          type: array
+          items:
+            type: object
+            required: [field]
+            properties:
+              field:
+                type: string
+              order:
+                type: string
+                enum: [asc, desc]
+                default: asc
+        fields:
+          type: array
+          items:
+            type: string
+          description: "Field projection — return only these fields. Empty = all fields."
+        kinds:
+          type: array
+          items:
+            type: string
+            enum: [Skill, Agent, Tool]
+          description: "Resource types to include. Empty = all types."
+        federated:
+          type: boolean
+          default: false
+        page:
+          type: integer
+          default: 1
+        limit:
+          type: integer
+          default: 20
+          maximum: 100
+        cursor:
+          type: string
+          description: "Cursor-based pagination token (alternative to page/limit)."

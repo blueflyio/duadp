@@ -495,6 +495,406 @@ func (c *Client) GetAgentIdentity(ctx context.Context, gaid string) (*AgentIdent
 	return &identity, nil
 }
 
+// --- Batch Operations ---
+
+// BatchPublish sends POST /uadp/v1/publish/batch.
+func (c *Client) BatchPublish(ctx context.Context, req *BatchPublishRequest) (*BatchPublishResponse, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Publish")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(req)
+	var resp BatchPublishResponse
+	if err := c.doPost(ctx, endpoint+"/batch", string(body), &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// --- Protocol Compatibility (A2A, MCP) ---
+
+// GetA2ACard queries GET /uadp/v1/agents/{name}/card.
+func (c *Client) GetA2ACard(ctx context.Context, name string) (*A2AAgentCard, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Agents")
+	if err != nil {
+		return nil, err
+	}
+	var card A2AAgentCard
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(name)+"/card", &card); err != nil {
+		return nil, err
+	}
+	return &card, nil
+}
+
+// GetMcpManifest queries GET /uadp/v1/tools/mcp-manifest.
+func (c *Client) GetMcpManifest(ctx context.Context) (*McpServerManifest, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Tools")
+	if err != nil {
+		return nil, err
+	}
+	var manifest McpServerManifest
+	if err := c.doGet(ctx, endpoint+"/mcp-manifest", &manifest); err != nil {
+		return nil, err
+	}
+	return &manifest, nil
+}
+
+// --- Structured Query ---
+
+// Query sends POST /uadp/v1/query.
+func (c *Client) Query(ctx context.Context, q *StructuredQuery) (*SearchResponse, error) {
+	body, _ := json.Marshal(q)
+	var resp SearchResponse
+	if err := c.doPost(ctx, c.BaseURL+"/uadp/v1/query", string(body), &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// --- Health ---
+
+// GetHealth queries GET /uadp/v1/health.
+func (c *Client) GetHealth(ctx context.Context) (*NodeHealth, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Health")
+	if err != nil {
+		// Fallback to base URL + /uadp/v1/health
+		endpoint = c.BaseURL + "/uadp/v1/health"
+	}
+	var health NodeHealth
+	if err := c.doGet(ctx, endpoint, &health); err != nil {
+		return nil, err
+	}
+	return &health, nil
+}
+
+// --- Unified Search ---
+
+// SearchParams for unified search.
+type SearchParams struct {
+	Query        string
+	Kind         string // skill, agent, tool (empty = all)
+	Category     string
+	TrustTier    TrustTier
+	Tag          string
+	Federated    bool
+	Page         int
+	Limit        int
+	IncludeFacets bool
+}
+
+// UnifiedSearch queries GET /uadp/v1/search.
+func (c *Client) UnifiedSearch(ctx context.Context, params *SearchParams) (*SearchResponse, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Search")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint)
+	q := u.Query()
+	if params != nil {
+		if params.Query != "" {
+			q.Set("q", params.Query)
+		}
+		if params.Kind != "" {
+			q.Set("kind", params.Kind)
+		}
+		if params.Category != "" {
+			q.Set("category", params.Category)
+		}
+		if params.TrustTier != "" {
+			q.Set("trust_tier", string(params.TrustTier))
+		}
+		if params.Tag != "" {
+			q.Set("tag", params.Tag)
+		}
+		if params.Federated {
+			q.Set("federated", "true")
+		}
+		if params.Page > 0 {
+			q.Set("page", strconv.Itoa(params.Page))
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+		if params.IncludeFacets {
+			q.Set("facets", "true")
+		}
+	}
+	u.RawQuery = q.Encode()
+	var resp SearchResponse
+	if err := c.doGet(ctx, u.String(), &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// --- Agent Index (.ajson) ---
+
+// GetAgentIndex queries GET /uadp/v1/index/{gaid}.
+func (c *Client) GetAgentIndex(ctx context.Context, gaid string) (*AgentIndexRecord, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Index")
+	if err != nil {
+		return nil, err
+	}
+	var record AgentIndexRecord
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(gaid), &record); err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+// --- Context Negotiation ---
+
+// NegotiateContext sends POST /uadp/v1/context/negotiate.
+func (c *Client) NegotiateContext(ctx context.Context, agentGAID string, task *DelegationTask) (*ContextNegotiation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Context")
+	if err != nil {
+		return nil, err
+	}
+	payload := map[string]any{"agent_gaid": agentGAID, "task": task}
+	body, _ := json.Marshal(payload)
+	var result ContextNegotiation
+	if err := c.doPost(ctx, endpoint+"/negotiate", string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// GetContextSummary queries GET /uadp/v1/context/summary.
+func (c *Client) GetContextSummary(ctx context.Context, domain, taskType string) (*ContextNegotiation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Context")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint + "/summary")
+	q := u.Query()
+	q.Set("domain", domain)
+	if taskType != "" {
+		q.Set("task_type", taskType)
+	}
+	u.RawQuery = q.Encode()
+	var result ContextNegotiation
+	if err := c.doGet(ctx, u.String(), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// --- Token Analytics ---
+
+// ReportTokenUsage sends POST /uadp/v1/analytics/tokens.
+func (c *Client) ReportTokenUsage(ctx context.Context, analytics *TokenAnalytics) error {
+	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
+	if err != nil {
+		return err
+	}
+	body, _ := json.Marshal(analytics)
+	return c.doPost(ctx, endpoint+"/tokens", string(body), nil)
+}
+
+// GetTokenAnalytics queries GET /uadp/v1/analytics/tokens/{gaid}.
+func (c *Client) GetTokenAnalytics(ctx context.Context, agentGAID, period string) (*TokenAnalyticsAggregate, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint + "/tokens/" + url.PathEscape(agentGAID))
+	if period != "" {
+		q := u.Query()
+		q.Set("period", period)
+		u.RawQuery = q.Encode()
+	}
+	var result TokenAnalyticsAggregate
+	if err := c.doGet(ctx, u.String(), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// --- Capability Fingerprint ---
+
+// GetCapabilityFingerprint queries GET /uadp/v1/analytics/fingerprint/{gaid}.
+func (c *Client) GetCapabilityFingerprint(ctx context.Context, agentGAID string) (*CapabilityFingerprint, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
+	if err != nil {
+		return nil, err
+	}
+	var result CapabilityFingerprint
+	if err := c.doGet(ctx, endpoint+"/fingerprint/"+url.PathEscape(agentGAID), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// --- Feedback & Rewards ---
+
+// SubmitFeedback sends POST /uadp/v1/feedback.
+func (c *Client) SubmitFeedback(ctx context.Context, feedback *AgentFeedback) (*AgentFeedback, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(feedback)
+	var result AgentFeedback
+	if err := c.doPost(ctx, endpoint, string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// FeedbackParams for querying agent feedback.
+type FeedbackParams struct {
+	Type  string
+	Since string
+	Limit int
+}
+
+// GetAgentFeedback queries GET /uadp/v1/feedback/{gaid}.
+func (c *Client) GetAgentFeedback(ctx context.Context, agentGAID string, params *FeedbackParams) ([]AgentFeedback, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint + "/" + url.PathEscape(agentGAID))
+	q := u.Query()
+	if params != nil {
+		if params.Type != "" {
+			q.Set("type", params.Type)
+		}
+		if params.Since != "" {
+			q.Set("since", params.Since)
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+	}
+	u.RawQuery = q.Encode()
+	var feedbacks []AgentFeedback
+	if err := c.doGet(ctx, u.String(), &feedbacks); err != nil {
+		return nil, err
+	}
+	return feedbacks, nil
+}
+
+// GetAgentReputation queries GET /uadp/v1/feedback/{gaid}/reputation.
+func (c *Client) GetAgentReputation(ctx context.Context, agentGAID string) (*AgentReputation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
+	if err != nil {
+		return nil, err
+	}
+	var result AgentReputation
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(agentGAID)+"/reputation", &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// RecordReward sends POST /uadp/v1/feedback/rewards.
+func (c *Client) RecordReward(ctx context.Context, reward *RewardEvent) (*RewardEvent, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(reward)
+	var result RewardEvent
+	if err := c.doPost(ctx, endpoint+"/rewards", string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// --- Outcome Attestations ---
+
+// SubmitAttestation sends POST /uadp/v1/attestations.
+func (c *Client) SubmitAttestation(ctx context.Context, attestation *OutcomeAttestation) (*OutcomeAttestation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Attestations")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(attestation)
+	var result OutcomeAttestation
+	if err := c.doPost(ctx, endpoint, string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// AttestationParams for querying attestations.
+type AttestationParams struct {
+	Outcome string // success, partial_success, failure, timeout
+	Since   string
+	Limit   int
+}
+
+// GetAttestations queries GET /uadp/v1/attestations/{gaid}.
+func (c *Client) GetAttestations(ctx context.Context, agentGAID string, params *AttestationParams) ([]OutcomeAttestation, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Attestations")
+	if err != nil {
+		return nil, err
+	}
+	u, _ := url.Parse(endpoint + "/" + url.PathEscape(agentGAID))
+	q := u.Query()
+	if params != nil {
+		if params.Outcome != "" {
+			q.Set("outcome", params.Outcome)
+		}
+		if params.Since != "" {
+			q.Set("since", params.Since)
+		}
+		if params.Limit > 0 {
+			q.Set("limit", strconv.Itoa(params.Limit))
+		}
+	}
+	u.RawQuery = q.Encode()
+	var attestations []OutcomeAttestation
+	if err := c.doGet(ctx, u.String(), &attestations); err != nil {
+		return nil, err
+	}
+	return attestations, nil
+}
+
+// --- Multi-Agent Delegation ---
+
+// Delegate sends POST /uadp/v1/delegate.
+func (c *Client) Delegate(ctx context.Context, request *DelegationRequest) (*DelegationResult, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(request)
+	var result DelegationResult
+	if err := c.doPost(ctx, endpoint, string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+// GetOrchestrationPlan queries GET /uadp/v1/delegate/plans/{planId}.
+func (c *Client) GetOrchestrationPlan(ctx context.Context, planID string) (*OrchestrationPlan, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
+	if err != nil {
+		return nil, err
+	}
+	var plan OrchestrationPlan
+	if err := c.doGet(ctx, endpoint+"/plans/"+url.PathEscape(planID), &plan); err != nil {
+		return nil, err
+	}
+	return &plan, nil
+}
+
+// CreateOrchestrationPlan sends POST /uadp/v1/delegate/plans.
+func (c *Client) CreateOrchestrationPlan(ctx context.Context, plan *OrchestrationPlan) (*OrchestrationPlan, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
+	if err != nil {
+		return nil, err
+	}
+	body, _ := json.Marshal(plan)
+	var result OrchestrationPlan
+	if err := c.doPost(ctx, endpoint+"/plans", string(body), &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 // --- Internals ---
 
 func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, error) {
@@ -528,6 +928,22 @@ func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, erro
 		endpoint = m.Endpoints.Events
 	case "Identity":
 		endpoint = m.Endpoints.Identity
+	case "Context":
+		endpoint = m.Endpoints.Context
+	case "Analytics":
+		endpoint = m.Endpoints.Analytics
+	case "Feedback":
+		endpoint = m.Endpoints.Feedback
+	case "Attestations":
+		endpoint = m.Endpoints.Attestations
+	case "Delegate":
+		endpoint = m.Endpoints.Delegate
+	case "Health":
+		endpoint = m.Endpoints.Health
+	case "Search":
+		endpoint = m.Endpoints.Search
+	case "Index":
+		endpoint = m.Endpoints.Index
 	}
 	if endpoint == "" {
 		return "", &UadpError{Message: fmt.Sprintf("node does not expose a %s endpoint", strings.ToLower(name))}
@@ -642,7 +1058,7 @@ func (c *Client) doPost(ctx context.Context, u string, body string, out interfac
 //	client, kind, name := uadp.ResolveGaid("agent://skills.sh/skills/web-search")
 //	skill, _ := client.GetSkill(ctx, name)
 func ResolveGaid(gaid string, opts ...ClientOption) (*Client, string, string, error) {
-	re := regexp.MustCompile(`^agent://([^/]+)/([^/]+)/(.+)$`)
+	re := regexp.MustCompile(`^(?:agent|uadp)://([^/]+)/([^/]+)/(.+)$`)
 	m := re.FindStringSubmatch(gaid)
 	if m == nil {
 		return nil, "", "", &UadpError{Message: "invalid GAID: " + gaid}

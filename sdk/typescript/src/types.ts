@@ -217,6 +217,8 @@ export interface PaginationMeta {
   node_id?: string;
   federated?: boolean;
   sources?: FederatedSource[];
+  next_cursor?: string;
+  prev_cursor?: string;
 }
 
 /** Source attribution for federated search */
@@ -487,6 +489,84 @@ export interface AgentKey {
   purpose: 'signing' | 'authentication' | 'encryption';
   created?: string;
   expires?: string;
+}
+
+// ─── Node Health & Search ────────────────────────────────────────
+
+/** Node health status from GET /uadp/v1/health */
+export interface NodeHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  version?: string;
+  uptime?: number;
+  checks?: Record<string, string>;
+  skills?: number;
+  agents?: number;
+  tools?: number;
+  peers?: number;
+  last_sync?: string;
+}
+
+/** Facets returned alongside unified search results */
+export interface SearchFacets {
+  categories?: Record<string, number>;
+  trust_tiers?: Record<string, number>;
+  resource_types?: Record<string, number>;
+  tags?: Record<string, number>;
+}
+
+/** Unified search response */
+export interface SearchResponse {
+  data: OssaResource[];
+  meta: PaginationMeta;
+  facets?: SearchFacets;
+}
+
+/** Multi-protocol endpoint map for an agent */
+export interface ProtocolEndpoints {
+  uadp?: string;
+  a2a?: string;
+  mcp?: string;
+  openai?: string;
+  rest?: string;
+  grpc?: string;
+}
+
+/** Agent pricing model */
+export interface PricingInfo {
+  model: 'free' | 'per_request' | 'subscription' | 'token_based' | 'custom';
+  currency?: string;
+  price_per_call?: number;
+  free_tier?: number;
+  details?: string;
+}
+
+/** Service level agreement */
+export interface SLAInfo {
+  uptime_percent?: number;
+  response_time_ms?: number;
+  support_tier?: 'community' | 'standard' | 'premium' | 'enterprise';
+  sla_document?: string;
+}
+
+/** .ajson index card for an agent — lightweight cross-registry format */
+export interface AgentIndexRecord {
+  gaid: string;
+  name: string;
+  kind: 'Skill' | 'Agent' | 'Tool';
+  description?: string;
+  version?: string;
+  trust_tier?: TrustTier;
+  category?: string;
+  tags?: string[];
+  endpoints?: ProtocolEndpoints;
+  pricing?: PricingInfo;
+  sla?: SLAInfo;
+  status?: 'active' | 'deprecated' | 'suspended';
+  sunset_date?: string;
+  content_hash?: string;
+  node_name?: string;
+  node_id?: string;
+  updated?: string;
 }
 
 // ─── OSSA Agent Types (aligned with openstandardagents spec) ─────
@@ -929,4 +1009,104 @@ export interface OutcomeAttestation {
   timestamp: string;
   /** Cryptographic signature */
   signature?: ResourceSignature;
+}
+
+// ─── Batch Operations ────────────────────────────────────────────
+
+/** Batch publish request */
+export interface BatchPublishRequest {
+  resources: OssaResource[];
+  atomic?: boolean;
+}
+
+/** Single result in a batch publish response */
+export interface BatchPublishResult {
+  index: number;
+  success: boolean;
+  resource?: OssaResource;
+  error?: string;
+}
+
+/** Batch publish response */
+export interface BatchPublishResponse {
+  total: number;
+  succeeded: number;
+  failed: number;
+  results: BatchPublishResult[];
+}
+
+// ─── Protocol Compatibility ──────────────────────────────────────
+
+/** Google A2A-compatible Agent Card */
+export interface A2AAgentCard {
+  name: string;
+  description?: string;
+  url: string;
+  version?: string;
+  provider?: { organization?: string; url?: string };
+  capabilities?: {
+    streaming?: boolean;
+    pushNotifications?: boolean;
+    stateTransitionHistory?: boolean;
+  };
+  authentication?: { schemes?: string[] };
+  skills?: Array<{
+    id: string;
+    name: string;
+    description?: string;
+    tags?: string[];
+    examples?: string[];
+  }>;
+  defaultInputModes?: ('text' | 'file' | 'data')[];
+  defaultOutputModes?: ('text' | 'file' | 'data')[];
+  _uadp?: {
+    gaid?: string;
+    trust_tier?: string;
+    content_hash?: string;
+    node_name?: string;
+  };
+}
+
+/** MCP-compatible server manifest */
+export interface McpServerManifest {
+  name: string;
+  version: string;
+  description?: string;
+  tools: Array<{
+    name: string;
+    description?: string;
+    inputSchema?: Record<string, unknown>;
+    _uadp?: {
+      gaid?: string;
+      trust_tier?: string;
+      content_hash?: string;
+    };
+  }>;
+}
+
+// ─── Structured Query ────────────────────────────────────────────
+
+/** Filter in a structured query */
+export interface QueryFilter {
+  field: string;
+  operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'contains' | 'exists' | 'not_exists';
+  value: unknown;
+}
+
+/** Sort specification in a structured query */
+export interface QuerySort {
+  field: string;
+  order?: 'asc' | 'desc';
+}
+
+/** Structured query request */
+export interface StructuredQuery {
+  filters?: QueryFilter[];
+  sort?: QuerySort[];
+  fields?: string[];
+  kinds?: ('Skill' | 'Agent' | 'Tool')[];
+  federated?: boolean;
+  page?: number;
+  limit?: number;
+  cursor?: string;
 }

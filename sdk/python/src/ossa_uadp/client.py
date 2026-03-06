@@ -8,7 +8,13 @@ from .types import (
     ListParams, ToolListParams, PublishResponse, PeerRegistration,
     WebFingerResponse, NodeGovernance, ResourceRisk, ResourceProvenance,
     AuditEvent, Revocation, SyncResponse, WebhookSubscription,
-    AgentIdentity,
+    AgentIdentity, NodeHealth, AgentIndexRecord, ContextNegotiation,
+    TokenAnalytics, TokenAnalyticsAggregate, AgentFeedback,
+    AgentReputation, RewardEvent, CapabilityFingerprint,
+    OutcomeAttestation, DelegationRequest, DelegationResult,
+    OrchestrationPlan, DelegationTask,
+    BatchPublishResponse, A2AAgentCard, McpServerManifest,
+    StructuredQuery,
 )
 
 
@@ -318,6 +324,318 @@ class UadpClient:
         resp.raise_for_status()
         return AgentIdentity.model_validate(resp.json())
 
+    # --- Health ---
+
+    async def get_health(self) -> NodeHealth:
+        """Get node health status."""
+        try:
+            endpoint = await self._resolve_endpoint("health")
+        except UadpError:
+            endpoint = f"{self.base_url}/uadp/v1/health"
+        resp = await self._client.get(endpoint)
+        resp.raise_for_status()
+        return NodeHealth.model_validate(resp.json())
+
+    # --- Unified Search ---
+
+    async def search(
+        self,
+        *,
+        q: str | None = None,
+        kind: str | None = None,
+        category: str | None = None,
+        trust_tier: str | None = None,
+        tag: str | None = None,
+        federated: bool | None = None,
+        page: int | None = None,
+        limit: int | None = None,
+        facets: bool = False,
+    ) -> dict:
+        """Unified search across skills, agents, and tools.
+
+        Returns dict with 'data', 'meta', and optionally 'facets'.
+        """
+        endpoint = await self._resolve_endpoint("search")
+        params: dict[str, str] = {}
+        if q:
+            params["q"] = q
+        if kind:
+            params["kind"] = kind
+        if category:
+            params["category"] = category
+        if trust_tier:
+            params["trust_tier"] = trust_tier
+        if tag:
+            params["tag"] = tag
+        if federated:
+            params["federated"] = "true"
+        if page:
+            params["page"] = str(page)
+        if limit:
+            params["limit"] = str(limit)
+        if facets:
+            params["facets"] = "true"
+        resp = await self._client.get(endpoint, params=params)
+        resp.raise_for_status()
+        return resp.json()
+
+    # --- Agent Index (.ajson) ---
+
+    async def get_agent_index(self, gaid: str) -> AgentIndexRecord:
+        """Get the .ajson index card for an agent by GAID."""
+        endpoint = await self._resolve_endpoint("index")
+        resp = await self._client.get(f"{endpoint}/{gaid}")
+        resp.raise_for_status()
+        return AgentIndexRecord.model_validate(resp.json())
+
+    # --- Context Negotiation ---
+
+    async def negotiate_context(
+        self,
+        agent_gaid: str,
+        task: DelegationTask | dict,
+    ) -> ContextNegotiation:
+        """Negotiate context delivery for an agent task."""
+        endpoint = await self._resolve_endpoint("context")
+        task_data = task.model_dump() if isinstance(task, DelegationTask) else task
+        resp = await self._client.post(
+            f"{endpoint}/negotiate",
+            json={"agent_gaid": agent_gaid, "task": task_data},
+        )
+        resp.raise_for_status()
+        return ContextNegotiation.model_validate(resp.json())
+
+    async def get_context_summary(
+        self,
+        domain: str,
+        task_type: str | None = None,
+    ) -> ContextNegotiation:
+        """Get cached context summary for a domain."""
+        endpoint = await self._resolve_endpoint("context")
+        params: dict[str, str] = {"domain": domain}
+        if task_type:
+            params["task_type"] = task_type
+        resp = await self._client.get(f"{endpoint}/summary", params=params)
+        resp.raise_for_status()
+        return ContextNegotiation.model_validate(resp.json())
+
+    # --- Token Analytics ---
+
+    async def report_token_usage(self, analytics: TokenAnalytics) -> None:
+        """Report token usage for an execution."""
+        endpoint = await self._resolve_endpoint("analytics")
+        resp = await self._client.post(
+            f"{endpoint}/tokens",
+            json=analytics.model_dump(),
+        )
+        resp.raise_for_status()
+
+    async def get_token_analytics(
+        self,
+        agent_gaid: str,
+        period: str | None = None,
+    ) -> TokenAnalyticsAggregate:
+        """Get aggregate token analytics for an agent."""
+        endpoint = await self._resolve_endpoint("analytics")
+        params: dict[str, str] = {}
+        if period:
+            params["period"] = period
+        resp = await self._client.get(
+            f"{endpoint}/tokens/{agent_gaid}",
+            params=params,
+        )
+        resp.raise_for_status()
+        return TokenAnalyticsAggregate.model_validate(resp.json())
+
+    # --- Capability Fingerprint ---
+
+    async def get_capability_fingerprint(self, agent_gaid: str) -> CapabilityFingerprint:
+        """Get an agent's empirical capability fingerprint."""
+        endpoint = await self._resolve_endpoint("analytics")
+        resp = await self._client.get(f"{endpoint}/fingerprint/{agent_gaid}")
+        resp.raise_for_status()
+        return CapabilityFingerprint.model_validate(resp.json())
+
+    # --- Feedback & Rewards ---
+
+    async def submit_feedback(self, feedback: AgentFeedback | dict) -> AgentFeedback:
+        """Submit feedback on an agent's execution."""
+        endpoint = await self._resolve_endpoint("feedback")
+        data = feedback.model_dump() if isinstance(feedback, AgentFeedback) else feedback
+        resp = await self._client.post(endpoint, json=data)
+        resp.raise_for_status()
+        return AgentFeedback.model_validate(resp.json())
+
+    async def get_agent_feedback(
+        self,
+        agent_gaid: str,
+        *,
+        type: str | None = None,
+        since: str | None = None,
+        limit: int | None = None,
+    ) -> list[AgentFeedback]:
+        """Get feedback for an agent."""
+        endpoint = await self._resolve_endpoint("feedback")
+        params: dict[str, str] = {}
+        if type:
+            params["type"] = type
+        if since:
+            params["since"] = since
+        if limit:
+            params["limit"] = str(limit)
+        resp = await self._client.get(
+            f"{endpoint}/{agent_gaid}",
+            params=params,
+        )
+        resp.raise_for_status()
+        return [AgentFeedback.model_validate(f) for f in resp.json()]
+
+    async def get_agent_reputation(self, agent_gaid: str) -> AgentReputation:
+        """Get aggregate reputation for an agent."""
+        endpoint = await self._resolve_endpoint("feedback")
+        resp = await self._client.get(f"{endpoint}/{agent_gaid}/reputation")
+        resp.raise_for_status()
+        return AgentReputation.model_validate(resp.json())
+
+    async def record_reward(self, reward: RewardEvent | dict) -> RewardEvent:
+        """Record a reward event."""
+        endpoint = await self._resolve_endpoint("feedback")
+        data = reward.model_dump() if isinstance(reward, RewardEvent) else reward
+        resp = await self._client.post(f"{endpoint}/rewards", json=data)
+        resp.raise_for_status()
+        return RewardEvent.model_validate(resp.json())
+
+    # --- Outcome Attestations ---
+
+    async def submit_attestation(self, attestation: OutcomeAttestation | dict) -> OutcomeAttestation:
+        """Submit a signed outcome attestation."""
+        endpoint = await self._resolve_endpoint("attestations")
+        data = attestation.model_dump() if isinstance(attestation, OutcomeAttestation) else attestation
+        resp = await self._client.post(endpoint, json=data)
+        resp.raise_for_status()
+        return OutcomeAttestation.model_validate(resp.json())
+
+    async def get_attestations(
+        self,
+        agent_gaid: str,
+        *,
+        outcome: str | None = None,
+        since: str | None = None,
+        limit: int | None = None,
+    ) -> list[OutcomeAttestation]:
+        """Get attestations for an agent."""
+        endpoint = await self._resolve_endpoint("attestations")
+        params: dict[str, str] = {}
+        if outcome:
+            params["outcome"] = outcome
+        if since:
+            params["since"] = since
+        if limit:
+            params["limit"] = str(limit)
+        resp = await self._client.get(
+            f"{endpoint}/{agent_gaid}",
+            params=params,
+        )
+        resp.raise_for_status()
+        return [OutcomeAttestation.model_validate(a) for a in resp.json()]
+
+    # --- Multi-Agent Delegation ---
+
+    async def delegate(self, request: DelegationRequest | dict) -> DelegationResult:
+        """Delegate a task to another agent."""
+        endpoint = await self._resolve_endpoint("delegate")
+        data = request.model_dump() if isinstance(request, DelegationRequest) else request
+        resp = await self._client.post(endpoint, json=data)
+        resp.raise_for_status()
+        return DelegationResult.model_validate(resp.json())
+
+    async def get_orchestration_plan(self, plan_id: str) -> OrchestrationPlan:
+        """Get an orchestration plan by ID."""
+        endpoint = await self._resolve_endpoint("delegate")
+        resp = await self._client.get(f"{endpoint}/plans/{plan_id}")
+        resp.raise_for_status()
+        return OrchestrationPlan.model_validate(resp.json())
+
+    async def create_orchestration_plan(self, plan: OrchestrationPlan | dict) -> OrchestrationPlan:
+        """Create an orchestration plan."""
+        endpoint = await self._resolve_endpoint("delegate")
+        data = plan.model_dump() if isinstance(plan, OrchestrationPlan) else plan
+        resp = await self._client.post(f"{endpoint}/plans", json=data)
+        resp.raise_for_status()
+        return OrchestrationPlan.model_validate(resp.json())
+
+    # --- Batch Operations ---
+
+    async def batch_publish(
+        self,
+        resources: list[dict],
+        *,
+        atomic: bool = True,
+        dry_run: bool = False,
+    ) -> BatchPublishResponse:
+        """Publish multiple resources in a single atomic batch.
+
+        Args:
+            resources: List of resource dicts (skills, agents, tools).
+            atomic: If True, all succeed or all fail.
+            dry_run: If True, validate without persisting.
+        """
+        resp = await self._client.post(
+            f"{self.base_url}/uadp/v1/publish/batch",
+            json={
+                "resources": resources,
+                "atomic": atomic,
+                "dry_run": dry_run,
+            },
+        )
+        resp.raise_for_status()
+        return BatchPublishResponse.model_validate(resp.json())
+
+    # --- A2A Interop ---
+
+    async def get_a2a_card(self, agent_name: str) -> A2AAgentCard:
+        """Get Google A2A Agent Card for an agent.
+
+        Returns a standards-compliant A2A Agent Card that can be used
+        for cross-protocol agent discovery.
+        """
+        resp = await self._client.get(
+            f"{self.base_url}/uadp/v1/agents/{agent_name}/card"
+        )
+        resp.raise_for_status()
+        return A2AAgentCard.model_validate(resp.json())
+
+    # --- MCP Interop ---
+
+    async def get_mcp_manifest(self) -> McpServerManifest:
+        """Get MCP Server Manifest for all tools on this node.
+
+        Returns a standards-compliant MCP Server Manifest suitable
+        for use with MCP-compatible clients.
+        """
+        resp = await self._client.get(
+            f"{self.base_url}/uadp/v1/tools/mcp-manifest"
+        )
+        resp.raise_for_status()
+        return McpServerManifest.model_validate(resp.json())
+
+    # --- Structured Query ---
+
+    async def query(self, query: StructuredQuery | dict) -> PaginatedResponse:
+        """Execute a structured query with compound filters and sorting.
+
+        Args:
+            query: A StructuredQuery object or dict with filters, sort,
+                   fields, and pagination options.
+        """
+        data = query.model_dump() if isinstance(query, StructuredQuery) else query
+        resp = await self._client.post(
+            f"{self.base_url}/uadp/v1/query",
+            json=data,
+        )
+        resp.raise_for_status()
+        return PaginatedResponse.model_validate(resp.json())
+
     # --- Internals ---
 
     async def _resolve_endpoint(self, name: str) -> str:
@@ -359,7 +677,7 @@ def resolve_gaid(gaid: str, **client_kwargs) -> tuple[UadpClient, str, str]:
         skill = await client.get_skill(name)
     """
     import re
-    match = re.match(r"^agent://([^/]+)/([^/]+)/(.+)$", gaid)
+    match = re.match(r"^(?:agent|uadp)://([^/]+)/([^/]+)/(.+)$", gaid)
     if not match:
         raise UadpError(f"Invalid GAID: {gaid}")
     domain, kind, name = match.groups()

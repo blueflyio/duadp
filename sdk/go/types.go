@@ -30,7 +30,15 @@ type UadpEndpoints struct {
 	Revocations string `json:"revocations,omitempty"`
 	AuditLog    string `json:"audit_log,omitempty"`
 	Events      string `json:"events,omitempty"`
-	Identity    string `json:"identity,omitempty"`
+	Identity     string `json:"identity,omitempty"`
+	Context      string `json:"context,omitempty"`
+	Analytics    string `json:"analytics,omitempty"`
+	Feedback     string `json:"feedback,omitempty"`
+	Attestations string `json:"attestations,omitempty"`
+	Delegate     string `json:"delegate,omitempty"`
+	Health       string `json:"health,omitempty"`
+	Search       string `json:"search,omitempty"`
+	Index        string `json:"index,omitempty"`
 }
 
 // NodeIdentity contains DID-based identity for signature verification.
@@ -286,7 +294,9 @@ type PaginationMeta struct {
 	NodeName  string            `json:"node_name"`
 	NodeID    string            `json:"node_id,omitempty"`
 	Federated bool              `json:"federated,omitempty"`
-	Sources   []FederatedSource `json:"sources,omitempty"`
+	Sources    []FederatedSource `json:"sources,omitempty"`
+	NextCursor string            `json:"next_cursor,omitempty"`
+	PrevCursor string            `json:"prev_cursor,omitempty"`
 }
 
 // SkillsResponse for GET /uadp/v1/skills.
@@ -567,4 +577,512 @@ type AgentKey struct {
 	Purpose   string `json:"purpose"`   // signing, authentication, encryption
 	Created   string `json:"created,omitempty"`
 	Expires   string `json:"expires,omitempty"`
+}
+
+// ─── Node Health & Search ────────────────────────────────────
+
+// NodeHealth is the response from GET /uadp/v1/health.
+type NodeHealth struct {
+	Status     string            `json:"status"` // healthy, degraded, unhealthy
+	Version    string            `json:"version,omitempty"`
+	Uptime     int               `json:"uptime,omitempty"`
+	Checks     map[string]string `json:"checks,omitempty"`
+	Skills     *int              `json:"skills,omitempty"`
+	Agents     *int              `json:"agents,omitempty"`
+	Tools      *int              `json:"tools,omitempty"`
+	Peers      *int              `json:"peers,omitempty"`
+	LastSync   string            `json:"last_sync,omitempty"`
+}
+
+// SearchFacets are returned alongside unified search results.
+type SearchFacets struct {
+	Categories    map[string]int `json:"categories,omitempty"`
+	TrustTiers    map[string]int `json:"trust_tiers,omitempty"`
+	ResourceTypes map[string]int `json:"resource_types,omitempty"`
+	Tags          map[string]int `json:"tags,omitempty"`
+}
+
+// SearchResponse is the unified search response.
+type SearchResponse struct {
+	Data   []OssaResource `json:"data"`
+	Meta   PaginationMeta `json:"meta"`
+	Facets *SearchFacets  `json:"facets,omitempty"`
+}
+
+// ProtocolEndpoints maps protocol names to their endpoint URLs.
+type ProtocolEndpoints struct {
+	UADP    string `json:"uadp,omitempty"`
+	A2A     string `json:"a2a,omitempty"`
+	MCP     string `json:"mcp,omitempty"`
+	OpenAI  string `json:"openai,omitempty"`
+	REST    string `json:"rest,omitempty"`
+	GRPC    string `json:"grpc,omitempty"`
+}
+
+// PricingInfo describes an agent's pricing model.
+type PricingInfo struct {
+	Model        string   `json:"model"` // free, per_request, subscription, token_based, custom
+	Currency     string   `json:"currency,omitempty"`
+	PricePerCall *float64 `json:"price_per_call,omitempty"`
+	FreeTier     *int     `json:"free_tier,omitempty"`
+	Details      string   `json:"details,omitempty"`
+}
+
+// SLAInfo describes service level agreements.
+type SLAInfo struct {
+	UptimePercent  *float64 `json:"uptime_percent,omitempty"`
+	ResponseTimeMs *int     `json:"response_time_ms,omitempty"`
+	SupportTier    string   `json:"support_tier,omitempty"` // community, standard, premium, enterprise
+	SLADocument    string   `json:"sla_document,omitempty"`
+}
+
+// AgentIndexRecord is the .ajson index card for an agent.
+type AgentIndexRecord struct {
+	GAID        string             `json:"gaid"`
+	Name        string             `json:"name"`
+	Kind        string             `json:"kind"` // Skill, Agent, Tool
+	Description string             `json:"description,omitempty"`
+	Version     string             `json:"version,omitempty"`
+	TrustTier   TrustTier          `json:"trust_tier,omitempty"`
+	Category    string             `json:"category,omitempty"`
+	Tags        []string           `json:"tags,omitempty"`
+	Endpoints   *ProtocolEndpoints `json:"endpoints,omitempty"`
+	Pricing     *PricingInfo       `json:"pricing,omitempty"`
+	SLA         *SLAInfo           `json:"sla,omitempty"`
+	Status      string             `json:"status,omitempty"` // active, deprecated, suspended
+	SunsetDate  string             `json:"sunset_date,omitempty"`
+	ContentHash string             `json:"content_hash,omitempty"`
+	NodeName    string             `json:"node_name,omitempty"`
+	NodeID      string             `json:"node_id,omitempty"`
+	Updated     string             `json:"updated,omitempty"`
+}
+
+// ─── Context Awareness & Token Efficiency ────────────────────
+
+// ContextNegotiation describes how an agent receives work context.
+type ContextNegotiation struct {
+	MaxContextTokens int               `json:"max_context_tokens,omitempty"`
+	DeliveryMode     string            `json:"delivery_mode,omitempty"` // layered, flat, streaming
+	Layers           []ContextLayer    `json:"layers,omitempty"`
+	KnowledgeSources []KnowledgeSource `json:"knowledge_sources,omitempty"`
+	CacheRefs        []ContextCacheRef `json:"cache_refs,omitempty"`
+}
+
+// ContextLayer is a single context layer with priority.
+type ContextLayer struct {
+	Name        string `json:"name"`
+	Priority    int    `json:"priority"`
+	MaxTokens   *int   `json:"max_tokens,omitempty"`
+	ContentType string `json:"content_type,omitempty"` // code, documentation, schema, config, embedding, summary
+	Required    bool   `json:"required,omitempty"`
+}
+
+// KnowledgeSource is a queryable knowledge source.
+type KnowledgeSource struct {
+	Type                string `json:"type"` // qdrant, neo4j, weaviate, pinecone, meilisearch, elasticsearch, custom
+	Endpoint            string `json:"endpoint"`
+	Collection          string `json:"collection,omitempty"`
+	Auth                string `json:"auth,omitempty"` // bearer, api-key, none
+	EmbeddingModel      string `json:"embedding_model,omitempty"`
+	EmbeddingDimensions *int   `json:"embedding_dimensions,omitempty"`
+}
+
+// ContextCacheRef enables skip-if-unchanged context delivery.
+type ContextCacheRef struct {
+	CacheID     string `json:"cache_id"`
+	Domain      string `json:"domain"`
+	ContentHash string `json:"content_hash"`
+	ComputedAt  string `json:"computed_at"`
+	TTL         *int   `json:"ttl,omitempty"`
+}
+
+// ─── Token Analytics ─────────────────────────────────────────
+
+// TokenAnalytics tracks token usage for an execution.
+type TokenAnalytics struct {
+	TotalTokens        int     `json:"total_tokens"`
+	InputTokens        int     `json:"input_tokens"`
+	OutputTokens       int     `json:"output_tokens"`
+	CostUSD            *float64 `json:"cost_usd,omitempty"`
+	Model              string  `json:"model,omitempty"`
+	TaskCompleted      bool    `json:"task_completed"`
+	DurationMs         *int    `json:"duration_ms,omitempty"`
+	EfficiencyScore    *float64 `json:"efficiency_score,omitempty"`
+	ContextUtilization *float64 `json:"context_utilization,omitempty"`
+	Timestamp          string  `json:"timestamp"`
+}
+
+// TokenAnalyticsAggregate aggregates token analytics over a period.
+type TokenAnalyticsAggregate struct {
+	GAID               string             `json:"gaid"`
+	Period             string             `json:"period"` // hour, day, week, month, all_time
+	ExecutionCount     int                `json:"execution_count"`
+	AvgTokensPerTask   int                `json:"avg_tokens_per_task"`
+	MedianTokens       *int               `json:"median_tokens_per_task,omitempty"`
+	P95Tokens          *int               `json:"p95_tokens_per_task,omitempty"`
+	AvgCostPerTask     *float64           `json:"avg_cost_per_task_usd,omitempty"`
+	TotalCost          *float64           `json:"total_cost_usd,omitempty"`
+	SuccessRate        float64            `json:"success_rate"`
+	AvgEfficiency      *float64           `json:"avg_efficiency_score,omitempty"`
+	ByTaskType         map[string]TaskTypeStat `json:"by_task_type,omitempty"`
+	ByDomain           map[string]DomainStat   `json:"by_domain,omitempty"`
+}
+
+// TaskTypeStat is per-task-type breakdown in analytics.
+type TaskTypeStat struct {
+	Count       int      `json:"count"`
+	AvgTokens   int      `json:"avg_tokens"`
+	SuccessRate float64  `json:"success_rate"`
+	AvgCost     *float64 `json:"avg_cost_usd,omitempty"`
+}
+
+// DomainStat is per-domain breakdown in analytics.
+type DomainStat struct {
+	Count       int     `json:"count"`
+	AvgTokens   int     `json:"avg_tokens"`
+	SuccessRate float64 `json:"success_rate"`
+}
+
+// ─── Feedback & Rewards ──────────────────────────────────────
+
+// FeedbackSource identifies who provided feedback.
+type FeedbackSource struct {
+	Type string `json:"type"` // human, agent, system, automated-test
+	ID   string `json:"id"`
+	Role string `json:"role,omitempty"` // user, reviewer, peer-agent, supervisor-agent, qa, admin
+}
+
+// FeedbackDimensions are structured quality ratings.
+type FeedbackDimensions struct {
+	Accuracy            *float64           `json:"accuracy,omitempty"`
+	Efficiency          *float64           `json:"efficiency,omitempty"`
+	InstructionFollowing *float64          `json:"instruction_following,omitempty"`
+	Quality             *float64           `json:"quality,omitempty"`
+	Helpfulness         *float64           `json:"helpfulness,omitempty"`
+	ScopeAdherence      *float64           `json:"scope_adherence,omitempty"`
+	Custom              map[string]float64 `json:"custom,omitempty"`
+}
+
+// AgentFeedback is feedback on an agent's execution.
+type AgentFeedback struct {
+	FeedbackID  string              `json:"feedback_id"`
+	AgentGAID   string              `json:"agent_gaid"`
+	TaskRef     string              `json:"task_ref,omitempty"`
+	Source      FeedbackSource      `json:"source"`
+	Type        string              `json:"type"` // rating, correction, reward, penalty, observation
+	Rating      *float64            `json:"rating,omitempty"`
+	RatingScale string              `json:"rating_scale,omitempty"` // 1-5, 0-1, percentage
+	Comment     string              `json:"comment,omitempty"`
+	Dimensions  *FeedbackDimensions `json:"dimensions,omitempty"`
+	Timestamp   string              `json:"timestamp"`
+	Signature   *ResourceSignature  `json:"signature,omitempty"`
+}
+
+// RewardEvent tracks incentives for agent behavior.
+type RewardEvent struct {
+	RewardID  string `json:"reward_id"`
+	AgentGAID string `json:"agent_gaid"`
+	Trigger   string `json:"trigger"` // task_completion, quality_threshold, efficiency_bonus, streak, peer_endorsement, manual
+	Type      string `json:"type"`    // reputation_boost, priority_increase, capability_unlock, token_credit, badge
+	Value     *float64 `json:"value,omitempty"`
+	Badge     string `json:"badge,omitempty"`
+	Timestamp string `json:"timestamp"`
+	TaskRef   string `json:"task_ref,omitempty"`
+}
+
+// AgentReputation is the aggregate reputation computed from feedback.
+type AgentReputation struct {
+	AgentGAID        string              `json:"agent_gaid"`
+	OverallScore     float64             `json:"overall_score"`
+	FeedbackCount    int                 `json:"feedback_count"`
+	FeedbackSummary  FeedbackSummary     `json:"feedback_summary"`
+	DimensionAverages *FeedbackDimensions `json:"dimension_averages,omitempty"`
+	RewardCount      int                 `json:"reward_count"`
+	Badges           []string            `json:"badges,omitempty"`
+	Trend            string              `json:"trend,omitempty"` // improving, stable, declining
+	ComputedAt       string              `json:"computed_at"`
+}
+
+// FeedbackSummary breaks down feedback counts.
+type FeedbackSummary struct {
+	Positive int `json:"positive"`
+	Neutral  int `json:"neutral"`
+	Negative int `json:"negative"`
+}
+
+// ─── Capability Fingerprint ──────────────────────────────────
+
+// CapabilityFingerprint is computed from actual execution data.
+type CapabilityFingerprint struct {
+	AgentGAID     string                        `json:"agent_gaid"`
+	Domains       map[string]DomainPerformance  `json:"domains,omitempty"`
+	TaskTypes     map[string]TaskTypePerformance `json:"task_types,omitempty"`
+	ModelAffinity map[string]ModelAffinityScore  `json:"model_affinity,omitempty"`
+	SampleSize    int                           `json:"sample_size"`
+	UpdatedAt     string                        `json:"updated_at"`
+}
+
+// DomainPerformance tracks performance in a specific domain.
+type DomainPerformance struct {
+	Accuracy   float64  `json:"accuracy"`
+	AvgTokens  int      `json:"avg_tokens"`
+	SampleSize int      `json:"sample_size"`
+	AvgCost    *float64 `json:"avg_cost_usd,omitempty"`
+}
+
+// TaskTypePerformance tracks performance for a specific task type.
+type TaskTypePerformance struct {
+	Accuracy   float64  `json:"accuracy"`
+	AvgCost    *float64 `json:"avg_cost_usd,omitempty"`
+	AvgTokens  int      `json:"avg_tokens"`
+	SampleSize int      `json:"sample_size"`
+	AvgDuration *int    `json:"avg_duration_ms,omitempty"`
+}
+
+// ModelAffinityScore rates how well a model works for an agent.
+type ModelAffinityScore struct {
+	Efficiency float64 `json:"efficiency"`
+	Quality    float64 `json:"quality"`
+}
+
+// ─── Outcome Attestation ─────────────────────────────────────
+
+// OutcomeAttestationMetrics are the metrics within an attestation.
+type OutcomeAttestationMetrics struct {
+	TokensUsed    int      `json:"tokens_used"`
+	DurationMs    int      `json:"duration_ms"`
+	CostUSD       *float64 `json:"cost_usd,omitempty"`
+	HumanOverride bool     `json:"human_override"`
+	Confidence    *float64 `json:"confidence,omitempty"`
+}
+
+// OutcomeAttestation is a signed attestation of a task outcome.
+type OutcomeAttestation struct {
+	AttestationID string                    `json:"attestation_id"`
+	AgentGAID     string                    `json:"agent_gaid"`
+	TaskHash      string                    `json:"task_hash"`
+	Outcome       string                    `json:"outcome"` // success, partial_success, failure, timeout
+	Metrics       OutcomeAttestationMetrics `json:"metrics"`
+	Attester      string                    `json:"attester"`
+	Timestamp     string                    `json:"timestamp"`
+	Signature     *ResourceSignature        `json:"signature,omitempty"`
+}
+
+// ─── Multi-Agent Delegation & Orchestration ──────────────────
+
+// DelegationTask is the task being delegated.
+type DelegationTask struct {
+	Type           string         `json:"type"`
+	Description    string         `json:"description,omitempty"`
+	Scope          []string       `json:"scope,omitempty"`
+	Inputs         map[string]any `json:"inputs,omitempty"`
+	ExpectedOutput string         `json:"expected_output,omitempty"`
+	Priority       string         `json:"priority,omitempty"` // critical, high, normal, low
+	Deadline       string         `json:"deadline,omitempty"`
+}
+
+// ContextTransfer is compressed context passed during delegation.
+type ContextTransfer struct {
+	CompressedState string            `json:"compressed_state,omitempty"`
+	Encoding        string            `json:"encoding,omitempty"` // base64, gzip+base64, json
+	TokensUsedSoFar *int              `json:"tokens_used_so_far,omitempty"`
+	Findings        []Finding         `json:"findings,omitempty"`
+	CacheRefs       []ContextCacheRef `json:"cache_refs,omitempty"`
+	KnowledgeAccess []KnowledgeSource `json:"knowledge_access,omitempty"`
+}
+
+// Finding is a partial result from a parent agent.
+type Finding struct {
+	Type       string   `json:"type"`
+	Content    string   `json:"content"`
+	Confidence *float64 `json:"confidence,omitempty"`
+}
+
+// TaskBudget constrains delegation resources.
+type TaskBudget struct {
+	MaxTokens          *int     `json:"max_tokens,omitempty"`
+	MaxCostUSD         *float64 `json:"max_cost_usd,omitempty"`
+	MaxDurationMs      *int     `json:"max_duration_ms,omitempty"`
+	MaxDelegationDepth *int     `json:"max_delegation_depth,omitempty"`
+}
+
+// DelegationRequest hands off work to another agent.
+type DelegationRequest struct {
+	FromAgent       string           `json:"from_agent"`
+	ToAgent         string           `json:"to_agent"`
+	Task            DelegationTask   `json:"task"`
+	ContextTransfer *ContextTransfer `json:"context_transfer,omitempty"`
+	Budget          *TaskBudget      `json:"budget,omitempty"`
+	CallbackURL     string           `json:"callback_url,omitempty"`
+	Depth           *int             `json:"depth,omitempty"`
+	MaxDepth        *int             `json:"max_depth,omitempty"`
+}
+
+// DelegationChainEntry tracks a sub-delegation in the chain.
+type DelegationChainEntry struct {
+	AgentGAID  string `json:"agent_gaid"`
+	TaskType   string `json:"task_type"`
+	TokensUsed int    `json:"tokens_used"`
+	Status     string `json:"status"`
+}
+
+// DelegationResult is returned by the delegate agent.
+type DelegationResult struct {
+	Status           string                 `json:"status"` // completed, failed, partial, timeout, rejected
+	Result           map[string]any         `json:"result,omitempty"`
+	Analytics        *TokenAnalytics        `json:"analytics,omitempty"`
+	DelegateFeedback string                 `json:"delegate_feedback,omitempty"`
+	DelegationChain  []DelegationChainEntry `json:"delegation_chain,omitempty"`
+}
+
+// OrchestrationStep is a single step in an orchestration plan.
+type OrchestrationStep struct {
+	StepID    string            `json:"step_id"`
+	Name      string            `json:"name"`
+	AgentType string            `json:"agent_type,omitempty"` // orchestrator, worker, specialist, critic, monitor, gateway
+	AgentGAID string            `json:"agent_gaid,omitempty"`
+	Task      DelegationTask    `json:"task"`
+	DependsOn []string          `json:"depends_on,omitempty"`
+	Budget    *TaskBudget       `json:"budget,omitempty"`
+	Status    string            `json:"status,omitempty"` // pending, running, completed, failed, skipped
+	Result    *DelegationResult `json:"result,omitempty"`
+}
+
+// OrchestrationPlan describes how an orchestrator distributes work.
+type OrchestrationPlan struct {
+	PlanID           string              `json:"plan_id"`
+	OrchestratorGAID string             `json:"orchestrator_gaid"`
+	Task             DelegationTask      `json:"task"`
+	Steps            []OrchestrationStep `json:"steps"`
+	Strategy         string              `json:"strategy"` // sequential, parallel, dag, adaptive
+	Budget           *TaskBudget         `json:"budget,omitempty"`
+	Status           string              `json:"status"` // planning, executing, completed, failed, cancelled
+	CreatedAt        string              `json:"created_at"`
+	UpdatedAt        string              `json:"updated_at,omitempty"`
+}
+
+// ─── Batch Operations ────────────────────────────────────────
+
+// BatchPublishRequest for POST /uadp/v1/publish/batch.
+type BatchPublishRequest struct {
+	Resources []OssaResource `json:"resources"`
+	Atomic    bool           `json:"atomic,omitempty"`
+}
+
+// BatchPublishResult is a single result in a batch publish response.
+type BatchPublishResult struct {
+	Index    int           `json:"index"`
+	Success  bool          `json:"success"`
+	Resource *OssaResource `json:"resource,omitempty"`
+	Error    string        `json:"error,omitempty"`
+}
+
+// BatchPublishResponse for POST /uadp/v1/publish/batch.
+type BatchPublishResponse struct {
+	Total     int                  `json:"total"`
+	Succeeded int                  `json:"succeeded"`
+	Failed    int                  `json:"failed"`
+	Results   []BatchPublishResult `json:"results"`
+}
+
+// ─── Protocol Compatibility ──────────────────────────────────
+
+// A2AAgentCard is a Google A2A-compatible Agent Card.
+type A2AAgentCard struct {
+	Name           string              `json:"name"`
+	Description    string              `json:"description,omitempty"`
+	URL            string              `json:"url"`
+	Version        string              `json:"version,omitempty"`
+	Provider       *A2AProvider        `json:"provider,omitempty"`
+	Capabilities   *A2ACapabilities    `json:"capabilities,omitempty"`
+	Authentication *A2AAuthentication  `json:"authentication,omitempty"`
+	Skills         []A2ASkill          `json:"skills,omitempty"`
+	DefaultInputModes  []string        `json:"defaultInputModes,omitempty"`
+	DefaultOutputModes []string        `json:"defaultOutputModes,omitempty"`
+	UadpExtensions *A2AUadpExtensions  `json:"_uadp,omitempty"`
+}
+
+// A2AProvider in an Agent Card.
+type A2AProvider struct {
+	Organization string `json:"organization,omitempty"`
+	URL          string `json:"url,omitempty"`
+}
+
+// A2ACapabilities in an Agent Card.
+type A2ACapabilities struct {
+	Streaming              bool `json:"streaming,omitempty"`
+	PushNotifications      bool `json:"pushNotifications,omitempty"`
+	StateTransitionHistory bool `json:"stateTransitionHistory,omitempty"`
+}
+
+// A2AAuthentication in an Agent Card.
+type A2AAuthentication struct {
+	Schemes []string `json:"schemes,omitempty"`
+}
+
+// A2ASkill in an Agent Card.
+type A2ASkill struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
+	Examples    []string `json:"examples,omitempty"`
+}
+
+// A2AUadpExtensions are UADP-specific extensions in an Agent Card.
+type A2AUadpExtensions struct {
+	GAID        string `json:"gaid,omitempty"`
+	TrustTier   string `json:"trust_tier,omitempty"`
+	ContentHash string `json:"content_hash,omitempty"`
+	NodeName    string `json:"node_name,omitempty"`
+}
+
+// McpTool is a single tool in an MCP server manifest.
+type McpTool struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	InputSchema map[string]any `json:"inputSchema,omitempty"`
+	Uadp        *McpToolUadp   `json:"_uadp,omitempty"`
+}
+
+// McpToolUadp are UADP extensions on an MCP tool.
+type McpToolUadp struct {
+	GAID        string `json:"gaid,omitempty"`
+	TrustTier   string `json:"trust_tier,omitempty"`
+	ContentHash string `json:"content_hash,omitempty"`
+}
+
+// McpServerManifest is an MCP-compatible server manifest.
+type McpServerManifest struct {
+	Name        string    `json:"name"`
+	Version     string    `json:"version"`
+	Description string    `json:"description,omitempty"`
+	Tools       []McpTool `json:"tools"`
+}
+
+// ─── Structured Query ────────────────────────────────────────
+
+// QueryFilter is a single filter in a structured query.
+type QueryFilter struct {
+	Field    string `json:"field"`
+	Operator string `json:"operator"` // eq, ne, gt, gte, lt, lte, in, contains, exists, not_exists
+	Value    any    `json:"value"`
+}
+
+// QuerySort is a sort specification in a structured query.
+type QuerySort struct {
+	Field string `json:"field"`
+	Order string `json:"order,omitempty"` // asc, desc
+}
+
+// StructuredQuery for POST /uadp/v1/query.
+type StructuredQuery struct {
+	Filters   []QueryFilter `json:"filters,omitempty"`
+	Sort      []QuerySort   `json:"sort,omitempty"`
+	Fields    []string      `json:"fields,omitempty"`
+	Kinds     []string      `json:"kinds,omitempty"` // Skill, Agent, Tool
+	Federated bool          `json:"federated,omitempty"`
+	Page      int           `json:"page,omitempty"`
+	Limit     int           `json:"limit,omitempty"`
+	Cursor    string        `json:"cursor,omitempty"`
 }

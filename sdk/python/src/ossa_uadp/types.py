@@ -30,6 +30,14 @@ class UadpEndpoints(BaseModel):
     audit_log: str | None = None
     events: str | None = None
     identity: str | None = None
+    context: str | None = None
+    analytics: str | None = None
+    feedback: str | None = None
+    attestations: str | None = None
+    delegate: str | None = None
+    health: str | None = None
+    search: str | None = None
+    index: str | None = None
 
     class Config:
         extra = "allow"
@@ -278,6 +286,8 @@ class PaginationMeta(BaseModel):
     node_id: str | None = None
     federated: bool | None = None
     sources: list[FederatedSource] | None = None
+    next_cursor: str | None = None
+    prev_cursor: str | None = None
 
 
 class PaginatedResponse[T](BaseModel):
@@ -540,3 +550,493 @@ class AgentIdentity(BaseModel):
     service_account: AgentServiceAcct | None = None
     keys: list[AgentKey] | None = None
     verification_methods: list[str] | None = None
+
+
+# ─── Node Health & Search ────────────────────────────────────
+
+class NodeHealth(BaseModel):
+    """Node health status from GET /uadp/v1/health."""
+    status: Literal["healthy", "degraded", "unhealthy"]
+    version: str | None = None
+    uptime: int | None = None
+    checks: dict[str, str] | None = None
+    skills: int | None = None
+    agents: int | None = None
+    tools: int | None = None
+    peers: int | None = None
+    last_sync: str | None = None
+
+
+class SearchFacets(BaseModel):
+    """Facets returned alongside unified search results."""
+    categories: dict[str, int] | None = None
+    trust_tiers: dict[str, int] | None = None
+    resource_types: dict[str, int] | None = None
+    tags: dict[str, int] | None = None
+
+
+class ProtocolEndpoints(BaseModel):
+    """Multi-protocol endpoint map for an agent."""
+    uadp: str | None = None
+    a2a: str | None = None
+    mcp: str | None = None
+    openai: str | None = None
+    rest: str | None = None
+    grpc: str | None = None
+
+
+class PricingInfo(BaseModel):
+    """Agent pricing model."""
+    model: Literal["free", "per_request", "subscription", "token_based", "custom"]
+    currency: str | None = None
+    price_per_call: float | None = None
+    free_tier: int | None = None
+    details: str | None = None
+
+
+class SLAInfo(BaseModel):
+    """Service level agreement."""
+    uptime_percent: float | None = None
+    response_time_ms: int | None = None
+    support_tier: Literal["community", "standard", "premium", "enterprise"] | None = None
+    sla_document: str | None = None
+
+
+class AgentIndexRecord(BaseModel):
+    """.ajson index card for an agent — lightweight cross-registry format."""
+    gaid: str
+    name: str
+    kind: Literal["Skill", "Agent", "Tool"]
+    description: str | None = None
+    version: str | None = None
+    trust_tier: TrustTier | None = None
+    category: str | None = None
+    tags: list[str] | None = None
+    endpoints: ProtocolEndpoints | None = None
+    pricing: PricingInfo | None = None
+    sla: SLAInfo | None = None
+    status: Literal["active", "deprecated", "suspended"] | None = None
+    sunset_date: str | None = None
+    content_hash: str | None = None
+    node_name: str | None = None
+    node_id: str | None = None
+    updated: str | None = None
+
+
+# ─── Context Awareness & Token Efficiency ────────────────────
+
+class ContextLayer(BaseModel):
+    """Single context layer with priority and token budget."""
+    name: str
+    priority: int
+    max_tokens: int | None = None
+    content_type: Literal["code", "documentation", "schema", "config", "embedding", "summary"] | None = None
+    required: bool | None = None
+
+
+class KnowledgeSource(BaseModel):
+    """Queryable knowledge source for domain context."""
+    type: Literal["qdrant", "neo4j", "weaviate", "pinecone", "meilisearch", "elasticsearch", "custom"]
+    endpoint: str
+    collection: str | None = None
+    auth: Literal["bearer", "api-key", "none"] | None = None
+    embedding_model: str | None = None
+    embedding_dimensions: int | None = None
+
+
+class ContextCacheRef(BaseModel):
+    """Cached context reference — enables skip-if-unchanged semantics."""
+    cache_id: str
+    domain: str
+    content_hash: str
+    computed_at: str
+    ttl: int | None = None
+
+
+class ContextNegotiation(BaseModel):
+    """Context negotiation — how an agent receives work context."""
+    max_context_tokens: int | None = None
+    delivery_mode: Literal["layered", "flat", "streaming"] | None = None
+    layers: list[ContextLayer] | None = None
+    knowledge_sources: list[KnowledgeSource] | None = None
+    cache_refs: list[ContextCacheRef] | None = None
+
+
+# ─── Token Analytics ─────────────────────────────────────────
+
+class TokenAnalytics(BaseModel):
+    """Token usage analytics for an execution."""
+    total_tokens: int
+    input_tokens: int
+    output_tokens: int
+    cost_usd: float | None = None
+    model: str | None = None
+    task_completed: bool
+    duration_ms: int | None = None
+    efficiency_score: float | None = None
+    context_utilization: float | None = None
+    timestamp: str
+
+
+class TaskTypeStat(BaseModel):
+    """Per-task-type breakdown in analytics."""
+    count: int
+    avg_tokens: int
+    success_rate: float
+    avg_cost_usd: float | None = None
+
+
+class DomainStat(BaseModel):
+    """Per-domain breakdown in analytics."""
+    count: int
+    avg_tokens: int
+    success_rate: float
+
+
+class TokenAnalyticsAggregate(BaseModel):
+    """Aggregate token analytics over a period."""
+    gaid: str
+    period: Literal["hour", "day", "week", "month", "all_time"]
+    execution_count: int
+    avg_tokens_per_task: int
+    median_tokens_per_task: int | None = None
+    p95_tokens_per_task: int | None = None
+    avg_cost_per_task_usd: float | None = None
+    total_cost_usd: float | None = None
+    success_rate: float
+    avg_efficiency_score: float | None = None
+    by_task_type: dict[str, TaskTypeStat] | None = None
+    by_domain: dict[str, DomainStat] | None = None
+
+
+# ─── Feedback & Rewards ──────────────────────────────────────
+
+class FeedbackSource(BaseModel):
+    """Who provided the feedback."""
+    type: Literal["human", "agent", "system", "automated-test"]
+    id: str
+    role: Literal["user", "reviewer", "peer-agent", "supervisor-agent", "qa", "admin"] | None = None
+
+
+class FeedbackDimensions(BaseModel):
+    """Structured feedback across quality dimensions."""
+    accuracy: float | None = None
+    efficiency: float | None = None
+    instruction_following: float | None = None
+    quality: float | None = None
+    helpfulness: float | None = None
+    scope_adherence: float | None = None
+    custom: dict[str, float] | None = None
+
+
+class AgentFeedback(BaseModel):
+    """Feedback on an agent's task execution."""
+    feedback_id: str
+    agent_gaid: str
+    task_ref: str | None = None
+    source: FeedbackSource
+    type: Literal["rating", "correction", "reward", "penalty", "observation"]
+    rating: float | None = None
+    rating_scale: Literal["1-5", "0-1", "percentage"] | None = None
+    comment: str | None = None
+    dimensions: FeedbackDimensions | None = None
+    timestamp: str
+    signature: ResourceSignature | None = None
+
+
+class RewardEvent(BaseModel):
+    """Reward event — tracks incentives for agent behavior."""
+    reward_id: str
+    agent_gaid: str
+    trigger: Literal["task_completion", "quality_threshold", "efficiency_bonus", "streak", "peer_endorsement", "manual"]
+    type: Literal["reputation_boost", "priority_increase", "capability_unlock", "token_credit", "badge"]
+    value: float | None = None
+    badge: str | None = None
+    timestamp: str
+    task_ref: str | None = None
+
+
+class FeedbackSummary(BaseModel):
+    """Feedback count breakdown."""
+    positive: int
+    neutral: int
+    negative: int
+
+
+class AgentReputation(BaseModel):
+    """Aggregate reputation computed from feedback + rewards."""
+    agent_gaid: str
+    overall_score: float
+    feedback_count: int
+    feedback_summary: FeedbackSummary
+    dimension_averages: FeedbackDimensions | None = None
+    reward_count: int
+    badges: list[str] | None = None
+    trend: Literal["improving", "stable", "declining"] | None = None
+    computed_at: str
+
+
+# ─── Capability Fingerprint ──────────────────────────────────
+
+class DomainPerformance(BaseModel):
+    """Performance in a specific domain."""
+    accuracy: float
+    avg_tokens: int
+    sample_size: int
+    avg_cost_usd: float | None = None
+
+
+class TaskTypePerformance(BaseModel):
+    """Performance for a specific task type."""
+    accuracy: float
+    avg_cost_usd: float | None = None
+    avg_tokens: int
+    sample_size: int
+    avg_duration_ms: int | None = None
+
+
+class ModelAffinityScore(BaseModel):
+    """How well a model works for an agent."""
+    efficiency: float
+    quality: float
+
+
+class CapabilityFingerprint(BaseModel):
+    """Empirical capability fingerprint from execution data."""
+    agent_gaid: str
+    domains: dict[str, DomainPerformance] | None = None
+    task_types: dict[str, TaskTypePerformance] | None = None
+    model_affinity: dict[str, ModelAffinityScore] | None = None
+    sample_size: int
+    updated_at: str
+
+
+# ─── Outcome Attestation ─────────────────────────────────────
+
+class OutcomeAttestationMetrics(BaseModel):
+    """Metrics within an outcome attestation."""
+    tokens_used: int
+    duration_ms: int
+    cost_usd: float | None = None
+    human_override: bool
+    confidence: float | None = None
+
+
+class OutcomeAttestation(BaseModel):
+    """Signed attestation of a task outcome."""
+    attestation_id: str
+    agent_gaid: str
+    task_hash: str
+    outcome: Literal["success", "partial_success", "failure", "timeout"]
+    metrics: OutcomeAttestationMetrics
+    attester: str
+    timestamp: str
+    signature: ResourceSignature | None = None
+
+
+# ─── Multi-Agent Delegation & Orchestration ──────────────────
+
+class DelegationTask(BaseModel):
+    """Task being delegated."""
+    type: str
+    description: str | None = None
+    scope: list[str] | None = None
+    inputs: dict | None = None
+    expected_output: str | None = None
+    priority: Literal["critical", "high", "normal", "low"] | None = None
+    deadline: str | None = None
+
+
+class Finding(BaseModel):
+    """Partial result from a parent agent."""
+    type: str
+    content: str
+    confidence: float | None = None
+
+
+class ContextTransfer(BaseModel):
+    """Compressed context passed during delegation."""
+    compressed_state: str | None = None
+    encoding: Literal["base64", "gzip+base64", "json"] | None = None
+    tokens_used_so_far: int | None = None
+    findings: list[Finding] | None = None
+    cache_refs: list[ContextCacheRef] | None = None
+    knowledge_access: list[KnowledgeSource] | None = None
+
+
+class TaskBudget(BaseModel):
+    """Token and cost budget for a delegated task."""
+    max_tokens: int | None = None
+    max_cost_usd: float | None = None
+    max_duration_ms: int | None = None
+    max_delegation_depth: int | None = None
+
+
+class DelegationRequest(BaseModel):
+    """Delegation request — one agent hands off work to another."""
+    from_agent: str
+    to_agent: str
+    task: DelegationTask
+    context_transfer: ContextTransfer | None = None
+    budget: TaskBudget | None = None
+    callback_url: str | None = None
+    depth: int | None = None
+    max_depth: int | None = None
+
+
+class DelegationChainEntry(BaseModel):
+    """Sub-delegation in the chain."""
+    agent_gaid: str
+    task_type: str
+    tokens_used: int
+    status: str
+
+
+class DelegationResult(BaseModel):
+    """Result from a delegated task."""
+    status: Literal["completed", "failed", "partial", "timeout", "rejected"]
+    result: dict | None = None
+    analytics: TokenAnalytics | None = None
+    delegate_feedback: str | None = None
+    delegation_chain: list[DelegationChainEntry] | None = None
+
+
+class OrchestrationStep(BaseModel):
+    """Single step in an orchestration plan."""
+    step_id: str
+    name: str
+    agent_type: Literal["orchestrator", "worker", "specialist", "critic", "monitor", "gateway"] | None = None
+    agent_gaid: str | None = None
+    task: DelegationTask
+    depends_on: list[str] | None = None
+    budget: TaskBudget | None = None
+    status: Literal["pending", "running", "completed", "failed", "skipped"] | None = None
+    result: DelegationResult | None = None
+
+
+class OrchestrationPlan(BaseModel):
+    """Orchestration plan — how an orchestrator distributes work."""
+    plan_id: str
+    orchestrator_gaid: str
+    task: DelegationTask
+    steps: list[OrchestrationStep]
+    strategy: Literal["sequential", "parallel", "dag", "adaptive"]
+    budget: TaskBudget | None = None
+    status: Literal["planning", "executing", "completed", "failed", "cancelled"]
+    created_at: str
+    updated_at: str | None = None
+
+
+# ─── Batch Operations ────────────────────────────────────────
+
+class BatchPublishResult(BaseModel):
+    """Single result in a batch publish response."""
+    index: int
+    success: bool
+    resource: OssaResource | None = None
+    error: str | None = None
+
+
+class BatchPublishResponse(BaseModel):
+    """Batch publish response."""
+    total: int
+    succeeded: int
+    failed: int
+    results: list[BatchPublishResult]
+
+
+# ─── Protocol Compatibility ──────────────────────────────────
+
+class A2AProvider(BaseModel):
+    """Provider in an A2A Agent Card."""
+    organization: str | None = None
+    url: str | None = None
+
+
+class A2ACapabilities(BaseModel):
+    """Capabilities in an A2A Agent Card."""
+    streaming: bool | None = None
+    pushNotifications: bool | None = None
+    stateTransitionHistory: bool | None = None
+
+
+class A2ASkill(BaseModel):
+    """Skill in an A2A Agent Card."""
+    id: str
+    name: str
+    description: str | None = None
+    tags: list[str] | None = None
+    examples: list[str] | None = None
+
+
+class A2AUadpExtensions(BaseModel):
+    """UADP-specific extensions in an Agent Card."""
+    gaid: str | None = None
+    trust_tier: str | None = None
+    content_hash: str | None = None
+    node_name: str | None = None
+
+
+class A2AAgentCard(BaseModel):
+    """Google A2A-compatible Agent Card."""
+    name: str
+    description: str | None = None
+    url: str
+    version: str | None = None
+    provider: A2AProvider | None = None
+    capabilities: A2ACapabilities | None = None
+    authentication: dict | None = None
+    skills: list[A2ASkill] | None = None
+    defaultInputModes: list[Literal["text", "file", "data"]] | None = None
+    defaultOutputModes: list[Literal["text", "file", "data"]] | None = None
+    _uadp: A2AUadpExtensions | None = None
+
+
+class McpToolUadp(BaseModel):
+    """UADP extensions on an MCP tool."""
+    gaid: str | None = None
+    trust_tier: str | None = None
+    content_hash: str | None = None
+
+
+class McpTool(BaseModel):
+    """Single tool in an MCP server manifest."""
+    name: str
+    description: str | None = None
+    inputSchema: dict | None = None
+    _uadp: McpToolUadp | None = None
+
+
+class McpServerManifest(BaseModel):
+    """MCP-compatible server manifest."""
+    name: str
+    version: str
+    description: str | None = None
+    tools: list[McpTool]
+
+
+# ─── Structured Query ────────────────────────────────────────
+
+class QueryFilter(BaseModel):
+    """Single filter in a structured query."""
+    field: str
+    operator: Literal["eq", "ne", "gt", "gte", "lt", "lte", "in", "contains", "exists", "not_exists"]
+    value: object
+
+
+class QuerySort(BaseModel):
+    """Sort specification in a structured query."""
+    field: str
+    order: Literal["asc", "desc"] = "asc"
+
+
+class StructuredQuery(BaseModel):
+    """Structured query for advanced resource discovery."""
+    filters: list[QueryFilter] | None = None
+    sort: list[QuerySort] | None = None
+    fields: list[str] | None = None
+    kinds: list[Literal["Skill", "Agent", "Tool"]] | None = None
+    federated: bool = False
+    page: int = 1
+    limit: int = 20
+    cursor: str | None = None
