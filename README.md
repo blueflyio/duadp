@@ -207,7 +207,7 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 
 ## Live Reference Node
 
-**Try it now** — the OSSA Reference Node is live at [`uadp.blueflyagents.com`](https://uadp.blueflyagents.com/.well-known/uadp.json):
+**Try it now** — Bluefly's hosted reference node is live at [`uadp.blueflyagents.com`](https://uadp.blueflyagents.com/.well-known/uadp.json):
 
 ```bash
 # Discovery manifest
@@ -242,21 +242,18 @@ Node ID: `did:web:uadp.blueflyagents.com` | Protocol: UADP v0.2.0 | 5 skills, 3 
 ## Run the Reference Node Locally
 
 ```bash
-# 1. Build the SDK
-cd sdk/typescript && npm ci && npm run build && cd ../..
-
-# 2. Install reference node dependencies
+# 1. Install reference node dependencies (SDK is on npm)
 cd reference-node && npm ci
 
-# 3. Seed the database
+# 2. Seed the database
 npx tsx src/seed.ts
 
-# 4. Start the node
+# 3. Start the node
 npx tsx src/index.ts
 # → UADP Reference Node "OSSA Reference Node" running at http://localhost:4200
 # → Discovery: http://localhost:4200/.well-known/uadp.json
 
-# 5. Verify
+# 4. Verify
 curl http://localhost:4200/.well-known/uadp.json
 curl http://localhost:4200/uadp/v1/health
 curl http://localhost:4200/uadp/v1/skills
@@ -341,7 +338,7 @@ cd sdk/typescript && npm test
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
+| Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
 | `@bluefly/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
 | `bluefly-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |

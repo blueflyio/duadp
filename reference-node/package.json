@@ -9,7 +9,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@bluefly/uadp": "file:../sdk/typescript",
+    "@bluefly/uadp": "^0.1.2",
     "better-sqlite3": "^11.0.0",
     "express": "^5.0.0",
     "cors": "^2.8.5"
