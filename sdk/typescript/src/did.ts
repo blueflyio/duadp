@@ -1,11 +1,22 @@
 /**
  * DID resolution for UADP identity verification.
  *
- * Supports:
- * - did:web — resolves via HTTPS to /.well-known/did.json or /path/did.json
- * - did:key — self-contained key material (Ed25519 only)
+ * Uses DIF (Decentralized Identity Foundation) standard libraries:
+ * - did-resolver — core resolution framework
+ * - web-did-resolver — did:web method
+ * - key-did-resolver — did:key method (Ed25519, secp256k1, etc.)
  */
 
+import { Resolver } from 'did-resolver';
+import type {
+  DIDDocument as DIFDIDDocument,
+  VerificationMethod as DIFVerificationMethod,
+  Service as DIFService,
+} from 'did-resolver';
+import { getResolver as getWebResolver } from 'web-did-resolver';
+import { getResolver as getKeyResolver } from 'key-did-resolver';
+
+// Re-export types compatible with our SDK's API surface
 export interface DIDDocument {
   '@context': string | string[];
   id: string;
@@ -42,142 +53,36 @@ export interface DIDResolutionResult {
   uadpEndpoint?: string;
 }
 
+// Singleton resolver instance — supports did:web and did:key out of the box
+const resolver = new Resolver({
+  ...getWebResolver(),
+  ...getKeyResolver(),
+});
+
 /**
  * Resolve a DID to its DID Document and extract verification keys.
+ * Delegates to DIF's did-resolver with web + key method support.
  *
  * @param did - The DID to resolve (e.g., "did:web:acme.com:agents:my-agent")
- * @param fetchFn - Optional custom fetch implementation
+ * @param _fetchFn - Deprecated, kept for API compatibility. web-did-resolver uses cross-fetch internally.
  * @returns The resolved DID document with extracted public keys
  */
 export async function resolveDID(
   did: string,
-  fetchFn: typeof fetch = globalThis.fetch.bind(globalThis),
+  _fetchFn?: typeof fetch,
 ): Promise<DIDResolutionResult> {
-  const [, method] = did.split(':');
+  const result = await resolver.resolve(did);
 
-  switch (method) {
-    case 'web':
-      return resolveDidWeb(did, fetchFn);
-    case 'key':
-      return resolveDidKey(did);
-    default:
-      throw new Error(`Unsupported DID method: ${method}. Supported: did:web, did:key`);
-  }
-}
-
-/**
- * Resolve did:web by fetching the DID document over HTTPS.
- *
- * did:web:example.com → https://example.com/.well-known/did.json
- * did:web:example.com:path:to:doc → https://example.com/path/to/doc/did.json
- */
-async function resolveDidWeb(
-  did: string,
-  fetchFn: typeof fetch,
-): Promise<DIDResolutionResult> {
-  const parts = did.split(':').slice(2); // Remove "did:web:"
-  if (parts.length === 0) throw new Error(`Invalid did:web: ${did}`);
-
-  const domain = decodeURIComponent(parts[0]);
-  const path = parts.slice(1).map(decodeURIComponent);
-
-  let url: string;
-  if (path.length === 0) {
-    url = `https://${domain}/.well-known/did.json`;
-  } else {
-    url = `https://${domain}/${path.join('/')}/did.json`;
+  if (result.didResolutionMetadata.error) {
+    throw new Error(`DID resolution failed for ${did}: ${result.didResolutionMetadata.error}`);
   }
 
-  const res = await fetchFn(url, {
-    headers: { 'Accept': 'application/did+json, application/json' },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to resolve ${did}: HTTP ${res.status} from ${url}`);
+  if (!result.didDocument) {
+    throw new Error(`No DID document returned for ${did}`);
   }
 
-  const document = await res.json() as DIDDocument;
+  const document = convertDocument(result.didDocument);
   return extractKeys(document);
-}
-
-/**
- * Resolve did:key — self-contained, no network request needed.
- * Only Ed25519 (z6Mk prefix in multibase) is supported.
- */
-function resolveDidKey(did: string): DIDResolutionResult {
-  const parts = did.split(':');
-  if (parts.length !== 3) throw new Error(`Invalid did:key: ${did}`);
-  const multibase = parts[2];
-
-  const verificationMethod: VerificationMethod = {
-    id: `${did}#${multibase}`,
-    type: 'Ed25519VerificationKey2020',
-    controller: did,
-    publicKeyMultibase: multibase,
-  };
-
-  const document: DIDDocument = {
-    '@context': ['https://www.w3.org/ns/did/v1'],
-    id: did,
-    verificationMethod: [verificationMethod],
-    authentication: [`${did}#${multibase}`],
-    assertionMethod: [`${did}#${multibase}`],
-  };
-
-  return extractKeys(document);
-}
-
-function extractKeys(document: DIDDocument): DIDResolutionResult {
-  const publicKeys: DIDResolutionResult['publicKeys'] = [];
-
-  const authIds = new Set(
-    (document.authentication ?? []).map(a => typeof a === 'string' ? a : a.id)
-  );
-  const assertIds = new Set(
-    (document.assertionMethod ?? []).map(a => typeof a === 'string' ? a : a.id)
-  );
-
-  for (const vm of document.verificationMethod ?? []) {
-    const purpose: string[] = [];
-    if (authIds.has(vm.id)) purpose.push('authentication');
-    if (assertIds.has(vm.id)) purpose.push('assertionMethod');
-    if (purpose.length === 0) purpose.push('verification');
-
-    publicKeys.push({
-      id: vm.id,
-      type: vm.type,
-      publicKeyMultibase: vm.publicKeyMultibase,
-      purpose,
-    });
-  }
-
-  // Also extract inline verification methods from auth/assertion arrays
-  for (const arr of [document.authentication, document.assertionMethod]) {
-    if (!arr) continue;
-    for (const item of arr) {
-      if (typeof item !== 'string' && !publicKeys.find(k => k.id === item.id)) {
-        publicKeys.push({
-          id: item.id,
-          type: item.type,
-          publicKeyMultibase: item.publicKeyMultibase,
-          purpose: ['verification'],
-        });
-      }
-    }
-  }
-
-  // Find UADP service endpoint
-  let uadpEndpoint: string | undefined;
-  for (const svc of document.service ?? []) {
-    if (svc.type === 'UadpNode' || svc.type === 'UadpResource') {
-      uadpEndpoint = typeof svc.serviceEndpoint === 'string'
-        ? svc.serviceEndpoint
-        : undefined;
-      break;
-    }
-  }
-
-  return { document, publicKeys, uadpEndpoint };
 }
 
 /**
@@ -209,7 +114,7 @@ export function didWebToUrl(did: string): string {
  * Full identity verification chain for a UADP resource.
  *
  * 1. Extract DID from resource identity
- * 2. Resolve DID document
+ * 2. Resolve DID document (via DIF resolver)
  * 3. Extract public key
  * 4. Verify signature
  * 5. Check lifecycle status
@@ -229,7 +134,6 @@ export async function verifyResourceIdentity(
   trustLevel: 'full' | 'partial' | 'none';
 }> {
   const checks: Array<{ check: string; passed: boolean; detail?: string }> = [];
-  const fetchFn = options?.fetchFn ?? globalThis.fetch.bind(globalThis);
 
   // Check 1: Resource has identity
   if (!resource.identity) {
@@ -245,10 +149,10 @@ export async function verifyResourceIdentity(
   }
   checks.push({ check: 'did_present', passed: true, detail: resource.identity.did });
 
-  // Check 3: Resolve DID document
+  // Check 3: Resolve DID document via DIF resolver
   let resolution: DIDResolutionResult;
   try {
-    resolution = await resolveDID(resource.identity.did, fetchFn);
+    resolution = await resolveDID(resource.identity.did);
     checks.push({ check: 'did_resolution', passed: true, detail: `Resolved ${resolution.publicKeys.length} keys` });
   } catch (err) {
     checks.push({ check: 'did_resolution', passed: false, detail: String(err) });
@@ -303,4 +207,98 @@ export async function verifyResourceIdentity(
   else trustLevel = 'none';
 
   return { verified: passCount === totalCount, checks, trustLevel };
+}
+
+// --- Internal helpers ---
+
+/**
+ * Convert DIF's DIDDocument type to our SDK's DIDDocument interface.
+ */
+function convertDocument(doc: DIFDIDDocument): DIDDocument {
+  return {
+    '@context': doc['@context'] as string | string[],
+    id: doc.id,
+    controller: doc.controller as string | string[] | undefined,
+    verificationMethod: doc.verificationMethod?.map(convertVM),
+    authentication: doc.authentication?.map(convertVMRef),
+    assertionMethod: doc.assertionMethod?.map(convertVMRef),
+    keyAgreement: doc.keyAgreement?.map(convertVMRef),
+    service: doc.service?.map(convertService),
+  };
+}
+
+function convertVM(vm: DIFVerificationMethod): VerificationMethod {
+  return {
+    id: vm.id,
+    type: vm.type,
+    controller: vm.controller,
+    publicKeyMultibase: vm.publicKeyMultibase,
+    publicKeyJwk: vm.publicKeyJwk as Record<string, string> | undefined,
+  };
+}
+
+function convertVMRef(ref: string | DIFVerificationMethod): string | VerificationMethod {
+  if (typeof ref === 'string') return ref;
+  return convertVM(ref);
+}
+
+function convertService(svc: DIFService): ServiceEndpoint {
+  return {
+    id: svc.id,
+    type: svc.type,
+    serviceEndpoint: svc.serviceEndpoint as string | string[] | Record<string, string>,
+  };
+}
+
+function extractKeys(document: DIDDocument): DIDResolutionResult {
+  const publicKeys: DIDResolutionResult['publicKeys'] = [];
+
+  const authIds = new Set(
+    (document.authentication ?? []).map(a => typeof a === 'string' ? a : a.id)
+  );
+  const assertIds = new Set(
+    (document.assertionMethod ?? []).map(a => typeof a === 'string' ? a : a.id)
+  );
+
+  for (const vm of document.verificationMethod ?? []) {
+    const purpose: string[] = [];
+    if (authIds.has(vm.id)) purpose.push('authentication');
+    if (assertIds.has(vm.id)) purpose.push('assertionMethod');
+    if (purpose.length === 0) purpose.push('verification');
+
+    publicKeys.push({
+      id: vm.id,
+      type: vm.type,
+      publicKeyMultibase: vm.publicKeyMultibase,
+      purpose,
+    });
+  }
+
+  // Also extract inline verification methods from auth/assertion arrays
+  for (const arr of [document.authentication, document.assertionMethod]) {
+    if (!arr) continue;
+    for (const item of arr) {
+      if (typeof item !== 'string' && !publicKeys.find(k => k.id === item.id)) {
+        publicKeys.push({
+          id: item.id,
+          type: item.type,
+          publicKeyMultibase: item.publicKeyMultibase,
+          purpose: ['verification'],
+        });
+      }
+    }
+  }
+
+  // Find UADP service endpoint
+  let uadpEndpoint: string | undefined;
+  for (const svc of document.service ?? []) {
+    if (svc.type === 'UadpNode' || svc.type === 'UadpResource') {
+      uadpEndpoint = typeof svc.serviceEndpoint === 'string'
+        ? svc.serviceEndpoint
+        : undefined;
+      break;
+    }
+  }
+
+  return { document, publicKeys, uadpEndpoint };
 }

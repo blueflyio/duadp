@@ -437,6 +437,127 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # ─── Health ─────────────────────────────────────────────────
+  /uadp/v1/health:
+    get:
+      operationId: getHealth
+      summary: Node Health Check
+      description: |
+        Returns node health, version, uptime, and resource counts.
+        Peers SHOULD poll this to update peer status.
+      tags: [Discovery]
+      responses:
+        "200":
+          description: Node is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeHealth"
+
+  # ─── Unified Search ────────────────────────────────────────
+  /uadp/v1/search:
+    get:
+      operationId: unifiedSearch
+      summary: Unified Search
+      description: |
+        Search across skills, agents, AND tools in a single call.
+        Returns mixed results with type discrimination via `kind`.
+        Supports protocol filtering, capability matching, and federated search.
+      tags: [Discovery]
+      parameters:
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/TrustTier"
+        - $ref: "#/components/parameters/Tag"
+        - $ref: "#/components/parameters/Federated"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+        - name: kind
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [Skill, Agent, Tool]
+          description: "Filter by resource kind(s). Omit to search all."
+        - name: protocol
+          in: query
+          schema:
+            type: string
+            enum: [mcp, a2a, function, rest, openai, langchain, crewai, autogen, grpc]
+          description: "Filter by protocol (tools only)."
+        - name: capability
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: "Filter by standardized capability tags."
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, deprecated, suspended]
+          description: "Filter by operational status."
+        - name: min_trust
+          in: query
+          schema:
+            type: string
+            enum: [official, verified-signature, signed, community, experimental]
+          description: "Minimum trust tier (inclusive upward)."
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [relevance, name, created, updated, reputation, trust_tier]
+          description: "Sort order (default: relevance when search is present, name otherwise)."
+      responses:
+        "200":
+          description: Unified search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/OssaResource"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+                  facets:
+                    $ref: "#/components/schemas/SearchFacets"
+
+  # ─── Agent JSON Index (.ajson) ─────────────────────────────
+  /uadp/v1/index/{gaid}:
+    get:
+      operationId: getAgentIndex
+      summary: Get Agent JSON Index Record
+      description: |
+        Returns a lightweight `.ajson` index record for any resource.
+        The index record is a universal discovery card linking to full
+        specifications in any protocol format (A2A, MCP, OSSA, OpenAPI).
+        Designed for fast indexing, caching, and cross-registry aggregation.
+      tags: [Discovery]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent JSON index record
+          content:
+            application/agent+json:
+              schema:
+                $ref: "#/components/schemas/AgentIndexRecord"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentIndexRecord"
+        "404":
+          description: Resource not found
+
   # ─── Governance (NIST AI RMF) ────────────────────────────────
   /uadp/v1/governance:
     get:
@@ -670,6 +791,352 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  # ─── Context Awareness & Token Efficiency ─────────────────────
+
+  /uadp/v1/context/negotiate:
+    post:
+      operationId: negotiateContext
+      summary: Negotiate Context Delivery
+      description: |
+        Negotiate how context is delivered to an agent before task execution.
+        Returns prioritized context layers, knowledge source references,
+        and cache entries. Agents request only what they need.
+      tags: [Context]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [agent_gaid, task]
+              properties:
+                agent_gaid:
+                  type: string
+                task:
+                  type: object
+                  required: [type]
+                  properties:
+                    type:
+                      type: string
+                    scope:
+                      type: array
+                      items:
+                        type: string
+                    max_tokens:
+                      type: integer
+      responses:
+        "200":
+          description: Context negotiation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContextNegotiation"
+
+  /uadp/v1/context/summary:
+    get:
+      operationId: getContextSummary
+      summary: Get Cached Context Summary
+      description: Returns pre-computed context summary for a domain with adaptive cache layers.
+      tags: [Context]
+      parameters:
+        - name: domain
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: task_type
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Context summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContextNegotiation"
+
+  /uadp/v1/analytics/tokens:
+    post:
+      operationId: reportTokenUsage
+      summary: Report Token Usage
+      description: Report token consumption for an agent execution.
+      tags: [Analytics]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenAnalytics"
+      responses:
+        "204":
+          description: Token usage recorded
+
+  /uadp/v1/analytics/tokens/{gaid}:
+    get:
+      operationId: getTokenAnalytics
+      summary: Get Token Analytics
+      description: Returns aggregate token analytics for an agent with period filtering.
+      tags: [Analytics]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month, all_time]
+      responses:
+        "200":
+          description: Token analytics aggregate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenAnalyticsAggregate"
+
+  /uadp/v1/analytics/fingerprint/{gaid}:
+    get:
+      operationId: getCapabilityFingerprint
+      summary: Get Capability Fingerprint
+      description: Returns empirical capability fingerprint computed from actual execution data.
+      tags: [Analytics]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Capability fingerprint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapabilityFingerprint"
+
+  /uadp/v1/feedback:
+    post:
+      operationId: submitFeedback
+      summary: Submit Agent Feedback
+      description: Submit 360-degree feedback on an agent execution from any source.
+      tags: [Feedback]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentFeedback"
+      responses:
+        "201":
+          description: Feedback recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentFeedback"
+
+  /uadp/v1/feedback/{gaid}:
+    get:
+      operationId: getAgentFeedback
+      summary: Get Agent Feedback
+      tags: [Feedback]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [rating, correction, reward, penalty, observation]
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Feedback list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentFeedback"
+
+  /uadp/v1/feedback/{gaid}/reputation:
+    get:
+      operationId: getAgentReputation
+      summary: Get Agent Reputation Score
+      description: Returns computed reputation from feedback, rewards, and attestations.
+      tags: [Feedback]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent reputation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentReputation"
+
+  /uadp/v1/feedback/rewards:
+    post:
+      operationId: recordReward
+      summary: Record Agent Reward
+      tags: [Feedback]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RewardEvent"
+      responses:
+        "201":
+          description: Reward recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardEvent"
+
+  /uadp/v1/attestations:
+    post:
+      operationId: submitAttestation
+      summary: Submit Outcome Attestation
+      description: Submit a signed, verifiable attestation of a task outcome.
+      tags: [Attestations]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OutcomeAttestation"
+      responses:
+        "201":
+          description: Attestation recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomeAttestation"
+
+  /uadp/v1/attestations/{gaid}:
+    get:
+      operationId: getAttestations
+      summary: Get Agent Attestations
+      tags: [Attestations]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: outcome
+          in: query
+          schema:
+            type: string
+            enum: [success, partial_success, failure, timeout]
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Attestation list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OutcomeAttestation"
+
+  /uadp/v1/delegate:
+    post:
+      operationId: delegateTask
+      summary: Delegate Task to Agent
+      description: |
+        Delegate work with compressed context transfer. The delegating agent
+        passes minimal state — the delegate starts smart, not from scratch.
+      tags: [Orchestration]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DelegationRequest"
+      responses:
+        "200":
+          description: Delegation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DelegationResult"
+
+  /uadp/v1/delegate/plans:
+    post:
+      operationId: createOrchestrationPlan
+      summary: Create Orchestration Plan
+      description: |
+        Create a multi-step plan distributing work across agent types
+        (orchestrator, worker, specialist, critic, monitor, gateway).
+      tags: [Orchestration]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrchestrationPlan"
+      responses:
+        "201":
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrationPlan"
+
+  /uadp/v1/delegate/plans/{planId}:
+    get:
+      operationId: getOrchestrationPlan
+      summary: Get Orchestration Plan
+      tags: [Orchestration]
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Orchestration plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrchestrationPlan"
 
 components:
   securitySchemes:
@@ -1123,6 +1590,23 @@ components:
         content_hash:
           type: string
           description: "SHA-256 of canonical manifest. Content-addressed dedup."
+        endpoints:
+          $ref: "#/components/schemas/ProtocolEndpoints"
+          description: "Multi-protocol endpoint map (A2A, MCP, OSSA, OpenAPI, REST, etc.)."
+        pricing:
+          $ref: "#/components/schemas/PricingInfo"
+          description: "Cost/pricing metadata."
+        sla:
+          $ref: "#/components/schemas/SLAInfo"
+          description: "Service level agreement."
+        status:
+          type: string
+          enum: [active, deprecated, suspended, sunset]
+          description: "Operational status."
+        sunset_date:
+          type: string
+          format: date-time
+          description: "Planned decommissioning date (NIST MG-4.1)."
 
     OssaSkill:
       allOf:
@@ -1272,26 +1756,100 @@ components:
     WebFingerResponse:
       type: object
       required: [subject, links]
+      description: |
+        RFC 7033 WebFinger response with protocol-specific link relations.
+        A GAID query returns links to ALL supported protocol endpoints.
       properties:
         subject:
           type: string
           description: The queried GAID URI
+        aliases:
+          type: array
+          items:
+            type: string
+          description: "Alternative URIs (e.g., agent://, did:web:, uadp://)"
         links:
           type: array
           items:
-            type: object
-            properties:
-              rel:
-                type: string
-              type:
-                type: string
-              href:
-                type: string
-                format: uri
+            $ref: "#/components/schemas/WebFingerLink"
         properties:
           type: object
           additionalProperties:
             type: string
+      example:
+        subject: "uadp://acme.com/agents/code-reviewer"
+        aliases:
+          - "agent://acme.com/agents/code-reviewer"
+          - "did:web:acme.com:agents:code-reviewer"
+        links:
+          - rel: "https://uadp.dev/rel/self"
+            type: "application/json"
+            href: "https://acme.com/uadp/v1/agents/code-reviewer"
+          - rel: "https://uadp.dev/rel/a2a"
+            type: "application/json"
+            href: "https://acme.com/.well-known/agent.json"
+            titles:
+              default: "A2A Agent Card"
+          - rel: "https://uadp.dev/rel/mcp"
+            type: "application/json"
+            href: "mcp://acme.com/tools/code-reviewer"
+            titles:
+              default: "MCP Server"
+          - rel: "https://uadp.dev/rel/ossa"
+            type: "application/yaml"
+            href: "https://acme.com/manifests/code-reviewer.ossa.yaml"
+            titles:
+              default: "OSSA Manifest"
+          - rel: "https://uadp.dev/rel/openapi"
+            type: "application/openapi+yaml"
+            href: "https://acme.com/api/code-reviewer/openapi.yaml"
+          - rel: "https://uadp.dev/rel/identity"
+            type: "application/json"
+            href: "https://acme.com/uadp/v1/identity/uadp://acme.com/agents/code-reviewer"
+          - rel: "https://uadp.dev/rel/provenance"
+            type: "application/json"
+            href: "https://acme.com/uadp/v1/provenance/uadp://acme.com/agents/code-reviewer"
+        properties:
+          "https://uadp.dev/ns/trust_tier": "verified-signature"
+          "https://uadp.dev/ns/version": "1.2.0"
+          "https://uadp.dev/ns/status": "active"
+
+    WebFingerLink:
+      type: object
+      required: [rel, href]
+      description: |
+        WebFinger link with UADP-defined link relations.
+        Standard link relations:
+          - `https://uadp.dev/rel/self` — UADP resource endpoint
+          - `https://uadp.dev/rel/a2a` — A2A Agent Card (Google A2A protocol)
+          - `https://uadp.dev/rel/mcp` — MCP server manifest (Anthropic MCP)
+          - `https://uadp.dev/rel/ossa` — OSSA governance manifest
+          - `https://uadp.dev/rel/openapi` — OpenAPI specification
+          - `https://uadp.dev/rel/identity` — Agent identity record
+          - `https://uadp.dev/rel/provenance` — Supply chain provenance
+          - `https://uadp.dev/rel/health` — Health check endpoint
+          - `https://uadp.dev/rel/ajson` — Agent JSON index record
+      properties:
+        rel:
+          type: string
+          description: "Link relation type (IANA or UADP namespace)"
+        type:
+          type: string
+          description: "MIME type of the linked resource"
+        href:
+          type: string
+          format: uri
+          description: "URL of the linked resource"
+        titles:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Human-readable titles keyed by language tag"
+        properties:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Additional metadata about this link"
 
     ValidationResult:
       type: object
@@ -1661,3 +2219,811 @@ components:
           items:
             type: string
           description: "DID verification methods (e.g., did:web resolution, DNS TXT lookup)."
+
+    # ─── Node Health ───────────────────────────────────────────────
+
+    NodeHealth:
+      type: object
+      required: [status, protocol_version, node_name, uptime_seconds]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, maintenance]
+        protocol_version:
+          type: string
+        node_name:
+          type: string
+        node_id:
+          type: string
+        uptime_seconds:
+          type: integer
+        resource_counts:
+          type: object
+          properties:
+            skills:
+              type: integer
+            agents:
+              type: integer
+            tools:
+              type: integer
+            peers:
+              type: integer
+        federation:
+          type: object
+          properties:
+            peer_count:
+              type: integer
+            healthy_peers:
+              type: integer
+            last_sync:
+              type: string
+              format: date-time
+        version:
+          type: string
+          description: "Implementation version (not protocol version)"
+
+    # ─── Search Facets ───────────────────────────────────────────
+
+    SearchFacets:
+      type: object
+      description: "Faceted search metadata for filtering refinement."
+      properties:
+        kinds:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Count per resource kind (e.g., {Skill: 12, Agent: 5, Tool: 8})"
+        categories:
+          type: object
+          additionalProperties:
+            type: integer
+        trust_tiers:
+          type: object
+          additionalProperties:
+            type: integer
+        protocols:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Count per protocol (tools only)"
+        tags:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Top tags with counts"
+
+    # ─── Agent JSON Index Record (.ajson) ────────────────────────
+
+    AgentIndexRecord:
+      type: object
+      required: [gaid, kind, name, endpoints]
+      description: |
+        Lightweight, universal discovery index record.
+        Links to full specifications in any protocol format.
+        Designed as the "index card" for cross-registry aggregation.
+        Content-Type: application/agent+json
+      properties:
+        gaid:
+          type: string
+          description: "Global Agent Identifier (uadp://namespace/kind/name)"
+        kind:
+          type: string
+          enum: [Skill, Agent, Tool, Workflow]
+        name:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+          maxLength: 500
+        status:
+          type: string
+          enum: [active, deprecated, suspended, sunset]
+        trust_tier:
+          type: string
+          enum: [official, verified-signature, signed, community, experimental]
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: "Standardized capability tags from UADP taxonomy"
+        tags:
+          type: array
+          items:
+            type: string
+        endpoints:
+          $ref: "#/components/schemas/ProtocolEndpoints"
+        identity:
+          type: object
+          properties:
+            did:
+              type: string
+            node_id:
+              type: string
+            publisher:
+              type: string
+        pricing:
+          $ref: "#/components/schemas/PricingInfo"
+        sla:
+          $ref: "#/components/schemas/SLAInfo"
+        content_hash:
+          type: string
+          description: "SHA-256 hash for dedup and integrity verification"
+        updated:
+          type: string
+          format: date-time
+        sunset_date:
+          type: string
+          format: date-time
+          description: "NIST MG-4.1 — planned decommissioning date"
+      example:
+        gaid: "uadp://acme.com/agents/code-reviewer"
+        kind: Agent
+        name: code-reviewer
+        version: "1.2.0"
+        description: "Reviews code for quality, security, and style"
+        status: active
+        trust_tier: verified-signature
+        capabilities: [code-review, security-analysis, style-check]
+        tags: [security, quality, devops]
+        endpoints:
+          uadp: "https://acme.com/uadp/v1/agents/code-reviewer"
+          a2a: "https://acme.com/.well-known/agent.json"
+          mcp: "mcp://acme.com/tools/code-reviewer"
+          ossa: "https://acme.com/manifests/code-reviewer.ossa.yaml"
+          openapi: "https://acme.com/api/code-reviewer/openapi.yaml"
+          health: "https://acme.com/agents/code-reviewer/health"
+        identity:
+          did: "did:web:acme.com:agents:code-reviewer"
+          publisher: "Acme Corp"
+        pricing:
+          model: free
+        sla:
+          availability: "99.9%"
+          max_latency_ms: 5000
+        content_hash: "sha256:a1b2c3d4e5f6..."
+        updated: "2026-03-05T10:00:00Z"
+
+    ProtocolEndpoints:
+      type: object
+      description: |
+        Multi-protocol endpoint map. Each key is a protocol identifier,
+        the value is the endpoint URL or URI for that protocol.
+        This is what makes UADP a universal discovery layer — a single
+        record links to every protocol endpoint for a resource.
+      properties:
+        uadp:
+          type: string
+          format: uri
+          description: "UADP resource endpoint"
+        a2a:
+          type: string
+          format: uri
+          description: "Google A2A Agent Card endpoint"
+        mcp:
+          type: string
+          description: "MCP server URI (mcp:// or https://)"
+        ossa:
+          type: string
+          format: uri
+          description: "OSSA manifest URL"
+        openapi:
+          type: string
+          format: uri
+          description: "OpenAPI specification URL"
+        rest:
+          type: string
+          format: uri
+          description: "REST API base URL"
+        grpc:
+          type: string
+          description: "gRPC endpoint"
+        graphql:
+          type: string
+          format: uri
+          description: "GraphQL endpoint"
+        health:
+          type: string
+          format: uri
+          description: "Health check endpoint"
+      additionalProperties:
+        type: string
+        description: "Custom protocol endpoints"
+
+    PricingInfo:
+      type: object
+      description: "Cost/pricing metadata for the resource."
+      properties:
+        model:
+          type: string
+          enum: [free, metered, subscription, enterprise, contact]
+        currency:
+          type: string
+          default: "USD"
+        per_request:
+          type: number
+          description: "Cost per API call (metered model)"
+        per_token:
+          type: number
+          description: "Cost per token (metered model)"
+        monthly:
+          type: number
+          description: "Monthly subscription cost"
+        free_tier:
+          type: object
+          properties:
+            requests_per_month:
+              type: integer
+            tokens_per_month:
+              type: integer
+
+    SLAInfo:
+      type: object
+      description: "Service Level Agreement metadata."
+      properties:
+        availability:
+          type: string
+          description: "Uptime SLA (e.g., 99.9%)"
+        max_latency_ms:
+          type: integer
+          description: "Maximum P99 latency in milliseconds"
+        rate_limit:
+          type: object
+          properties:
+            requests_per_minute:
+              type: integer
+            requests_per_day:
+              type: integer
+            tokens_per_minute:
+              type: integer
+        support:
+          type: string
+          enum: [community, email, priority, dedicated]
+
+    # ─── OSSA Agent Types (aligned with openstandardagents spec) ───
+
+    AgentType:
+      type: string
+      enum: [orchestrator, worker, specialist, critic, monitor, gateway]
+      description: OSSA agent type classification
+
+    AgentStatus:
+      type: string
+      enum: [registered, active, inactive, suspended, deprecated]
+      description: Current operational status of the agent
+
+    # ─── Context Awareness & Token Efficiency ──────────────────────
+
+    ContextNegotiation:
+      type: object
+      description: Context delivery negotiation for agent task execution
+      properties:
+        max_context_tokens:
+          type: integer
+        delivery_mode:
+          type: string
+          enum: [layered, flat, streaming]
+        layers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContextLayer"
+        knowledge_sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/KnowledgeSource"
+        cache_refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContextCacheRef"
+
+    ContextLayer:
+      type: object
+      required: [name, priority]
+      properties:
+        name:
+          type: string
+        priority:
+          type: integer
+        max_tokens:
+          type: integer
+        content_type:
+          type: string
+          enum: [code, documentation, schema, config, embedding, summary]
+        required:
+          type: boolean
+
+    KnowledgeSource:
+      type: object
+      required: [type, endpoint]
+      properties:
+        type:
+          type: string
+          enum: [qdrant, neo4j, weaviate, pinecone, meilisearch, elasticsearch, custom]
+        endpoint:
+          type: string
+          format: uri
+        collection:
+          type: string
+        auth:
+          type: string
+          enum: [bearer, api-key, none]
+        embedding_model:
+          type: string
+        embedding_dimensions:
+          type: integer
+
+    ContextCacheRef:
+      type: object
+      required: [cache_id, domain, content_hash, computed_at]
+      properties:
+        cache_id:
+          type: string
+        domain:
+          type: string
+        content_hash:
+          type: string
+        computed_at:
+          type: string
+          format: date-time
+        ttl:
+          type: integer
+
+    # ─── Token Analytics ───────────────────────────────────────────
+
+    TokenAnalytics:
+      type: object
+      required: [total_tokens, input_tokens, output_tokens, task_completed, timestamp]
+      properties:
+        total_tokens:
+          type: integer
+        input_tokens:
+          type: integer
+        output_tokens:
+          type: integer
+        cost_usd:
+          type: number
+        model:
+          type: string
+        task_completed:
+          type: boolean
+        duration_ms:
+          type: integer
+        efficiency_score:
+          type: number
+        context_utilization:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    TokenAnalyticsAggregate:
+      type: object
+      required: [gaid, period, execution_count, avg_tokens_per_task, success_rate]
+      properties:
+        gaid:
+          type: string
+        period:
+          type: string
+          enum: [hour, day, week, month, all_time]
+        execution_count:
+          type: integer
+        avg_tokens_per_task:
+          type: number
+        median_tokens_per_task:
+          type: number
+        p95_tokens_per_task:
+          type: number
+        avg_cost_per_task_usd:
+          type: number
+        total_cost_usd:
+          type: number
+        success_rate:
+          type: number
+        avg_efficiency_score:
+          type: number
+        by_task_type:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              count:
+                type: integer
+              avg_tokens:
+                type: number
+              success_rate:
+                type: number
+              avg_cost_usd:
+                type: number
+        by_domain:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              count:
+                type: integer
+              avg_tokens:
+                type: number
+              success_rate:
+                type: number
+
+    CapabilityFingerprint:
+      type: object
+      required: [agent_gaid, sample_size, updated_at]
+      properties:
+        agent_gaid:
+          type: string
+        domains:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              accuracy:
+                type: number
+              avg_tokens:
+                type: number
+              sample_size:
+                type: integer
+              avg_cost_usd:
+                type: number
+        task_types:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              accuracy:
+                type: number
+              avg_cost_usd:
+                type: number
+              avg_tokens:
+                type: number
+              sample_size:
+                type: integer
+              avg_duration_ms:
+                type: number
+        model_affinity:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              efficiency:
+                type: number
+              quality:
+                type: number
+        sample_size:
+          type: integer
+        updated_at:
+          type: string
+          format: date-time
+
+    # ─── Feedback & Rewards ────────────────────────────────────────
+
+    AgentFeedback:
+      type: object
+      required: [agent_gaid, source, type, timestamp]
+      properties:
+        feedback_id:
+          type: string
+        agent_gaid:
+          type: string
+        task_ref:
+          type: string
+        source:
+          $ref: "#/components/schemas/FeedbackSource"
+        type:
+          type: string
+          enum: [rating, correction, reward, penalty, observation]
+        rating:
+          type: number
+        rating_scale:
+          type: string
+          enum: ["1-5", "0-1", percentage]
+        comment:
+          type: string
+        dimensions:
+          $ref: "#/components/schemas/FeedbackDimensions"
+        timestamp:
+          type: string
+          format: date-time
+        signature:
+          $ref: "#/components/schemas/ResourceSignature"
+
+    FeedbackSource:
+      type: object
+      required: [type, id]
+      properties:
+        type:
+          type: string
+          enum: [human, agent, system, automated-test]
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, reviewer, peer-agent, supervisor-agent, qa, admin]
+
+    FeedbackDimensions:
+      type: object
+      properties:
+        accuracy:
+          type: number
+        efficiency:
+          type: number
+        instruction_following:
+          type: number
+        quality:
+          type: number
+        helpfulness:
+          type: number
+        scope_adherence:
+          type: number
+        custom:
+          type: object
+          additionalProperties:
+            type: number
+
+    RewardEvent:
+      type: object
+      required: [agent_gaid, trigger, type, timestamp]
+      properties:
+        reward_id:
+          type: string
+        agent_gaid:
+          type: string
+        trigger:
+          type: string
+          enum: [task_completion, quality_threshold, efficiency_bonus, streak, peer_endorsement, manual]
+        type:
+          type: string
+          enum: [reputation_boost, priority_increase, capability_unlock, token_credit, badge]
+        value:
+          type: number
+        badge:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        task_ref:
+          type: string
+
+    AgentReputation:
+      type: object
+      required: [agent_gaid, overall_score, feedback_count, feedback_summary, reward_count, computed_at]
+      properties:
+        agent_gaid:
+          type: string
+        overall_score:
+          type: number
+        feedback_count:
+          type: integer
+        feedback_summary:
+          type: object
+          properties:
+            positive:
+              type: integer
+            neutral:
+              type: integer
+            negative:
+              type: integer
+        dimension_averages:
+          $ref: "#/components/schemas/FeedbackDimensions"
+        reward_count:
+          type: integer
+        badges:
+          type: array
+          items:
+            type: string
+        trend:
+          type: string
+          enum: [improving, stable, declining]
+        computed_at:
+          type: string
+          format: date-time
+
+    # ─── Outcome Attestations ──────────────────────────────────────
+
+    OutcomeAttestation:
+      type: object
+      required: [agent_gaid, task_hash, outcome, metrics, attester, timestamp]
+      properties:
+        attestation_id:
+          type: string
+        agent_gaid:
+          type: string
+        task_hash:
+          type: string
+        outcome:
+          type: string
+          enum: [success, partial_success, failure, timeout]
+        metrics:
+          type: object
+          required: [tokens_used, duration_ms, human_override]
+          properties:
+            tokens_used:
+              type: integer
+            duration_ms:
+              type: integer
+            cost_usd:
+              type: number
+            human_override:
+              type: boolean
+            confidence:
+              type: number
+        attester:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        signature:
+          $ref: "#/components/schemas/ResourceSignature"
+
+    # ─── Multi-Agent Orchestration ─────────────────────────────────
+
+    DelegationRequest:
+      type: object
+      required: [from_agent, to_agent, task]
+      properties:
+        from_agent:
+          type: string
+        to_agent:
+          type: string
+        task:
+          $ref: "#/components/schemas/DelegationTask"
+        context_transfer:
+          $ref: "#/components/schemas/ContextTransfer"
+        budget:
+          $ref: "#/components/schemas/TaskBudget"
+        callback_url:
+          type: string
+          format: uri
+        depth:
+          type: integer
+        max_depth:
+          type: integer
+
+    DelegationTask:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        scope:
+          type: array
+          items:
+            type: string
+        inputs:
+          type: object
+          additionalProperties: true
+        expected_output:
+          type: string
+        priority:
+          type: string
+          enum: [critical, high, normal, low]
+        deadline:
+          type: string
+          format: date-time
+
+    ContextTransfer:
+      type: object
+      properties:
+        compressed_state:
+          type: string
+        encoding:
+          type: string
+          enum: [base64, gzip+base64, json]
+        tokens_used_so_far:
+          type: integer
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              content:
+                type: string
+              confidence:
+                type: number
+        cache_refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContextCacheRef"
+        knowledge_access:
+          type: array
+          items:
+            $ref: "#/components/schemas/KnowledgeSource"
+
+    TaskBudget:
+      type: object
+      properties:
+        max_tokens:
+          type: integer
+        max_cost_usd:
+          type: number
+        max_duration_ms:
+          type: integer
+        max_delegation_depth:
+          type: integer
+
+    DelegationResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [completed, failed, partial, timeout, rejected]
+        result:
+          type: object
+          additionalProperties: true
+        analytics:
+          $ref: "#/components/schemas/TokenAnalytics"
+        delegate_feedback:
+          type: string
+        delegation_chain:
+          type: array
+          items:
+            type: object
+            properties:
+              agent_gaid:
+                type: string
+              task_type:
+                type: string
+              tokens_used:
+                type: integer
+              status:
+                type: string
+
+    OrchestrationPlan:
+      type: object
+      required: [orchestrator_gaid, task, steps, strategy]
+      properties:
+        plan_id:
+          type: string
+        orchestrator_gaid:
+          type: string
+        task:
+          $ref: "#/components/schemas/DelegationTask"
+        steps:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrchestrationStep"
+        strategy:
+          type: string
+          enum: [sequential, parallel, dag, adaptive]
+        budget:
+          $ref: "#/components/schemas/TaskBudget"
+        status:
+          type: string
+          enum: [planning, executing, completed, failed, cancelled]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    OrchestrationStep:
+      type: object
+      required: [step_id, name, task]
+      properties:
+        step_id:
+          type: string
+        name:
+          type: string
+        agent_type:
+          $ref: "#/components/schemas/AgentType"
+        agent_gaid:
+          type: string
+        task:
+          $ref: "#/components/schemas/DelegationTask"
+        depends_on:
+          type: array
+          items:
+            type: string
+        budget:
+          $ref: "#/components/schemas/TaskBudget"
+        status:
+          type: string
+          enum: [pending, running, completed, failed, skipped]
+        result:
+          $ref: "#/components/schemas/DelegationResult"

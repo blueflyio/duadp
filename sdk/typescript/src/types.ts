@@ -488,3 +488,445 @@ export interface AgentKey {
   created?: string;
   expires?: string;
 }
+
+// ─── OSSA Agent Types (aligned with openstandardagents spec) ─────
+
+/** OSSA agent type classification */
+export type AgentType = 'orchestrator' | 'worker' | 'specialist' | 'critic' | 'monitor' | 'gateway';
+
+/** Agent operational status */
+export type AgentStatus = 'registered' | 'active' | 'inactive' | 'suspended' | 'deprecated';
+
+// ─── Context Awareness & Token Efficiency ────────────────────────
+
+/** Context negotiation — how an agent receives work context from a UADP node */
+export interface ContextNegotiation {
+  /** Maximum tokens this agent should receive as context */
+  max_context_tokens?: number;
+  /** Preferred context delivery: layered (priority tiers) or flat (single blob) */
+  delivery_mode?: 'layered' | 'flat' | 'streaming';
+  /** Context layers in priority order — node serves highest priority first */
+  layers?: ContextLayer[];
+  /** Knowledge graph sources the agent can query for domain context */
+  knowledge_sources?: KnowledgeSource[];
+  /** Cached context references — skip re-fetching if hash unchanged */
+  cache_refs?: ContextCacheRef[];
+}
+
+/** Single context layer with priority and token budget */
+export interface ContextLayer {
+  /** Layer name (e.g., "diff", "architecture", "conventions") */
+  name: string;
+  /** Priority: lower number = higher priority. Layer 0 always delivered. */
+  priority: number;
+  /** Maximum tokens for this layer */
+  max_tokens?: number;
+  /** Content type hint for the node */
+  content_type?: 'code' | 'documentation' | 'schema' | 'config' | 'embedding' | 'summary';
+  /** If true, this layer must be included (not optional) */
+  required?: boolean;
+}
+
+/** Knowledge source the agent can query for contextual information */
+export interface KnowledgeSource {
+  /** Source type */
+  type: 'qdrant' | 'neo4j' | 'weaviate' | 'pinecone' | 'meilisearch' | 'elasticsearch' | 'custom';
+  /** Endpoint URL */
+  endpoint: string;
+  /** Collection/index name */
+  collection?: string;
+  /** Authentication method */
+  auth?: 'bearer' | 'api-key' | 'none';
+  /** Embedding model used (for vector stores) */
+  embedding_model?: string;
+  /** Embedding dimensions */
+  embedding_dimensions?: number;
+}
+
+/** Cached context reference — enables skip-if-unchanged semantics */
+export interface ContextCacheRef {
+  /** Cache identifier */
+  cache_id: string;
+  /** Domain this cache covers */
+  domain: string;
+  /** Content hash — if unchanged, agent can skip re-reading */
+  content_hash: string;
+  /** When this cache was last computed */
+  computed_at: string;
+  /** Time-to-live in seconds */
+  ttl?: number;
+}
+
+// ─── Token Analytics & Cost Tracking ─────────────────────────────
+
+/** Token usage analytics for an agent or task execution */
+export interface TokenAnalytics {
+  /** Total tokens consumed (input + output) */
+  total_tokens: number;
+  /** Input/context tokens */
+  input_tokens: number;
+  /** Output/generation tokens */
+  output_tokens: number;
+  /** Cost in USD */
+  cost_usd?: number;
+  /** Model used */
+  model?: string;
+  /** Task completion: did the agent finish successfully? */
+  task_completed: boolean;
+  /** Duration in milliseconds */
+  duration_ms?: number;
+  /** Efficiency score: task_quality / tokens_used (higher = better) */
+  efficiency_score?: number;
+  /** Context tokens that were actually used vs delivered */
+  context_utilization?: number;
+  /** Timestamp */
+  timestamp: string;
+}
+
+/** Aggregate token analytics across multiple executions */
+export interface TokenAnalyticsAggregate {
+  /** Agent or resource GAID */
+  gaid: string;
+  /** Time period */
+  period: 'hour' | 'day' | 'week' | 'month' | 'all_time';
+  /** Number of executions in this period */
+  execution_count: number;
+  /** Average tokens per task */
+  avg_tokens_per_task: number;
+  /** Median tokens per task */
+  median_tokens_per_task?: number;
+  /** P95 tokens per task */
+  p95_tokens_per_task?: number;
+  /** Average cost per task in USD */
+  avg_cost_per_task_usd?: number;
+  /** Total cost in this period */
+  total_cost_usd?: number;
+  /** Success rate (0.0 to 1.0) */
+  success_rate: number;
+  /** Average efficiency score */
+  avg_efficiency_score?: number;
+  /** Breakdown by task type */
+  by_task_type?: Record<string, {
+    count: number;
+    avg_tokens: number;
+    success_rate: number;
+    avg_cost_usd?: number;
+  }>;
+  /** Breakdown by domain */
+  by_domain?: Record<string, {
+    count: number;
+    avg_tokens: number;
+    success_rate: number;
+  }>;
+}
+
+// ─── Feedback & Reward Systems ───────────────────────────────────
+
+/** Feedback on an agent's task execution — 360-degree from multiple sources */
+export interface AgentFeedback {
+  /** Unique feedback ID */
+  feedback_id: string;
+  /** Agent that received the feedback */
+  agent_gaid: string;
+  /** Task or execution this feedback relates to */
+  task_ref?: string;
+  /** Who gave the feedback */
+  source: FeedbackSource;
+  /** Feedback type */
+  type: 'rating' | 'correction' | 'reward' | 'penalty' | 'observation';
+  /** Numeric rating (1-5 or 0.0-1.0 depending on scale) */
+  rating?: number;
+  /** Rating scale */
+  rating_scale?: '1-5' | '0-1' | 'percentage';
+  /** Qualitative feedback */
+  comment?: string;
+  /** Structured dimensions */
+  dimensions?: FeedbackDimensions;
+  /** Timestamp */
+  timestamp: string;
+  /** Cryptographic signature of the feedback (verifiable) */
+  signature?: ResourceSignature;
+}
+
+/** Who provided the feedback */
+export interface FeedbackSource {
+  /** Source type */
+  type: 'human' | 'agent' | 'system' | 'automated-test';
+  /** Identifier (DID, user ID, or agent GAID) */
+  id: string;
+  /** Role of the feedback provider */
+  role?: 'user' | 'reviewer' | 'peer-agent' | 'supervisor-agent' | 'qa' | 'admin';
+}
+
+/** Structured feedback across multiple quality dimensions */
+export interface FeedbackDimensions {
+  /** Was the output accurate/correct? */
+  accuracy?: number;
+  /** Was it completed in reasonable time/tokens? */
+  efficiency?: number;
+  /** Did it follow instructions? */
+  instruction_following?: number;
+  /** Code quality, safety, security */
+  quality?: number;
+  /** Was the output useful to the requester? */
+  helpfulness?: number;
+  /** Did it stay within scope? */
+  scope_adherence?: number;
+  /** Custom dimensions */
+  custom?: Record<string, number>;
+}
+
+/** Reward event — tracks incentives for agent behavior */
+export interface RewardEvent {
+  /** Reward ID */
+  reward_id: string;
+  /** Agent receiving the reward */
+  agent_gaid: string;
+  /** What triggered the reward */
+  trigger: 'task_completion' | 'quality_threshold' | 'efficiency_bonus' | 'streak' | 'peer_endorsement' | 'manual';
+  /** Reward type */
+  type: 'reputation_boost' | 'priority_increase' | 'capability_unlock' | 'token_credit' | 'badge';
+  /** Numeric value of the reward */
+  value?: number;
+  /** Badge or achievement name */
+  badge?: string;
+  /** Timestamp */
+  timestamp: string;
+  /** Task reference */
+  task_ref?: string;
+}
+
+/** Aggregate reputation score computed from feedback + rewards */
+export interface AgentReputation {
+  /** Agent GAID */
+  agent_gaid: string;
+  /** Overall reputation score (0.0 to 1.0) */
+  overall_score: number;
+  /** Total feedback count */
+  feedback_count: number;
+  /** Feedback breakdown */
+  feedback_summary: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  /** Dimension averages */
+  dimension_averages?: Partial<FeedbackDimensions>;
+  /** Reward count */
+  reward_count: number;
+  /** Badges earned */
+  badges?: string[];
+  /** Trend: improving, stable, declining */
+  trend?: 'improving' | 'stable' | 'declining';
+  /** Computed at */
+  computed_at: string;
+}
+
+// ─── Multi-Agent Orchestration ───────────────────────────────────
+
+/** Delegation request — one agent hands off work to another */
+export interface DelegationRequest {
+  /** Delegating agent */
+  from_agent: string;
+  /** Target agent */
+  to_agent: string;
+  /** Task description */
+  task: DelegationTask;
+  /** Compressed context state from the delegating agent */
+  context_transfer?: ContextTransfer;
+  /** Budget constraints */
+  budget?: TaskBudget;
+  /** Callback URL for status updates */
+  callback_url?: string;
+  /** Delegation chain depth (prevents infinite delegation) */
+  depth?: number;
+  /** Maximum allowed depth */
+  max_depth?: number;
+}
+
+/** Task being delegated */
+export interface DelegationTask {
+  /** Task type */
+  type: string;
+  /** Human-readable description */
+  description?: string;
+  /** Scope constraint (e.g., file paths, modules) */
+  scope?: string[];
+  /** Input data or references */
+  inputs?: Record<string, unknown>;
+  /** Expected output format */
+  expected_output?: string;
+  /** Priority */
+  priority?: 'critical' | 'high' | 'normal' | 'low';
+  /** Deadline (ISO 8601) */
+  deadline?: string;
+}
+
+/** Compressed context passed between agents during delegation */
+export interface ContextTransfer {
+  /** Compressed state blob (agent-specific format) */
+  compressed_state?: string;
+  /** Encoding of the compressed state */
+  encoding?: 'base64' | 'gzip+base64' | 'json';
+  /** Tokens used so far in the parent agent's execution */
+  tokens_used_so_far?: number;
+  /** Partial findings/results from parent */
+  findings?: Array<{
+    type: string;
+    content: string;
+    confidence?: number;
+  }>;
+  /** Context cache references the delegate can use */
+  cache_refs?: ContextCacheRef[];
+  /** Knowledge source access granted to delegate */
+  knowledge_access?: KnowledgeSource[];
+}
+
+/** Token and cost budget for a delegated task */
+export interface TaskBudget {
+  /** Maximum tokens */
+  max_tokens?: number;
+  /** Maximum cost in USD */
+  max_cost_usd?: number;
+  /** Maximum duration in milliseconds */
+  max_duration_ms?: number;
+  /** Maximum delegation depth (prevent recursive delegation) */
+  max_delegation_depth?: number;
+}
+
+/** Delegation result returned by the delegate agent */
+export interface DelegationResult {
+  /** Status */
+  status: 'completed' | 'failed' | 'partial' | 'timeout' | 'rejected';
+  /** Result data */
+  result?: Record<string, unknown>;
+  /** Token analytics for this delegation */
+  analytics?: TokenAnalytics;
+  /** Feedback from the delegate about the task */
+  delegate_feedback?: string;
+  /** If the delegate further delegated, the chain */
+  delegation_chain?: Array<{
+    agent_gaid: string;
+    task_type: string;
+    tokens_used: number;
+    status: string;
+  }>;
+}
+
+/** Orchestration plan — how an orchestrator agent distributes work */
+export interface OrchestrationPlan {
+  /** Plan ID */
+  plan_id: string;
+  /** Orchestrator agent */
+  orchestrator_gaid: string;
+  /** Overall task */
+  task: DelegationTask;
+  /** Steps in the plan */
+  steps: OrchestrationStep[];
+  /** Execution strategy */
+  strategy: 'sequential' | 'parallel' | 'dag' | 'adaptive';
+  /** Total budget across all steps */
+  budget?: TaskBudget;
+  /** Plan status */
+  status: 'planning' | 'executing' | 'completed' | 'failed' | 'cancelled';
+  /** Created at */
+  created_at: string;
+  /** Updated at */
+  updated_at?: string;
+}
+
+/** Single step in an orchestration plan */
+export interface OrchestrationStep {
+  /** Step ID */
+  step_id: string;
+  /** Step name */
+  name: string;
+  /** Agent type required (from OSSA taxonomy) */
+  agent_type?: AgentType;
+  /** Specific agent to use (GAID), or null for best-available routing */
+  agent_gaid?: string;
+  /** Task for this step */
+  task: DelegationTask;
+  /** Steps this depends on (DAG edges) */
+  depends_on?: string[];
+  /** Step budget */
+  budget?: TaskBudget;
+  /** Step status */
+  status?: 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+  /** Result of this step */
+  result?: DelegationResult;
+}
+
+// ─── Agent Capability Fingerprint ────────────────────────────────
+
+/** Empirical capability fingerprint — computed from actual execution data */
+export interface CapabilityFingerprint {
+  /** Agent GAID */
+  agent_gaid: string;
+  /** Domain-specific performance */
+  domains?: Record<string, DomainPerformance>;
+  /** Task-type-specific performance */
+  task_types?: Record<string, TaskTypePerformance>;
+  /** Model affinity — which LLM backend works best for this agent */
+  model_affinity?: Record<string, { efficiency: number; quality: number }>;
+  /** Sample size (total executions) */
+  sample_size: number;
+  /** Last updated */
+  updated_at: string;
+}
+
+/** Performance in a specific domain */
+export interface DomainPerformance {
+  /** Success rate (0.0 to 1.0) */
+  accuracy: number;
+  /** Average tokens per task */
+  avg_tokens: number;
+  /** Number of executions */
+  sample_size: number;
+  /** Average cost per task */
+  avg_cost_usd?: number;
+}
+
+/** Performance for a specific task type */
+export interface TaskTypePerformance {
+  /** Success rate (0.0 to 1.0) */
+  accuracy: number;
+  /** Average cost per task */
+  avg_cost_usd?: number;
+  /** Average tokens per task */
+  avg_tokens: number;
+  /** Number of executions */
+  sample_size: number;
+  /** Average duration in ms */
+  avg_duration_ms?: number;
+}
+
+// ─── Outcome Attestation ─────────────────────────────────────────
+
+/** Signed attestation of a task outcome — builds verifiable track record */
+export interface OutcomeAttestation {
+  /** Attestation ID */
+  attestation_id: string;
+  /** Agent that performed the work */
+  agent_gaid: string;
+  /** Task hash (SHA-256 of task description + inputs) */
+  task_hash: string;
+  /** Outcome */
+  outcome: 'success' | 'partial_success' | 'failure' | 'timeout';
+  /** Metrics */
+  metrics: {
+    tokens_used: number;
+    duration_ms: number;
+    cost_usd?: number;
+    /** Whether a human overrode the agent's output */
+    human_override: boolean;
+    /** Agent's self-assessed confidence */
+    confidence?: number;
+  };
+  /** Who attested (node DID, user DID, or peer agent DID) */
+  attester: string;
+  /** Timestamp */
+  timestamp: string;
+  /** Cryptographic signature */
+  signature?: ResourceSignature;
+}

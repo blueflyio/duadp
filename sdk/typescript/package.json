@@ -65,5 +65,11 @@
     "express": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "canonicalize": "^2.1.0",
+    "did-resolver": "^4.1.0",
+    "key-did-resolver": "^4.0.0",
+    "web-did-resolver": "^2.0.32"
   }
 }

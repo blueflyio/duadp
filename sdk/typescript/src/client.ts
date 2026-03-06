@@ -20,7 +20,18 @@ import type {
     SyncResponse,
     WebhookSubscription,
     AgentIdentity,
-    PeerStatus
+    PeerStatus,
+    ContextNegotiation,
+    TokenAnalytics,
+    TokenAnalyticsAggregate,
+    AgentFeedback,
+    AgentReputation,
+    CapabilityFingerprint,
+    OutcomeAttestation,
+    DelegationRequest,
+    DelegationResult,
+    OrchestrationPlan,
+    RewardEvent,
 } from './types.js';
 
 // --- Circuit Breaker ---
@@ -372,6 +383,148 @@ export class UadpClient {
   async getAgentIdentity(gaid: string): Promise<AgentIdentity> {
     const endpoint = await this.resolveEndpoint('identity');
     return this.request(`${endpoint}/${encodeURIComponent(gaid)}`) as Promise<AgentIdentity>;
+  }
+
+  // --- Context Negotiation ---
+
+  /** Negotiate context delivery for an agent task */
+  async negotiateContext(agentGaid: string, task: {
+    type: string;
+    scope?: string[];
+    max_tokens?: number;
+  }): Promise<ContextNegotiation> {
+    const endpoint = await this.resolveEndpoint('context');
+    return this.request(`${endpoint}/negotiate`, {
+      method: 'POST',
+      body: JSON.stringify({ agent_gaid: agentGaid, task }),
+    }) as Promise<ContextNegotiation>;
+  }
+
+  /** Get cached context summary for a domain */
+  async getContextSummary(domain: string, taskType?: string): Promise<ContextNegotiation> {
+    const endpoint = await this.resolveEndpoint('context');
+    const url = new URL(`${endpoint}/summary`);
+    url.searchParams.set('domain', domain);
+    if (taskType) url.searchParams.set('task_type', taskType);
+    return this.request(url.toString()) as Promise<ContextNegotiation>;
+  }
+
+  // --- Token Analytics ---
+
+  /** Report token usage for an execution */
+  async reportTokenUsage(analytics: TokenAnalytics): Promise<void> {
+    const endpoint = await this.resolveEndpoint('analytics');
+    await this.request(`${endpoint}/tokens`, {
+      method: 'POST',
+      body: JSON.stringify(analytics),
+    });
+  }
+
+  /** Get aggregate token analytics for an agent */
+  async getTokenAnalytics(agentGaid: string, period?: TokenAnalyticsAggregate['period']): Promise<TokenAnalyticsAggregate> {
+    const endpoint = await this.resolveEndpoint('analytics');
+    const url = new URL(`${endpoint}/tokens/${encodeURIComponent(agentGaid)}`);
+    if (period) url.searchParams.set('period', period);
+    return this.request(url.toString()) as Promise<TokenAnalyticsAggregate>;
+  }
+
+  // --- Feedback & Rewards ---
+
+  /** Submit feedback on an agent's execution */
+  async submitFeedback(feedback: Omit<AgentFeedback, 'feedback_id' | 'timestamp'>): Promise<AgentFeedback> {
+    const endpoint = await this.resolveEndpoint('feedback');
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(feedback),
+    }) as Promise<AgentFeedback>;
+  }
+
+  /** Get feedback for an agent */
+  async getAgentFeedback(agentGaid: string, params?: {
+    type?: AgentFeedback['type'];
+    since?: string;
+    limit?: number;
+  }): Promise<AgentFeedback[]> {
+    const endpoint = await this.resolveEndpoint('feedback');
+    const url = new URL(`${endpoint}/${encodeURIComponent(agentGaid)}`);
+    if (params?.type) url.searchParams.set('type', params.type);
+    if (params?.since) url.searchParams.set('since', params.since);
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<AgentFeedback[]>;
+  }
+
+  /** Get agent reputation score */
+  async getAgentReputation(agentGaid: string): Promise<AgentReputation> {
+    const endpoint = await this.resolveEndpoint('feedback');
+    return this.request(`${endpoint}/${encodeURIComponent(agentGaid)}/reputation`) as Promise<AgentReputation>;
+  }
+
+  /** Record a reward event */
+  async recordReward(reward: Omit<RewardEvent, 'reward_id' | 'timestamp'>): Promise<RewardEvent> {
+    const endpoint = await this.resolveEndpoint('feedback');
+    return this.request(`${endpoint}/rewards`, {
+      method: 'POST',
+      body: JSON.stringify(reward),
+    }) as Promise<RewardEvent>;
+  }
+
+  // --- Capability Fingerprints ---
+
+  /** Get an agent's capability fingerprint */
+  async getCapabilityFingerprint(agentGaid: string): Promise<CapabilityFingerprint> {
+    const endpoint = await this.resolveEndpoint('analytics');
+    return this.request(`${endpoint}/fingerprint/${encodeURIComponent(agentGaid)}`) as Promise<CapabilityFingerprint>;
+  }
+
+  // --- Outcome Attestations ---
+
+  /** Submit a signed outcome attestation */
+  async submitAttestation(attestation: Omit<OutcomeAttestation, 'attestation_id'>): Promise<OutcomeAttestation> {
+    const endpoint = await this.resolveEndpoint('attestations');
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(attestation),
+    }) as Promise<OutcomeAttestation>;
+  }
+
+  /** Get attestations for an agent */
+  async getAttestations(agentGaid: string, params?: {
+    outcome?: OutcomeAttestation['outcome'];
+    since?: string;
+    limit?: number;
+  }): Promise<OutcomeAttestation[]> {
+    const endpoint = await this.resolveEndpoint('attestations');
+    const url = new URL(`${endpoint}/${encodeURIComponent(agentGaid)}`);
+    if (params?.outcome) url.searchParams.set('outcome', params.outcome);
+    if (params?.since) url.searchParams.set('since', params.since);
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<OutcomeAttestation[]>;
+  }
+
+  // --- Multi-Agent Delegation ---
+
+  /** Delegate a task to another agent */
+  async delegate(request: DelegationRequest): Promise<DelegationResult> {
+    const endpoint = await this.resolveEndpoint('delegate');
+    return this.request(endpoint, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    }) as Promise<DelegationResult>;
+  }
+
+  /** Get an orchestration plan */
+  async getOrchestrationPlan(planId: string): Promise<OrchestrationPlan> {
+    const endpoint = await this.resolveEndpoint('delegate');
+    return this.request(`${endpoint}/plans/${encodeURIComponent(planId)}`) as Promise<OrchestrationPlan>;
+  }
+
+  /** Create an orchestration plan */
+  async createOrchestrationPlan(plan: Omit<OrchestrationPlan, 'plan_id' | 'created_at' | 'status'>): Promise<OrchestrationPlan> {
+    const endpoint = await this.resolveEndpoint('delegate');
+    return this.request(`${endpoint}/plans`, {
+      method: 'POST',
+      body: JSON.stringify(plan),
+    }) as Promise<OrchestrationPlan>;
   }
 
   // --- Internals ---

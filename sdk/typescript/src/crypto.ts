@@ -1,25 +1,16 @@
+import canonicalizeRFC8785 from 'canonicalize';
 import type { OssaResource, ResourceSignature } from './types.js';
 
 /**
  * Canonical JSON serialization for signing.
- * Strips the `signature` field and sorts keys deterministically.
+ * Uses RFC 8785 JSON Canonicalization Scheme (JCS) via the `canonicalize` package.
+ * Strips the `signature` field before canonicalization.
  */
 export function canonicalize(resource: OssaResource): string {
   const { signature: _, ...rest } = resource as OssaResource & { signature?: unknown };
-  return JSON.stringify(sortKeys(rest));
-}
-
-function sortKeys(obj: unknown): unknown {
-  if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(sortKeys);
-  if (typeof obj === 'object') {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(obj as Record<string, unknown>).sort()) {
-      sorted[key] = sortKeys((obj as Record<string, unknown>)[key]);
-    }
-    return sorted;
-  }
-  return obj;
+  const result = canonicalizeRFC8785(rest);
+  if (!result) throw new Error('Failed to canonicalize resource');
+  return result;
 }
 
 /**
@@ -107,7 +98,7 @@ export async function importPublicKey(raw: Uint8Array): Promise<CryptoKey> {
 }
 
 /**
- * Encode raw public key as multibase (z-prefix for base58btc, simplified as base64url for portability).
+ * Encode raw public key as multibase (z-prefix, base64url).
  */
 export function toMultibase(raw: Uint8Array): string {
   return 'z' + base64url(raw);
