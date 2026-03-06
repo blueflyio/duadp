@@ -7,7 +7,7 @@ import type { OssaResource, ResourceSignature } from './types.js';
  * Strips the `signature` field before canonicalization.
  */
 export function canonicalize(resource: OssaResource): string {
-  const { signature: _, ...rest } = resource as OssaResource & { signature?: unknown };
+  const { signature: _, content_hash: _h, ...rest } = resource as OssaResource & { signature?: unknown; content_hash?: unknown };
   const result = canonicalizeRFC8785(rest);
   if (!result) throw new Error('Failed to canonicalize resource');
   return result;

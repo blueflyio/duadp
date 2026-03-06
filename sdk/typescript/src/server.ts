@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import type { Request, Response, Router } from 'express';
 import type {
     FederationResponse,
@@ -74,8 +75,9 @@ export interface UadpDataProvider {
  */
 export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvider): Router {
   // Dynamic import to keep express as optional peer dep
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Router: ExpressRouter } = require('express') as typeof import('express');
+  // Use createRequire for ESM/CJS compatibility
+  const esmRequire = createRequire(import.meta.url);
+  const { Router: ExpressRouter } = esmRequire('express') as typeof import('express');
   const router = ExpressRouter();
 
   const capabilities: string[] = [];

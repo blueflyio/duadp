@@ -127,6 +127,7 @@ export async function verifyResourceIdentity(
     fetchFn?: typeof fetch;
     skipSignature?: boolean;
     skipLifecycle?: boolean;
+    resolveDID?: typeof resolveDID;
   },
 ): Promise<{
   verified: boolean;
@@ -152,7 +153,8 @@ export async function verifyResourceIdentity(
   // Check 3: Resolve DID document via DIF resolver
   let resolution: DIDResolutionResult;
   try {
-    resolution = await resolveDID(resource.identity.did);
+    const resolver = options?.resolveDID ?? resolveDID;
+    resolution = await resolver(resource.identity.did);
     checks.push({ check: 'did_resolution', passed: true, detail: `Resolved ${resolution.publicKeys.length} keys` });
   } catch (err) {
     checks.push({ check: 'did_resolution', passed: false, detail: String(err) });
