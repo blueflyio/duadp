@@ -1,5 +1,5 @@
 {
-  "name": "@bluefly/uadp-reference-node",
+  "name": "@bluefly/duadp-reference-node",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -9,7 +9,7 @@
     "seed": "tsx src/seed.ts"
   },
   "dependencies": {
-    "@bluefly/uadp": "^0.1.2",
+    "@bluefly/duadp": "^0.1.2",
     "better-sqlite3": "^11.0.0",
     "express": "^5.0.0",
     "cors": "^2.8.5"

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bluefly-uadp"
+name = "bluefly-duadp"
 version = "0.1.0"
 description = "DUADP — Decentralized Universal AI Discovery Protocol SDK"
 readme = "README.md"

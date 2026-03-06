@@ -1,4 +1,4 @@
-# @bluefly/uadp
+# @bluefly/duadp
 
 **The official TypeScript SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
 
@@ -14,7 +14,7 @@ The protocol addresses a fundamental problem in the AI ecosystem: **there is no 
 
 This SDK provides both a **client** for consuming any DUADP node and a **server router** for turning your Express app into a fully compliant DUADP node — with validation, cryptographic signing, DID resolution, and conformance testing built in.
 
-[![npm](https://img.shields.io/npm/v/@bluefly/uadp)](https://www.npmjs.com/package/@bluefly/uadp)
+[![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
 
 > **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
@@ -24,7 +24,7 @@ This SDK provides both a **client** for consuming any DUADP node and a **server 
 ## Install
 
 ```bash
-npm install @bluefly/uadp
+npm install @bluefly/duadp
 ```
 
 ## Architecture
@@ -63,7 +63,7 @@ This SDK provides 15 core protocol endpoints:
 ### Client — consume any DUADP node
 
 ```typescript
-import { UadpClient } from '@bluefly/uadp/client';
+import { UadpClient } from '@bluefly/duadp/client';
 
 const client = new UadpClient('https://your-uadp-node.example.com');
 
@@ -85,7 +85,7 @@ const tools = await client.listTools({ protocol: 'mcp' });
 
 ```typescript
 import express from 'express';
-import { createUadpRouter } from '@bluefly/uadp/server';
+import { createUadpRouter } from '@bluefly/duadp/server';
 
 const app = express();
 
@@ -105,7 +105,7 @@ app.listen(4200);
 ### Validate OSSA resource manifests
 
 ```typescript
-import { validateResource } from '@bluefly/uadp/validate';
+import { validateResource } from '@bluefly/duadp/validate';
 
 const result = validateResource(skillManifest);
 if (!result.valid) console.error(result.errors);
@@ -114,7 +114,7 @@ if (!result.valid) console.error(result.errors);
 ### Cryptographic signing and verification
 
 ```typescript
-import { generateKeyPair, signResource, verifyResource } from '@bluefly/uadp/crypto';
+import { generateKeyPair, signResource, verifyResource } from '@bluefly/duadp/crypto';
 
 const keys = await generateKeyPair();                        // Ed25519
 const signed = await signResource(resource, keys.privateKey);
@@ -124,7 +124,7 @@ const verified = await verifyResource(signed, keys.publicKey); // true/false
 ### DID resolution
 
 ```typescript
-import { resolveDid } from '@bluefly/uadp/did';
+import { resolveDid } from '@bluefly/duadp/did';
 
 const doc = await resolveDid('did:web:example.com');    // W3C DID Document
 const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
@@ -134,13 +134,13 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 
 | Import | Description |
 |--------|-------------|
-| `@bluefly/uadp` | Core types — `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
-| `@bluefly/uadp/client` | `UadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
-| `@bluefly/uadp/server` | `createUadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
-| `@bluefly/uadp/validate` | `validateResource()` — OSSA manifest validation against the spec |
-| `@bluefly/uadp/crypto` | `generateKeyPair()`, `signResource()`, `verifyResource()` — Ed25519 cryptographic operations |
-| `@bluefly/uadp/did` | `resolveDid()` — W3C Decentralized Identifier resolution (`did:web`, `did:key`) |
-| `@bluefly/uadp/conformance` | `runConformanceTests(url)` — automated protocol compliance test suite |
+| `@bluefly/duadp` | Core types — `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
+| `@bluefly/duadp/client` | `UadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
+| `@bluefly/duadp/server` | `createUadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
+| `@bluefly/duadp/validate` | `validateResource()` — OSSA manifest validation against the spec |
+| `@bluefly/duadp/crypto` | `generateKeyPair()`, `signResource()`, `verifyResource()` — Ed25519 cryptographic operations |
+| `@bluefly/duadp/did` | `resolveDid()` — W3C Decentralized Identifier resolution (`did:web`, `did:key`) |
+| `@bluefly/duadp/conformance` | `runConformanceTests(url)` — automated protocol compliance test suite |
 
 ## Key Concepts
 
@@ -175,8 +175,8 @@ npm test
 
 | Language | Package | Registry |
 |----------|---------|----------|
-| Python | `bluefly-uadp` | PyPI |
-| Go | `github.com/blueflyio/uadp/sdk/go` | Go modules |
+| Python | `bluefly-duadp` | PyPI |
+| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## License
 

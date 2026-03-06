@@ -1,3 +1,3 @@
-module github.com/blueflyio/uadp/sdk/go
+module github.com/blueflyio/duadp/sdk/go
 
 go 1.22

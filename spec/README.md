@@ -1121,9 +1121,9 @@ A more complete implementation adds:
 
 Reference implementations:
 - **SQLite Reference Node**: `reference-node/` — Express + SQLite, all 26 endpoints verified, Docker-ready
-- **TypeScript SDK**: `@bluefly/uadp` with Express server helper (136 tests passing)
+- **TypeScript SDK**: `@bluefly/duadp` with Express server helper (136 tests passing)
 - **Drupal**: `ai_agents_marketplace` module (PHP) — full DUADP node with federation
-- **Python SDK**: `bluefly-uadp` with FastAPI server helper
+- **Python SDK**: `bluefly-duadp` with FastAPI server helper
 - **Go SDK**: `uadp-go` with `net/http` handler
 - **Static**: GitHub Pages with JSON files — planned
 

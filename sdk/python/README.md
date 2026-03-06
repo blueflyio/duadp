@@ -1,8 +1,8 @@
-# bluefly-uadp — Python SDK
+# bluefly-duadp — Python SDK
 
 **The official Python SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
 
-[![PyPI](https://img.shields.io/pypi/v/bluefly-uadp)](https://pypi.org/project/bluefly-uadp/)
+[![PyPI](https://img.shields.io/pypi/v/bluefly-duadp)](https://pypi.org/project/bluefly-duadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 
 > **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
@@ -10,9 +10,9 @@
 ## Install
 
 ```bash
-pip install bluefly-uadp
+pip install bluefly-duadp
 # or
-uv add bluefly-uadp
+uv add bluefly-duadp
 ```
 
 ## Quick Start — Client
@@ -201,8 +201,8 @@ from bluefly_uadp.types import (
 
 | Language | Package | Registry |
 |----------|---------|----------|
-| TypeScript | [`@bluefly/uadp`](https://www.npmjs.com/package/@bluefly/uadp) | npm |
-| Go | `github.com/blueflyio/uadp/sdk/go` | Go modules |
+| TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
+| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## License
 

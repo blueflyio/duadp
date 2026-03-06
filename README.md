@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
-[![npm](https://img.shields.io/npm/v/@bluefly/uadp)](https://www.npmjs.com/package/@bluefly/uadp)
+[![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
 > **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** for protocol details and the **[OSSA ecosystem](https://openstandardagents.org)**.
@@ -45,7 +45,7 @@ Your App                              skills.sh (UADP node)
 
 **TypeScript:**
 ```typescript
-import { UadpClient, resolveGaid } from '@bluefly/uadp';
+import { UadpClient, resolveGaid } from '@bluefly/duadp';
 
 const client = new UadpClient('https://skills.sh');
 const skills = await client.listSkills({ search: 'code review' });
@@ -98,7 +98,7 @@ Or use an SDK to build a dynamic node with publishing, federation, and tools:
 
 **TypeScript (Express):**
 ```typescript
-import { createUadpRouter } from '@bluefly/uadp/server';
+import { createUadpRouter } from '@bluefly/duadp/server';
 
 app.use(createUadpRouter({
   nodeName: 'My AI Hub',
@@ -120,8 +120,8 @@ spec/                    # The normative specification
   openapi.yaml           # OpenAPI 3.1 definition
   schemas/               # JSON Schema validation files
 sdk/
-  typescript/            # @bluefly/uadp npm package
-  python/                # bluefly-uadp (PyPI)
+  typescript/            # @bluefly/duadp npm package
+  python/                # bluefly-duadp (PyPI)
   go/                    # uadp-go module
 ```
 
@@ -339,8 +339,8 @@ cd sdk/typescript && npm test
 |----------|--------|-------------|
 | [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
-| `@bluefly/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| `bluefly-uadp` Python SDK | Available | Client + FastAPI server |
+| `@bluefly/duadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
+| `bluefly-duadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
 

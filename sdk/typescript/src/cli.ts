@@ -3,9 +3,9 @@
  * UADP CLI — conformance testing and node discovery.
  *
  * Usage:
- *   npx @bluefly/uadp conformance https://node.example.com
- *   npx @bluefly/uadp discover https://node.example.com
- *   npx @bluefly/uadp verify agent://acme.com/agents/my-agent
+ *   npx @bluefly/duadp conformance https://node.example.com
+ *   npx @bluefly/duadp discover https://node.example.com
+ *   npx @bluefly/duadp verify agent://acme.com/agents/my-agent
  */
 
 import { UadpClient } from './client.js';
@@ -28,11 +28,11 @@ Commands:
   search <url> <q>     Search skills/agents/tools on a node
 
 Examples:
-  npx @bluefly/uadp conformance https://marketplace.example.com
-  npx @bluefly/uadp discover https://skills.sh
-  npx @bluefly/uadp resolve agent://acme.com/skills/code-review
-  npx @bluefly/uadp did did:web:acme.com
-  npx @bluefly/uadp search https://skills.sh "code review"
+  npx @bluefly/duadp conformance https://marketplace.example.com
+  npx @bluefly/duadp discover https://skills.sh
+  npx @bluefly/duadp resolve agent://acme.com/skills/code-review
+  npx @bluefly/duadp did did:web:acme.com
+  npx @bluefly/duadp search https://skills.sh "code review"
 `);
     process.exit(0);
   }

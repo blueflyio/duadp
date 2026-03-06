@@ -381,7 +381,7 @@ const tests: TestDef[] = [
  *
  * @example
  * ```ts
- * import { runConformanceTests } from '@bluefly/uadp/conformance';
+ * import { runConformanceTests } from '@bluefly/duadp/conformance';
  * const results = await runConformanceTests('https://marketplace.example.com');
  * console.log(`${results.passed}/${results.passed + results.failed} tests passed (level: ${results.level})`);
  * for (const r of results.results.filter(r => !r.passed && !r.skipped)) {

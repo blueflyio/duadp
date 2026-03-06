@@ -13,7 +13,7 @@ export interface ConformanceResult {
  *
  * Usage:
  * ```ts
- * import { runConformanceTests } from '@bluefly/uadp';
+ * import { runConformanceTests } from '@bluefly/duadp';
  * const results = await runConformanceTests('https://marketplace.example.com');
  * ```
  */

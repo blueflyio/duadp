@@ -22,7 +22,7 @@ npx tsx src/index.ts           # starts on PORT (default 4200)
 
 ```
 spec/           UADP protocol specification
-sdk/typescript/ TypeScript SDK (@bluefly/uadp)
+sdk/typescript/ TypeScript SDK (@bluefly/duadp)
 reference-node/ Express + SQLite reference implementation
 ```
 

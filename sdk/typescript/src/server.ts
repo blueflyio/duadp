@@ -67,7 +67,7 @@ export interface UadpDataProvider {
  * Usage:
  * ```ts
  * import express from 'express';
- * import { createUadpRouter } from '@bluefly/uadp/server';
+ * import { createUadpRouter } from '@bluefly/duadp/server';
  *
  * const app = express();
  * app.use(createUadpRouter(config, myProvider));
