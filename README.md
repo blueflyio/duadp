@@ -136,10 +136,21 @@ sdk/
 | `/uadp/v1/federation` | GET | SHOULD | Peer node list |
 | `/uadp/v1/federation` | POST | SHOULD | Register as peer (gossip) |
 | `/uadp/v1/validate` | POST | MAY | Validate a manifest |
+| `/uadp/v1/health` | GET | SHOULD | Node health status |
+| `/uadp/v1/search` | GET | MAY | Unified cross-resource search |
+| `/uadp/v1/index/{gaid}` | GET | MAY | Agent JSON index card |
+| `/uadp/v1/context/negotiate` | POST | MAY | Context negotiation |
+| `/uadp/v1/analytics/tokens` | POST | MAY | Report token usage |
+| `/uadp/v1/analytics/tokens/{agentId}` | GET | MAY | Token analytics for agent |
+| `/uadp/v1/feedback` | POST | MAY | Submit 360 feedback |
+| `/uadp/v1/feedback/{agentId}` | GET | MAY | Get agent feedback |
+| `/uadp/v1/reputation/{agentId}` | GET | MAY | Agent reputation score |
+| `/uadp/v1/rewards` | POST | MAY | Record reward event |
+| `/uadp/v1/attestations` | POST | MAY | Submit outcome attestation |
+| `/uadp/v1/delegate` | POST | MAY | Multi-agent delegation |
+| `/uadp/v1/orchestration` | POST | MAY | Create orchestration plan |
 
 *At least one of skills, agents, or tools MUST be implemented.
-
-## Key Features (v0.2)
 
 ## Key Features (v0.2)
 
@@ -148,10 +159,17 @@ sdk/
 - **DNS TXT discovery** — `_uadp.<domain>` for zero-configuration node finding
 - **WebFinger resolution** — Resolve any GAID URI (like `uadp://`) to its DUADP endpoint
 - **Gossip federation** — Automatic peer propagation with hop limits
-- **DID-based identity** — `did:web:` and `did:wba:` for verifiable, decentralized node identity
-- **Resource signatures** — Ed25519/ES256 cryptographic signatures on resources
+- **DID-based identity** — `did:web:` and `did:key:` with DIF standard resolvers
+- **Resource signatures** — Ed25519 cryptographic signatures with RFC 8785 canonicalization
 - **Federated search** — `?federated=true` queries peers and merges results
 - **Extensible kinds** — `Skill`, `Agent` (via `.ajson`), `Tool`, or any custom resource type
+- **Context negotiation** — Layered context delivery with priority tiers and knowledge graph sources
+- **Token analytics** — Per-execution and aggregate tracking with efficiency scoring
+- **360 feedback** — Multi-source feedback (human, agent, system, automated-test) with structured dimensions
+- **Agent rewards** — Reputation boosts, capability unlocks, token credits, and badges
+- **Outcome attestations** — Signed, verifiable task outcome records for portable reputation
+- **Multi-agent orchestration** — DAG/parallel/sequential/adaptive execution across OSSA agent types
+- **Capability fingerprints** — Empirical performance data by domain, task type, and model affinity
 
 ## Design Principles
 
