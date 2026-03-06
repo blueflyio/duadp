@@ -1,0 +1,20 @@
+services:
+  uadp-node:
+    build:
+      context: ..
+      dockerfile: reference-node/Dockerfile
+    container_name: uadp-reference-node
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    volumes:
+      - uadp-data:/app/reference-node/data
+    environment:
+      - NODE_ENV=production
+      - PORT=4200
+      - UADP_NODE_NAME=OSSA Reference Node
+      - UADP_BASE_URL=https://uadp.blueflyagents.com
+      - UADP_NODE_ID=did:web:uadp.blueflyagents.com
+
+volumes:
+  uadp-data:
