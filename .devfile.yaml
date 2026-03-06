@@ -1,0 +1,65 @@
+schemaVersion: 2.2.0
+metadata:
+  name: duadp-dev
+  version: 0.1.0
+  description: DUADP — Decentralized Universal AI Discovery Protocol development workspace
+components:
+  - name: dev
+    container:
+      image: node:22-bookworm
+      memoryLimit: 4Gi
+      cpuLimit: "2"
+      env:
+        - name: DUADP_BASE_URL
+          value: "http://localhost:4200"
+        - name: DUADP_NODE_NAME
+          value: "dev-workspace"
+        - name: DUADP_DB_PATH
+          value: "./data/duadp.db"
+      endpoints:
+        - name: reference-node
+          targetPort: 4200
+          exposure: public
+        - name: mcp
+          targetPort: 4200
+          path: /mcp
+          exposure: public
+        - name: website
+          targetPort: 9175
+          exposure: public
+      mountSources: true
+  - name: data
+    volume:
+      size: 1Gi
+commands:
+  - id: install-all
+    exec:
+      component: dev
+      commandLine: |
+        cd sdk/typescript && npm ci && npm run build && cd ../..
+        cd reference-node && npm ci && cd ..
+      workingDir: ${PROJECT_SOURCE}
+  - id: seed-db
+    exec:
+      component: dev
+      commandLine: npm run seed
+      workingDir: ${PROJECT_SOURCE}/reference-node
+  - id: dev-node
+    exec:
+      component: dev
+      commandLine: npm run dev
+      workingDir: ${PROJECT_SOURCE}/reference-node
+  - id: dev-website
+    exec:
+      component: dev
+      commandLine: npx next dev --turbopack --port 9175
+      workingDir: ${PROJECT_SOURCE}/../duadp.org
+  - id: test
+    exec:
+      component: dev
+      commandLine: npm test
+      workingDir: ${PROJECT_SOURCE}/sdk/typescript
+events:
+  postStart:
+    - install-all
+    - seed-db

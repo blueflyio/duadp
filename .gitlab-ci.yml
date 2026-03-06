@@ -113,6 +113,26 @@ container_scanning:
     - if: $CI_COMMIT_BRANCH
 
 # ---------------------------------------------------------------------------
+# Publish Stage - npm (npmjs.org public)
+# ---------------------------------------------------------------------------
+
+publish:npm:
+  stage: publish
+  image: node:22-alpine
+  needs:
+    - build:sdk
+  script:
+    - cd sdk/typescript
+    - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+    - npm publish --access public
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: $CI_COMMIT_BRANCH =~ /^release\/.*/
+      when: manual
+
+# ---------------------------------------------------------------------------
 # Publish Stage - PyPI (OIDC Trusted Publisher)
 # ---------------------------------------------------------------------------
 
