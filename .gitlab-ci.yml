@@ -3,10 +3,6 @@
 # =============================================================================
 
 include:
-  - component: $CI_SERVER_FQDN/blueflyio/agent-platform/tools/gitlab_components/base-runner@release/v0.1.x
-  - component: $CI_SERVER_FQDN/blueflyio/agent-platform/tools/gitlab_components/otel-instrument@release/v0.1.x
-    inputs:
-      service_name: uadp-reference-node
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Security/Container-Scanning.gitlab-ci.yml
@@ -120,20 +116,20 @@ container_scanning:
 # Deploy Stage - Oracle K3s
 # ---------------------------------------------------------------------------
 
-deploy:oracle:
+deploy:k8s:
   stage: deploy
   image: bitnami/kubectl:latest
   needs:
     - container_build
   before_script:
     - mkdir -p ~/.kube
-    - echo "$ORACLE_K3S_KUBECONFIG" > ~/.kube/config
+    - echo "$K8S_KUBECONFIG" > ~/.kube/config
     - chmod 600 ~/.kube/config
   script:
-    - kubectl create namespace uadp --dry-run=client -o yaml | kubectl apply -f -
+    - kubectl create namespace ${K8S_NAMESPACE:-uadp} --dry-run=client -o yaml | kubectl apply -f -
     - |
       kubectl create secret docker-registry gitlab-registry-creds \
-        --namespace=uadp \
+        --namespace=${K8S_NAMESPACE:-uadp} \
         --docker-server=$CI_REGISTRY \
         --docker-username=$CI_REGISTRY_USER \
         --docker-password=$CI_REGISTRY_PASSWORD \
@@ -141,10 +137,10 @@ deploy:oracle:
     - |
       kubectl set image deployment/uadp-reference-node \
         uadp-reference-node=$CONTAINER_IMAGE:$CI_COMMIT_SHA \
-        --namespace=uadp || echo "Deployment not found - apply manifests first"
+        --namespace=${K8S_NAMESPACE:-uadp} || echo "Deployment not found - apply manifests first"
   environment:
-    name: oracle/uadp
-    url: https://uadp.blueflyagents.com/uadp/v1/health
+    name: ${DEPLOY_ENV_NAME:-production/uadp}
+    url: ${DEPLOY_HEALTH_URL:-http://localhost:4200/uadp/v1/health}
   when: manual
   rules:
     - if: $CI_COMMIT_BRANCH == "main"

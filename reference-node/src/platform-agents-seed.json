@@ -1,0 +1,2204 @@
+[
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "a2a-bridge-worker",
+      "version": "0.2.0",
+      "description": "A2A Bridge agent — bridges MCP tools to A2A protocol for inter-agent communication, swarm coordination, and OSSA capability-based delegation. Connects Claude Code Agent Teams to the A2A collector/stream infrastructure.",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/a2a-bridge-worker",
+      "did": "did:web:blueflyagents.com:agents:a2a-bridge-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "a2a-send",
+        "a2a-stream",
+        "a2a-discover",
+        "a2a-delegate",
+        "a2a-team-broadcast",
+        "a2a-register",
+        "a2a-status",
+        "mesh-status",
+        "mesh-discover"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "agent-selector",
+      "version": "1.0.0",
+      "description": "Recommends the best agent for a given task by analyzing requirements",
+      "category": "orchestration",
+      "trust_tier": "official",
+      "tags": [
+        "orchestration",
+        "selector",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/agent-selector",
+      "did": "did:web:blueflyagents.com:agents:agent-selector"
+    },
+    "spec": {
+      "agent_type": "selector",
+      "capabilities": [
+        "agent-matching",
+        "capability-analysis",
+        "recommendation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "ci-fixer-worker",
+      "version": "1.0.0",
+      "description": "Monitors and fixes failing CI/CD pipelines. Analyzes failure logs,",
+      "category": "gitlab",
+      "trust_tier": "official",
+      "tags": [
+        "gitlab",
+        "worker",
+        "pipeline-management",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/ci-fixer-worker",
+      "did": "did:web:blueflyagents.com:agents:ci-fixer-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "failure_analysis",
+        "pipeline_analysis",
+        "error_diagnosis",
+        "config_validation",
+        "test_failure_analysis",
+        "auto-fix",
+        "pipeline-optimization",
+        "component-management",
+        "quality-gate-enforcement",
+        "dependency_resolution",
+        "fix_generation",
+        "retry_recommendation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "cluster-operator",
+      "version": "1.0.0",
+      "description": "K8s operations & scaling",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/cluster-operator",
+      "did": "did:web:blueflyagents.com:agents:cluster-operator"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "cluster-operator"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "code-quality-reviewer",
+      "version": "1.0.0",
+      "description": "Static analysis & code review",
+      "category": "code-quality",
+      "trust_tier": "official",
+      "tags": [
+        "code-quality",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/code-quality-reviewer",
+      "did": "did:web:blueflyagents.com:agents:code-quality-reviewer"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "code-quality-reviewer"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "code-reviewer",
+      "version": "1.0.0",
+      "description": "Automated code review analyzing code quality, security vulnerabilities, best practices,",
+      "category": "code",
+      "trust_tier": "official",
+      "tags": [
+        "code",
+        "worker",
+        "code-review",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/code-reviewer",
+      "did": "did:web:blueflyagents.com:agents:code-reviewer"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "analyze-code-quality",
+        "detect-security-vulnerabilities",
+        "check-best-practices",
+        "evaluate-maintainability",
+        "identify-code-smells",
+        "suggest-improvements",
+        "typescript-review",
+        "multi-language-support",
+        "quality-metrics",
+        "review-diff",
+        "analyze-complexity",
+        "critique-review",
+        "pattern-detection"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "communications-manager",
+      "version": "1.0.0",
+      "description": "Specializes in internal communications, newsletters, documentation,",
+      "category": "communications",
+      "trust_tier": "official",
+      "tags": [
+        "communications",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/communications-manager",
+      "did": "did:web:blueflyagents.com:agents:communications-manager"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "newsletter-creation",
+        "faq-creation",
+        "announcement-drafting",
+        "collaborative-editing"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "content-guardian",
+      "version": "1.0.0",
+      "description": "Multi-layer content governance agent that detects and prevents fraudulent claims,",
+      "category": "content",
+      "trust_tier": "official",
+      "tags": [
+        "content",
+        "worker",
+        "fraud-detection",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/content-guardian",
+      "did": "did:web:blueflyagents.com:agents:content-guardian"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "detect-false-compliance-claims",
+        "detect-fabricated-customers",
+        "detect-false-roi-data",
+        "detect-maturity-misrepresentation",
+        "detect-fake-social-proof",
+        "validate-technical-claims",
+        "validate-integration-status",
+        "validate-performance-benchmarks",
+        "post-violation-report",
+        "suggest-corrections",
+        "block-merge",
+        "create-tracking-issue"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "content-reviewer-agent",
+      "version": "1.0.0",
+      "description": "Content quality reviewer that validates white papers, educational documents,",
+      "category": "content",
+      "trust_tier": "official",
+      "tags": [
+        "content",
+        "worker",
+        "quality-assurance",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/content-reviewer-agent",
+      "did": "did:web:blueflyagents.com:agents:content-reviewer-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "fact_checking",
+        "tone_analysis",
+        "technical_accuracy",
+        "citation_validation",
+        "grammar_review",
+        "seo_validation",
+        "readability_analysis",
+        "quality_scoring"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "cost-intelligence-monitor",
+      "version": "1.0.0",
+      "description": "Token/cost optimization",
+      "category": "observability",
+      "trust_tier": "official",
+      "tags": [
+        "observability",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/cost-intelligence-monitor",
+      "did": "did:web:blueflyagents.com:agents:cost-intelligence-monitor"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "cost-intelligence-monitor"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "creative-designer",
+      "version": "1.0.0",
+      "description": "Visual design expert specializing in branding, presentations, algorithmic art,",
+      "category": "design",
+      "trust_tier": "official",
+      "tags": [
+        "design",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/creative-designer",
+      "did": "did:web:blueflyagents.com:agents:creative-designer"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "presentation-design",
+        "brand-identity",
+        "algorithmic-art",
+        "frontend-design",
+        "visual-content"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "daily-code-scan",
+      "version": "1.0.0",
+      "description": "Daily comprehensive code quality scan. Creates issues for regressions, tracks metrics over time, and identifies technical debt.",
+      "category": "code-quality",
+      "trust_tier": "official",
+      "tags": [
+        "code-quality",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/daily-code-scan",
+      "did": "did:web:blueflyagents.com:agents:daily-code-scan"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "daily-code-scan"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "data-analyst",
+      "version": "1.0.0",
+      "description": "Specializes in data analysis, statistics, visualization, and insights.",
+      "category": "data",
+      "trust_tier": "official",
+      "tags": [
+        "data",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/data-analyst",
+      "did": "did:web:blueflyagents.com:agents:data-analyst"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "statistical-analysis",
+        "data-visualization",
+        "trend-identification",
+        "dashboard-creation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "default-orchestrator",
+      "version": "1.0.0",
+      "description": "THE DEFAULT ORCHESTRATOR. Coordinates multi-agent workflows, task distribution,",
+      "category": "orchestration",
+      "trust_tier": "official",
+      "tags": [
+        "orchestration",
+        "orchestrator",
+        "workflow-orchestration",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/default-orchestrator",
+      "did": "did:web:blueflyagents.com:agents:default-orchestrator"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "workflow_orchestration",
+        "task_distribution",
+        "intelligent_routing",
+        "cost_optimization",
+        "agent_coordination",
+        "multi-agent-coordination",
+        "daily-scheduling",
+        "compass-navigation",
+        "priority_management",
+        "cross-project-orchestration",
+        "golden-workflow-deployment",
+        "status_aggregation",
+        "error_escalation",
+        "resource_allocation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "developer-agent",
+      "version": "1.0.0",
+      "description": "Specializes in writing code, building tools, MCP servers, APIs, and testing.",
+      "category": "development",
+      "trust_tier": "official",
+      "tags": [
+        "development",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/developer-agent",
+      "did": "did:web:blueflyagents.com:agents:developer-agent"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "code-writing",
+        "api-development",
+        "mcp-server-creation",
+        "testing",
+        "devops-tooling"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "devops-flow",
+      "version": "1.0.0",
+      "description": "Orchestrates the issue-driven DevOps workflow: GitLab issue to MR to branch to worktree, with safe push, rebase-sync, and cleanup automation.",
+      "category": "devops",
+      "trust_tier": "official",
+      "tags": [
+        "devops",
+        "orchestrator",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/devops-flow",
+      "did": "did:web:blueflyagents.com:agents:devops-flow"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "flow-start",
+        "flow-push",
+        "flow-sync-all",
+        "flow-status"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "document-specialist",
+      "version": "1.0.0",
+      "description": "Specializes in Excel spreadsheets, Word documents, PowerPoint presentations,",
+      "category": "documents",
+      "trust_tier": "official",
+      "tags": [
+        "documents",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/document-specialist",
+      "did": "did:web:blueflyagents.com:agents:document-specialist"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "spreadsheet-creation",
+        "document-creation",
+        "presentation-creation",
+        "financial-modeling",
+        "pdf-forms"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "documentation-aggregator",
+      "version": "1.0.0",
+      "description": "Wiki aggregation",
+      "category": "documentation",
+      "trust_tier": "official",
+      "tags": [
+        "documentation",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/documentation-aggregator",
+      "did": "did:web:blueflyagents.com:agents:documentation-aggregator"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "documentation-aggregator"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "dragonfly-deployment-agent",
+      "version": "0.1.0",
+      "description": "Meta-agent that deploys other OSSA agents. Orchestration layer for agent lifecycle:",
+      "category": "orchestration",
+      "trust_tier": "official",
+      "tags": [
+        "orchestration",
+        "orchestrator",
+        "agent-deployment",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/dragonfly-deployment-agent",
+      "did": "did:web:blueflyagents.com:agents:dragonfly-deployment-agent"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "agent-deploy",
+        "ossa-validate",
+        "rollback",
+        "flow-execute"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "drupal-fleet-operator",
+      "version": "1.0.0",
+      "description": "Manifest-driven Drupal fleet change control: generate recipe from description,",
+      "category": "drupal",
+      "trust_tier": "official",
+      "tags": [
+        "drupal",
+        "orchestrator",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/drupal-fleet-operator",
+      "did": "did:web:blueflyagents.com:agents:drupal-fleet-operator"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "generate-recipe",
+        "plan-rollout",
+        "apply-recipe",
+        "verify",
+        "rollback"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "drupal-standards-checker",
+      "version": "1.0.0",
+      "description": "Checks Drupal code against coding standards (PHPCS, PHPStan, ESLint).",
+      "category": "drupal",
+      "trust_tier": "official",
+      "tags": [
+        "drupal",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/drupal-standards-checker",
+      "did": "did:web:blueflyagents.com:agents:drupal-standards-checker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "phpcs-validation",
+        "phpstan-analysis",
+        "auto-fix",
+        "theme-testing",
+        "drupal-org-check"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "duo-comment-responder",
+      "version": "1.0.0",
+      "description": "Responds to GitLab Duo comments on merge requests. Enables agent-to-agent dialogue where Claude analyzes Duo's suggestions, implements fixes, and continues the conversation until issues are resolved.",
+      "category": "code-quality",
+      "trust_tier": "official",
+      "tags": [
+        "code-quality",
+        "executor",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/duo-comment-responder",
+      "did": "did:web:blueflyagents.com:agents:duo-comment-responder"
+    },
+    "spec": {
+      "agent_type": "executor",
+      "capabilities": [
+        "duo-comment-responder"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "ecma-standards-agent",
+      "version": "1.0.0",
+      "description": "Proactive Ecma International standards discovery and compliance auditor.",
+      "category": "standards-compliance",
+      "trust_tier": "official",
+      "tags": [
+        "standards-compliance",
+        "worker",
+        "code-quality",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/ecma-standards-agent",
+      "did": "did:web:blueflyagents.com:agents:ecma-standards-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "discover_new_standards",
+        "track_tc39_proposals",
+        "audit_ecmascript_compliance",
+        "audit_json_compliance",
+        "audit_sbom_compliance",
+        "gitlab_mr_commenting",
+        "block_non_compliant_mrs"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "full-stack-specialist",
+      "version": "1.0.0",
+      "description": "Handles complete projects spanning multiple domains - development, design,",
+      "category": "full-stack",
+      "trust_tier": "official",
+      "tags": [
+        "full-stack",
+        "specialist",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/full-stack-specialist",
+      "did": "did:web:blueflyagents.com:agents:full-stack-specialist"
+    },
+    "spec": {
+      "agent_type": "specialist",
+      "capabilities": [
+        "project-planning",
+        "full-stack-development",
+        "design-integration",
+        "data-pipeline",
+        "documentation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "gitlab-ossa-agent",
+      "version": "0.1.0",
+      "description": "GitLab Duo external agent coordinator. Runs on Oracle; receives webhooks from",
+      "category": "platform",
+      "trust_tier": "official",
+      "tags": [
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/gitlab-ossa-agent",
+      "did": "did:web:blueflyagents.com:agents:gitlab-ossa-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "duo-webhook-health",
+        "duo-webhook-trigger"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "hackathon-helper",
+      "version": "1.0.0",
+      "description": "Helps users discover hackathons from the pipeline feed, get details, draft submission text via the router, save selections, and get deadline reminders. Uses n8n list webhook, workflow-engine, and agent-router.",
+      "category": "hackathon",
+      "trust_tier": "official",
+      "tags": [
+        "hackathon",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/hackathon-helper",
+      "did": "did:web:blueflyagents.com:agents:hackathon-helper"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "get_hackathon_list",
+        "get_hackathon_details",
+        "draft_submission_text",
+        "save_my_selection",
+        "get_deadline_reminders"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "issue-lifecycle-manager",
+      "version": "1.0.0",
+      "description": "Issue triage & management",
+      "category": "project-management",
+      "trust_tier": "official",
+      "tags": [
+        "project-management",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/issue-lifecycle-manager",
+      "did": "did:web:blueflyagents.com:agents:issue-lifecycle-manager"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "issue-lifecycle-manager"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "issue-worker",
+      "version": "1.0.0",
+      "description": "Works on GitLab issues autonomously. Analyzes issue requirements,",
+      "category": "workflow",
+      "trust_tier": "official",
+      "tags": [
+        "workflow",
+        "worker",
+        "issue-implementation",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/issue-worker",
+      "did": "did:web:blueflyagents.com:agents:issue-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "issue-analysis",
+        "solution-design",
+        "priority_analysis",
+        "duplicate_detection",
+        "risk-assessment",
+        "code-implementation",
+        "test-creation",
+        "mr-creation",
+        "feedback-response",
+        "issue_triage",
+        "label_management",
+        "milestone_tracking",
+        "issue_summarization",
+        "workload_analysis",
+        "board_organization",
+        "execution-tracking",
+        "performance-metrics"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "k8s-ops-worker",
+      "version": "1.0.0",
+      "description": "Infrastructure production agent for Kubernetes and cloud deployments.",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "worker",
+        "infrastructure-ops",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/k8s-ops-worker",
+      "did": "did:web:blueflyagents.com:agents:k8s-ops-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "kubernetes-deployment",
+        "deployment_management",
+        "pod_operations",
+        "service_configuration",
+        "ingress_management",
+        "infrastructure-monitoring",
+        "auto-scaling",
+        "resource_scaling",
+        "configmap_secrets",
+        "namespace_management",
+        "rollback_operations",
+        "health_monitoring"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "kagent-catalog-sync",
+      "version": "1.0.0",
+      "description": "Kagent.dev catalog sync",
+      "category": "integration",
+      "trust_tier": "official",
+      "tags": [
+        "integration",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/kagent-catalog-sync",
+      "did": "did:web:blueflyagents.com:agents:kagent-catalog-sync"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "kagent-catalog-sync"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "kagent-worker",
+      "version": "1.0.0",
+      "description": "Generates kAgent CRDs from OSSA manifests and deploys to Kubernetes",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/kagent-worker",
+      "did": "did:web:blueflyagents.com:agents:kagent-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "agent_deployment",
+        "kagent-crd-management",
+        "manifest-generation",
+        "agent_scaling",
+        "horizontal-pod-autoscaler",
+        "agent_monitoring",
+        "health_checks",
+        "metrics-collection",
+        "resource_allocation",
+        "quota-management",
+        "llm_routing",
+        "task_distribution",
+        "lifecycle_management",
+        "auto_recovery",
+        "rolling-updates"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "manifest-validator",
+      "version": "1.0.0",
+      "description": "OSSA manifest validation",
+      "category": "validation",
+      "trust_tier": "official",
+      "tags": [
+        "validation",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/manifest-validator",
+      "did": "did:web:blueflyagents.com:agents:manifest-validator"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "manifest-validator"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "mcp-builder-worker",
+      "version": "1.0.0",
+      "description": "MCP server builder for creating and packaging Model Context Protocol integrations.",
+      "category": "mcp",
+      "trust_tier": "official",
+      "tags": [
+        "mcp",
+        "worker",
+        "mcp-development",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/mcp-builder-worker",
+      "did": "did:web:blueflyagents.com:agents:mcp-builder-worker"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "server_scaffolding",
+        "mcp-server-generation",
+        "tool_definition",
+        "resource_definition",
+        "prompt_definition",
+        "schema_generation",
+        "transport_configuration",
+        "capability_negotiation",
+        "server_packaging",
+        "documentation_generation",
+        "canvas-building",
+        "visual-workflow-design",
+        "node-connection",
+        "component-creation",
+        "component-library",
+        "component-testing"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "mcp-server-builder",
+      "version": "1.0.0",
+      "description": "MCP server creation",
+      "category": "code-generation",
+      "trust_tier": "official",
+      "tags": [
+        "code-generation",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/mcp-server-builder",
+      "did": "did:web:blueflyagents.com:agents:mcp-server-builder"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "mcp-server-builder"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "merge-request-reviewer",
+      "version": "1.0.0",
+      "description": "MR analysis & approval",
+      "category": "code-review",
+      "trust_tier": "official",
+      "tags": [
+        "code-review",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/merge-request-reviewer",
+      "did": "did:web:blueflyagents.com:agents:merge-request-reviewer"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "code_review",
+        "security_analysis",
+        "architecture_review",
+        "test_coverage_analysis",
+        "breaking_change_detection",
+        "approval_recommendation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "module-generator",
+      "version": "1.0.0",
+      "description": "Drupal module scaffolding",
+      "category": "code-generation",
+      "trust_tier": "official",
+      "tags": [
+        "code-generation",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/module-generator",
+      "did": "did:web:blueflyagents.com:agents:module-generator"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "module-generator"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "module-scaffolder",
+      "version": "1.0.0",
+      "description": "Scaffolds Drupal modules and recipes with proper structure, boilerplate code,",
+      "category": "drupal",
+      "trust_tier": "official",
+      "tags": [
+        "drupal",
+        "worker",
+        "module-generation",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/module-scaffolder",
+      "did": "did:web:blueflyagents.com:agents:module-scaffolder"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "module-generation",
+        "generate-module-structure",
+        "create-info-file",
+        "scaffold-services",
+        "generate-routing",
+        "create-controllers",
+        "scaffold-forms",
+        "generate-plugins",
+        "create-configuration",
+        "scaffold-tests",
+        "recipe-scaffolding",
+        "boilerplate-creation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "mr-auto-fix",
+      "version": "0.1.0",
+      "description": "Autonomous MR auto-fix agent — resolves conflicts, fixes pipelines, responds to Duo comments, and merges when ready.",
+      "category": "gitlab",
+      "trust_tier": "official",
+      "tags": [
+        "gitlab",
+        "worker",
+        "merge-request-automation",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/mr-auto-fix",
+      "did": "did:web:blueflyagents.com:agents:mr-auto-fix"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "conflict-resolution",
+        "pipeline-retry",
+        "auto-merge",
+        "duo-comment-response",
+        "pipeline-analysis"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "mr-reviewer",
+      "version": "1.0.0",
+      "description": "Reviews merge requests for code quality, security, and best practices.",
+      "category": "gitlab",
+      "trust_tier": "official",
+      "tags": [
+        "gitlab",
+        "reviewer",
+        "merge-request-review",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/mr-reviewer",
+      "did": "did:web:blueflyagents.com:agents:mr-reviewer"
+    },
+    "spec": {
+      "agent_type": "reviewer",
+      "capabilities": [
+        "code-review",
+        "security-review",
+        "diff_analysis",
+        "style_checking",
+        "best_practices_validation",
+        "test-coverage-check",
+        "documentation-check",
+        "risk-assessment",
+        "comment-generation",
+        "approval-decision",
+        "execution-tracking",
+        "auto-merge-recommendation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "openstandard-designer",
+      "version": "1.1.0",
+      "description": "Expert in creative direction, design systems, UI/UX and frontend: CSS, Sass, JS, Next.js theming, and especially Drupal theming using latest Drupal contrib. Prefers contrib over custom; organizes files and standards; builds design languages via component-based architecture. Aligned with OSSA brand, Apple HIG, Material Design.",
+      "category": "design",
+      "trust_tier": "official",
+      "tags": [
+        "design",
+        "production",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/openstandard-designer",
+      "did": "did:web:blueflyagents.com:agents:openstandard-designer"
+    },
+    "spec": {
+      "agent_type": "production",
+      "capabilities": [
+        "design-system-advice",
+        "ossa-brand-compliance",
+        "ui-ux-review",
+        "accessible-markup",
+        "component-specs",
+        "frontend-patterns",
+        "css-sass-js",
+        "nextjs-theming",
+        "drupal-theming",
+        "drupal-contrib-first",
+        "component-based-design-language",
+        "theme-file-organization",
+        "design-tokens"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "oracle-logging-agent",
+      "version": "1.0.0",
+      "description": "Oracle infrastructure agent for the Unified Monitoring Agent (Logging). Installs the agent",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "worker",
+        "oracle-logging",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/oracle-logging-agent",
+      "did": "did:web:blueflyagents.com:agents:oracle-logging-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "agent-version-lookup",
+        "agent-download",
+        "agent-install-linux",
+        "agent-install-windows",
+        "agent-configure-auth",
+        "agent-restart",
+        "custom-image-setup"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "semi_autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "ossa-validator",
+      "version": "1.0.0",
+      "description": "Validates OSSA agent manifests against v0.3.2 specification. Ensures compliance",
+      "category": "validation",
+      "trust_tier": "official",
+      "tags": [
+        "validation",
+        "worker",
+        "manifest-validation",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/ossa-validator",
+      "did": "did:web:blueflyagents.com:agents:ossa-validator"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "ossa-schema-validation",
+        "validate-ossa-manifest",
+        "check-schema-compliance",
+        "verify-access-controls",
+        "security-governance",
+        "validate-taxonomy",
+        "check-separation-of-concerns",
+        "template-compliance",
+        "generate-validation-report"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "pipeline-remediation",
+      "version": "1.0.0",
+      "description": "Token-optimized CI/CD failure fixing agent that receives knowledge references from",
+      "category": "ci-cd",
+      "trust_tier": "official",
+      "tags": [
+        "ci-cd",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/pipeline-remediation",
+      "did": "did:web:blueflyagents.com:agents:pipeline-remediation"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "pipeline_failure_analysis",
+        "auto_retry_strategy",
+        "dependency_resolution",
+        "code_fix_generation",
+        "ci_config_repair",
+        "test_healing"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "project-indexer",
+      "version": "1.0.0",
+      "description": "Indexes GitLab projects from multiple groups into the GitLab Knowledge Graph (GKG) on Oracle infrastructure. Manages clone lifecycle and indexing cron.",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/project-indexer",
+      "did": "did:web:blueflyagents.com:agents:project-indexer"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "projects-list",
+        "projects-index",
+        "projects-status"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "recipe-publisher",
+      "version": "1.0.0",
+      "description": "Recipe publishing to registries",
+      "category": "publishing",
+      "trust_tier": "official",
+      "tags": [
+        "publishing",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/recipe-publisher",
+      "did": "did:web:blueflyagents.com:agents:recipe-publisher"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "recipe-publisher"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "release-coordinator",
+      "version": "1.0.0",
+      "description": "Release orchestration",
+      "category": "release",
+      "trust_tier": "official",
+      "tags": [
+        "release",
+        "orchestrator",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/release-coordinator",
+      "did": "did:web:blueflyagents.com:agents:release-coordinator"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "release_planning",
+        "version_management",
+        "changelog_generation",
+        "release_validation",
+        "deployment_orchestration",
+        "rollback_management"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "release-manager",
+      "version": "1.0.0",
+      "description": "Orchestrates complete release workflows including milestone detection,",
+      "category": "gitlab",
+      "trust_tier": "official",
+      "tags": [
+        "gitlab",
+        "orchestrator",
+        "release-orchestration",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/release-manager",
+      "did": "did:web:blueflyagents.com:agents:release-manager"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "release-orchestration",
+        "milestone-detection",
+        "branch-management",
+        "sbom-generation",
+        "changelog-generation",
+        "version_calculation",
+        "version-bumping",
+        "tag_management",
+        "release_note_creation",
+        "gitlab-release-creation",
+        "milestone_tracking",
+        "dependency_analysis",
+        "breaking_change_detection"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "security-scanner",
+      "version": "1.0.0",
+      "description": "Security vulnerability scanner for code, dependencies, and infrastructure.",
+      "category": "security",
+      "trust_tier": "official",
+      "tags": [
+        "security",
+        "worker",
+        "security-analysis",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/security-scanner",
+      "did": "did:web:blueflyagents.com:agents:security-scanner"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "vulnerability-scanning",
+        "static_code_analysis",
+        "dependency_scanning",
+        "secrets-detection",
+        "config-auditing",
+        "configuration_audit",
+        "content-auditing",
+        "ossa-compliance-validation",
+        "gitlab-policy-enforcement",
+        "security-governance",
+        "vulnerability_classification",
+        "cve_lookup",
+        "security_report_generation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "social-research-agent",
+      "version": "1.0.0",
+      "description": "Research agent for white papers, educational documents, and analysis reports.",
+      "category": "research",
+      "trust_tier": "official",
+      "tags": [
+        "research",
+        "worker",
+        "research-analysis",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/social-research-agent",
+      "did": "did:web:blueflyagents.com:agents:social-research-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "academic_research",
+        "web_research",
+        "moltbook_query",
+        "trend_analysis",
+        "sentiment_analysis",
+        "literature_review",
+        "research_synthesis"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "task-dispatcher",
+      "version": "1.0.0",
+      "description": "Default orchestrator, routes tasks",
+      "category": "orchestration",
+      "trust_tier": "official",
+      "tags": [
+        "orchestration",
+        "orchestrator",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/task-dispatcher",
+      "did": "did:web:blueflyagents.com:agents:task-dispatcher"
+    },
+    "spec": {
+      "agent_type": "orchestrator",
+      "capabilities": [
+        "intelligent_task_routing",
+        "workflow_orchestration",
+        "cost_optimization",
+        "health_monitoring",
+        "escalation_management"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "moderate",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "token-optimizer",
+      "version": "1.0.0",
+      "description": "LLM token usage optimizer for cost-efficient AI operations and prompt engineering.",
+      "category": "llm",
+      "trust_tier": "official",
+      "tags": [
+        "llm",
+        "worker",
+        "cost-optimization",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/token-optimizer",
+      "did": "did:web:blueflyagents.com:agents:token-optimizer"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "token_counting",
+        "token-optimization",
+        "prompt_analysis",
+        "context_compression",
+        "cost_estimation",
+        "cost-tracking",
+        "budget-management",
+        "usage-analysis",
+        "prompt_optimization",
+        "model_recommendation",
+        "batch_optimization",
+        "usage_forecasting",
+        "predictive-modeling",
+        "anomaly-detection",
+        "pattern-learning",
+        "feedback-integration"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "token-rotation-manager",
+      "version": "1.0.0",
+      "description": "Automated token rotation for GitLab service accounts.",
+      "category": "infrastructure",
+      "trust_tier": "official",
+      "tags": [
+        "infrastructure",
+        "worker",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/token-rotation-manager",
+      "did": "did:web:blueflyagents.com:agents:token-rotation-manager"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "validate-environment",
+        "rotate-tokens",
+        "verify-tokens",
+        "rotation-status"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "vulnerability-scanner",
+      "version": "1.0.0",
+      "description": "Security scanning",
+      "category": "security",
+      "trust_tier": "official",
+      "tags": [
+        "security",
+        "analyzer",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/vulnerability-scanner",
+      "did": "did:web:blueflyagents.com:agents:vulnerability-scanner"
+    },
+    "spec": {
+      "agent_type": "analyzer",
+      "capabilities": [
+        "sast_scanning",
+        "dependency_audit",
+        "secrets_detection",
+        "container_scanning",
+        "owasp_validation",
+        "severity_classification",
+        "remediation_guidance"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "supervised",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "whitepaper-writer-agent",
+      "version": "1.0.0",
+      "description": "Content synthesis agent that transforms research into white papers, educational",
+      "category": "content",
+      "trust_tier": "official",
+      "tags": [
+        "content",
+        "worker",
+        "technical-writing",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/whitepaper-writer-agent",
+      "did": "did:web:blueflyagents.com:agents:whitepaper-writer-agent"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "research_synthesis",
+        "whitepaper_writing",
+        "educational_content",
+        "research_analysis",
+        "literature_review",
+        "markdown_generation",
+        "latex_generation",
+        "citation_management",
+        "outline_generation",
+        "audience_adaptation"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  },
+  {
+    "apiVersion": "ossa/v0.5",
+    "kind": "Agent",
+    "metadata": {
+      "name": "wiki-aggregator",
+      "version": "1.0.0",
+      "description": "Documentation wiki aggregator for collecting, organizing, and synchronizing wiki content",
+      "category": "docs",
+      "trust_tier": "official",
+      "tags": [
+        "docs",
+        "worker",
+        "documentation-sync",
+        "platform-agent"
+      ],
+      "created": "2026-01-01T00:00:00Z",
+      "updated": "2026-03-06T00:00:00Z"
+    },
+    "identity": {
+      "gaid": "agent://agents/wiki-aggregator",
+      "did": "did:web:blueflyagents.com:agents:wiki-aggregator"
+    },
+    "spec": {
+      "agent_type": "worker",
+      "capabilities": [
+        "wiki_discovery",
+        "content_aggregation",
+        "cross_reference_linking",
+        "content_indexing",
+        "search_optimization",
+        "structure_analysis",
+        "markdown_processing",
+        "metadata_extraction",
+        "wiki-sync",
+        "documentation-aggregation",
+        "cross-project-docs",
+        "readme-sync",
+        "changelog-sync"
+      ],
+      "namespace": "blueflyio"
+    },
+    "risk": {
+      "level": "low",
+      "autonomy_level": "autonomous",
+      "data_sensitivity": "internal"
+    }
+  }
+]

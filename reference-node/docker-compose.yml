@@ -6,15 +6,18 @@ services:
     container_name: uadp-reference-node
     restart: unless-stopped
     ports:
-      - "4200:4200"
+      - "${PORT:-4200}:${PORT:-4200}"
     volumes:
       - uadp-data:/app/reference-node/data
+    env_file:
+      - .env
     environment:
-      - NODE_ENV=production
-      - PORT=4200
-      - UADP_NODE_NAME=OSSA Reference Node
-      - UADP_BASE_URL=https://uadp.blueflyagents.com
-      - UADP_NODE_ID=did:web:uadp.blueflyagents.com
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-4200}
+      - UADP_NODE_NAME=${UADP_NODE_NAME:-My UADP Node}
+      - UADP_BASE_URL=${UADP_BASE_URL:-http://localhost:4200}
+      - UADP_NODE_ID=${UADP_NODE_ID:-did:web:localhost}
+      - DB_PATH=${DB_PATH:-./data/uadp.db}
 
 volumes:
   uadp-data:

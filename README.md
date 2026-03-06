@@ -235,16 +235,127 @@ curl -X POST https://uadp.blueflyagents.com/uadp/v1/publish \
 
 Node ID: `did:web:uadp.blueflyagents.com` | Protocol: UADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
 
+## Run the Reference Node Locally
+
+```bash
+# 1. Build the SDK
+cd sdk/typescript && npm ci && npm run build && cd ../..
+
+# 2. Install reference node dependencies
+cd reference-node && npm ci
+
+# 3. Seed the database
+npx tsx src/seed.ts
+
+# 4. Start the node
+npx tsx src/index.ts
+# → UADP Reference Node "OSSA Reference Node" running at http://localhost:4200
+# → Discovery: http://localhost:4200/.well-known/uadp.json
+
+# 5. Verify
+curl http://localhost:4200/.well-known/uadp.json
+curl http://localhost:4200/uadp/v1/health
+curl http://localhost:4200/uadp/v1/skills
+curl http://localhost:4200/uadp/v1/agents
+curl http://localhost:4200/uadp/v1/tools
+```
+
+### Docker
+
+```bash
+cd reference-node
+docker compose up --build
+# → Runs on port 4200 with persistent SQLite volume
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `4200` | HTTP port |
+| `UADP_BASE_URL` | `http://localhost:4200` | Public base URL |
+| `UADP_NODE_NAME` | `OSSA Reference Node` | Human-readable node name |
+| `UADP_NODE_ID` | `did:web:localhost` | DID identifier for this node |
+| `DB_PATH` | `./data/uadp.db` | SQLite database path |
+
+## Verified Endpoint Status
+
+All endpoints tested and passing (reference node v0.2.0):
+
+| Endpoint | Method | Status | Description |
+|----------|--------|--------|-------------|
+| `/.well-known/uadp.json` | GET | **Verified** | Discovery manifest with all endpoints |
+| `/.well-known/webfinger` | GET | **Verified** | GAID resolution (agent:// URIs) |
+| `/uadp/v1/skills` | GET | **Verified** | List skills (5 seeded), paginated |
+| `/uadp/v1/skills/:name` | GET | **Verified** | Get single skill by name |
+| `/uadp/v1/agents` | GET | **Verified** | List agents (3 seeded), paginated |
+| `/uadp/v1/agents/:name` | GET | **Verified** | Get single agent by name |
+| `/uadp/v1/tools` | GET | **Verified** | List tools (3 seeded), with `?protocol=` filter |
+| `/uadp/v1/tools/:name` | GET | **Verified** | Get single tool by name |
+| `/uadp/v1/publish` | POST | **Verified** | Publish any resource (auth required) |
+| `/uadp/v1/skills` | POST | **Verified** | Publish a skill (auth required) |
+| `/uadp/v1/skills/:name` | PUT | **Verified** | Update a skill (auth required) |
+| `/uadp/v1/skills/:name` | DELETE | **Verified** | Delete a skill (auth required) |
+| `/uadp/v1/validate` | POST | **Verified** | Validate OSSA manifest JSON |
+| `/uadp/v1/federation` | GET | **Verified** | List federation peers |
+| `/uadp/v1/federation` | POST | **Verified** | Register as peer (gossip) |
+| `/uadp/v1/health` | GET | **Verified** | Node health + resource counts |
+| `/uadp/v1/search` | GET | **Verified** | Cross-resource search with facets |
+| `/uadp/v1/governance` | GET | **Verified** | NIST AI RMF governance config |
+| `/uadp/v1/feedback` | POST | **Verified** | Submit 360 feedback |
+| `/uadp/v1/feedback/:agentId` | GET | **Verified** | Get agent feedback history |
+| `/uadp/v1/reputation/:agentId` | GET | **Verified** | Computed reputation score |
+| `/uadp/v1/analytics/tokens` | POST | **Verified** | Report token usage |
+| `/uadp/v1/analytics/tokens/:agentId` | GET | **Verified** | Token analytics per agent |
+| `/uadp/v1/attestations` | POST | **Verified** | Submit outcome attestation |
+| `/uadp/v1/attestations/:agentId` | GET | **Verified** | Get agent attestations |
+| `/uadp/v1/audit` | GET | **Verified** | Audit log with filters |
+
+## SDK Test Suite
+
+The TypeScript SDK includes 136 tests across 7 test files:
+
+```
+ ✓ circuit-breaker.test.ts   (12 tests)
+ ✓ validate.test.ts          (22 tests)
+ ✓ dedup.test.ts              (7 tests)
+ ✓ crypto.test.ts            (24 tests)
+ ✓ did.test.ts               (11 tests)
+ ✓ e2e-crypto.test.ts        (24 tests)
+ ✓ integration.test.ts       (36 tests)
+ ────────────────────────────────────────
+   7 passed | 136 tests | ~500ms
+```
+
+Run tests:
+```bash
+cd sdk/typescript && npm test
+```
+
 ## Reference Implementations
 
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
-| `@ossa/uadp` TypeScript SDK | Available | Client + Express server ([136 tests](sdk/typescript/src/__tests__/)) |
+| `@ossa/uadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
 | `ossa-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
+
+## Seeded Data
+
+The reference node seeds with realistic OSSA-formatted resources:
+
+| Kind | Count | Examples |
+|------|-------|---------|
+| Skills | 5 | `web-search`, `code-review`, `text-summarizer`, `data-analyzer`, `image-classifier` |
+| Agents | 3 | `orchestrator` (multi-agent), `code-reviewer` (worker), `security-auditor` (specialist) |
+| Tools | 3 | `mcp-filesystem` (MCP), `a2a-email` (A2A), `openapi-weather` (REST) |
+| Audit Log | 10 | Resource creation, updates, federation sync, auth events |
+| Feedback | 5 | Human, agent, and system feedback with structured dimensions |
+| Token Usage | 5 | Per-agent token tracking with model and cost data |
+| Attestations | 3 | Signed outcome records with metrics |
 
 ## Contributing
 

@@ -1,9 +1,36 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-*.js.map
+*.tsbuildinfo
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+data/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
 .DS_Store
-__pycache__/
-*.pyc
-*.egg-info/
-.pytest_cache/
-.venv/
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*

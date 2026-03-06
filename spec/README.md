@@ -1120,11 +1120,14 @@ A more complete implementation adds:
 - DNS TXT record
 
 Reference implementations:
-- **Drupal**: `ai_agents_marketplace` module (PHP)
-- **TypeScript SDK**: `@ossa/uadp` with Express server helper
+- **SQLite Reference Node**: `reference-node/` — Express + SQLite, all 26 endpoints verified, Docker-ready
+- **TypeScript SDK**: `@ossa/uadp` with Express server helper (136 tests passing)
+- **Drupal**: `ai_agents_marketplace` module (PHP) — full DUADP node with federation
 - **Python SDK**: `ossa-uadp` with FastAPI server helper
 - **Go SDK**: `uadp-go` with `net/http` handler
 - **Static**: GitHub Pages with JSON files — planned
+
+The reference node (`reference-node/`) implements every endpoint in this spec and can be started locally with `npx tsx src/index.ts` or via Docker. See the [root README](../README.md) for setup instructions.
 
 ## Appendix A: JSON Schemas
 

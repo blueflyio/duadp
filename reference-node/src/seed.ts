@@ -1,9 +1,11 @@
 import { initDb } from './db.js';
+import platformAgents from './platform-agents-seed.json' with { type: 'json' };
 
 const DB_PATH = process.env.DB_PATH || './data/uadp.db';
+const SEED_DOMAIN = process.env.UADP_SEED_DOMAIN || 'example.uadp.dev';
 const db = initDb(DB_PATH);
 
-console.log('Seeding UADP reference database...');
+console.log(`Seeding UADP reference database (domain: ${SEED_DOMAIN})...`);
 
 // Helper to insert a resource
 const insertResource = db.prepare(
@@ -50,7 +52,7 @@ const skills = [
     },
     identity: {
       gaid: 'agent://skills/web-search',
-      did: 'did:web:ossa.dev:skills:web-search',
+      did: `did:web:${SEED_DOMAIN}:skills:web-search`,
     },
     spec: {
       input_schema: { type: 'object', properties: { query: { type: 'string' }, max_results: { type: 'number', default: 10 } } },
@@ -76,7 +78,7 @@ const skills = [
     },
     identity: {
       gaid: 'agent://skills/code-review',
-      did: 'did:web:ossa.dev:skills:code-review',
+      did: `did:web:${SEED_DOMAIN}:skills:code-review`,
     },
     spec: {
       input_schema: { type: 'object', properties: { code: { type: 'string' }, language: { type: 'string' }, context: { type: 'string' } } },
@@ -101,7 +103,7 @@ const skills = [
     },
     identity: {
       gaid: 'agent://skills/text-summarizer',
-      did: 'did:web:ossa.dev:skills:text-summarizer',
+      did: `did:web:${SEED_DOMAIN}:skills:text-summarizer`,
     },
     spec: {
       input_schema: { type: 'object', properties: { text: { type: 'string' }, max_length: { type: 'number' }, style: { type: 'string', enum: ['bullet', 'paragraph', 'executive'] } } },
@@ -126,7 +128,7 @@ const skills = [
     },
     identity: {
       gaid: 'agent://skills/data-analyzer',
-      did: 'did:web:ossa.dev:skills:data-analyzer',
+      did: `did:web:${SEED_DOMAIN}:skills:data-analyzer`,
     },
     spec: {
       input_schema: { type: 'object', properties: { data: { type: 'array' }, columns: { type: 'array' }, analysis_type: { type: 'string' } } },
@@ -151,7 +153,7 @@ const skills = [
     },
     identity: {
       gaid: 'agent://skills/image-classifier',
-      did: 'did:web:ossa.dev:skills:image-classifier',
+      did: `did:web:${SEED_DOMAIN}:skills:image-classifier`,
     },
     spec: {
       input_schema: { type: 'object', properties: { image_url: { type: 'string' }, top_k: { type: 'number', default: 5 } } },
@@ -183,12 +185,12 @@ const agents = [
     },
     identity: {
       gaid: 'agent://agents/orchestrator',
-      did: 'did:web:ossa.dev:agents:orchestrator',
+      did: `did:web:${SEED_DOMAIN}:agents:orchestrator`,
       operational: {
-        endpoint: 'https://agents.ossa.dev/orchestrator',
+        endpoint: `https://agents.${SEED_DOMAIN}/orchestrator`,
         protocol: 'a2a',
         transport: 'https',
-        health_check: 'https://agents.ossa.dev/orchestrator/health',
+        health_check: `https://agents.${SEED_DOMAIN}/orchestrator/health`,
         rate_limit: { requests_per_minute: 60, concurrent_sessions: 10 },
       },
       relationships: {
@@ -221,12 +223,12 @@ const agents = [
     },
     identity: {
       gaid: 'agent://agents/code-reviewer',
-      did: 'did:web:ossa.dev:agents:code-reviewer',
+      did: `did:web:${SEED_DOMAIN}:agents:code-reviewer`,
       operational: {
-        endpoint: 'https://agents.ossa.dev/code-reviewer',
+        endpoint: `https://agents.${SEED_DOMAIN}/code-reviewer`,
         protocol: 'mcp',
         transport: 'sse',
-        health_check: 'https://agents.ossa.dev/code-reviewer/health',
+        health_check: `https://agents.${SEED_DOMAIN}/code-reviewer/health`,
       },
       relationships: {
         parent_agent: 'agent://agents/orchestrator',
@@ -258,12 +260,12 @@ const agents = [
     },
     identity: {
       gaid: 'agent://agents/security-auditor',
-      did: 'did:web:ossa.dev:agents:security-auditor',
+      did: `did:web:${SEED_DOMAIN}:agents:security-auditor`,
       operational: {
-        endpoint: 'https://agents.ossa.dev/security-auditor',
+        endpoint: `https://agents.${SEED_DOMAIN}/security-auditor`,
         protocol: 'a2a',
         transport: 'https',
-        health_check: 'https://agents.ossa.dev/security-auditor/health',
+        health_check: `https://agents.${SEED_DOMAIN}/security-auditor/health`,
       },
       relationships: {
         parent_agent: 'agent://agents/orchestrator',
@@ -309,9 +311,9 @@ const tools = [
     },
     identity: {
       gaid: 'agent://tools/mcp-filesystem',
-      did: 'did:web:ossa.dev:tools:mcp-filesystem',
+      did: `did:web:${SEED_DOMAIN}:tools:mcp-filesystem`,
       operational: {
-        endpoint: 'https://tools.ossa.dev/mcp-filesystem',
+        endpoint: `https://tools.${SEED_DOMAIN}/mcp-filesystem`,
         protocol: 'mcp',
         transport: 'stdio',
       },
@@ -343,9 +345,9 @@ const tools = [
     },
     identity: {
       gaid: 'agent://tools/a2a-email',
-      did: 'did:web:ossa.dev:tools:a2a-email',
+      did: `did:web:${SEED_DOMAIN}:tools:a2a-email`,
       operational: {
-        endpoint: 'https://tools.ossa.dev/a2a-email',
+        endpoint: `https://tools.${SEED_DOMAIN}/a2a-email`,
         protocol: 'a2a',
         transport: 'https',
       },
@@ -376,9 +378,9 @@ const tools = [
     },
     identity: {
       gaid: 'agent://tools/openapi-weather',
-      did: 'did:web:ossa.dev:tools:openapi-weather',
+      did: `did:web:${SEED_DOMAIN}:tools:openapi-weather`,
       operational: {
-        endpoint: 'https://tools.ossa.dev/openapi-weather',
+        endpoint: `https://tools.${SEED_DOMAIN}/openapi-weather`,
         protocol: 'rest',
         transport: 'https',
       },
@@ -386,7 +388,7 @@ const tools = [
     spec: {
       protocol: 'rest',
       transport: 'https',
-      openapi_spec_url: 'https://tools.ossa.dev/openapi-weather/openapi.json',
+      openapi_spec_url: `https://tools.${SEED_DOMAIN}/openapi-weather/openapi.json`,
       endpoints: [
         { path: '/current', method: 'GET', description: 'Get current weather conditions' },
         { path: '/forecast', method: 'GET', description: 'Get 7-day forecast' },
@@ -417,11 +419,19 @@ const seedAll = db.transaction(() => {
     console.log(`  + Skill: ${skill.metadata.name}`);
   }
 
-  // Insert agents
+  // Insert agents (reference)
   for (const agent of agents) {
     insertResource.run('Agent', agent.metadata.name, JSON.stringify(agent));
     console.log(`  + Agent: ${agent.metadata.name}`);
   }
+
+  // Insert platform agents (from platform-agents repo manifests)
+  for (const agent of platformAgents) {
+    const a = agent as { metadata: { name: string } };
+    insertResource.run('Agent', a.metadata.name, JSON.stringify(agent));
+    console.log(`  + Platform Agent: ${a.metadata.name}`);
+  }
+  console.log(`  = ${platformAgents.length} platform agents inserted`);
 
   // Insert tools
   for (const tool of tools) {
@@ -446,12 +456,12 @@ const seedAll = db.transaction(() => {
     { event_type: 'resource.created', gaid: 'agent://skills/web-search', actor: 'admin', detail: { kind: 'Skill', name: 'web-search' }, created_at: '2026-01-15T10:00:00Z' },
     { event_type: 'resource.created', gaid: 'agent://agents/orchestrator', actor: 'admin', detail: { kind: 'Agent', name: 'orchestrator' }, created_at: '2025-09-01T06:00:00Z' },
     { event_type: 'resource.updated', gaid: 'agent://skills/code-review', actor: 'ci-bot', detail: { kind: 'Skill', name: 'code-review', version: '2.0.1' }, created_at: '2026-03-01T09:15:00Z' },
-    { event_type: 'peer.added', gaid: null, actor: 'system', detail: { url: 'https://node2.ossa.dev', name: 'OSSA Node 2' }, created_at: '2026-02-10T12:00:00Z' },
+    { event_type: 'peer.added', gaid: null, actor: 'system', detail: { url: `https://node2.${SEED_DOMAIN}`, name: 'OSSA Node 2' }, created_at: '2026-02-10T12:00:00Z' },
     { event_type: 'resource.created', gaid: 'agent://tools/mcp-filesystem', actor: 'admin', detail: { kind: 'Tool', name: 'mcp-filesystem' }, created_at: '2025-12-01T10:00:00Z' },
     { event_type: 'auth.failed', gaid: null, actor: 'unknown', detail: { reason: 'invalid_token', ip: '192.168.1.100' }, created_at: '2026-02-20T03:45:00Z' },
     { event_type: 'resource.created', gaid: 'agent://agents/code-reviewer', actor: 'admin', detail: { kind: 'Agent', name: 'code-reviewer' }, created_at: '2025-10-15T11:00:00Z' },
     { event_type: 'resource.updated', gaid: 'agent://agents/orchestrator', actor: 'admin', detail: { kind: 'Agent', name: 'orchestrator', version: '2.0.0' }, created_at: '2026-03-05T10:00:00Z' },
-    { event_type: 'federation.sync', gaid: null, actor: 'system', detail: { peer: 'https://node2.ossa.dev', resources_synced: 12 }, created_at: '2026-03-04T00:00:00Z' },
+    { event_type: 'federation.sync', gaid: null, actor: 'system', detail: { peer: `https://node2.${SEED_DOMAIN}`, resources_synced: 12 }, created_at: '2026-03-04T00:00:00Z' },
     { event_type: 'resource.created', gaid: 'agent://agents/security-auditor', actor: 'admin', detail: { kind: 'Agent', name: 'security-auditor' }, created_at: '2025-11-20T14:00:00Z' },
   ];
 
@@ -505,7 +515,7 @@ const seedAll = db.transaction(() => {
       task_id: 'task-2026-03-02-005',
       outcome: 'success',
       attestor: 'agent://agents/orchestrator',
-      attestor_did: 'did:web:ossa.dev:agents:orchestrator',
+      attestor_did: `did:web:${SEED_DOMAIN}:agents:orchestrator`,
       signature: null,
       metrics: { duration_ms: 28000, tokens_used: 37200, quality_score: 0.95 },
       created_at: '2026-03-02T11:00:00Z',
