@@ -1,5 +1,5 @@
 /**
- * Reads platform-agent OSSA manifests and generates a UADP-compatible seed JSON.
+ * Reads platform-agent OSSA manifests and generates a DUADP-compatible seed JSON.
  * Run: npx tsx scripts/generate-platform-agents-seed.ts
  * Output: src/platform-agents-seed.json
  */
@@ -105,7 +105,7 @@ function manifestToUadpAgent(manifest: OssaManifest): UadpAgent | null {
     },
     identity: {
       gaid: `agent://agents/${meta.name}`,
-      did: `did:web:example.uadp.dev:agents:${meta.name}`,
+      did: `did:web:example.duadp.dev:agents:${meta.name}`,
     },
     spec: {
       agent_type: labels.tier ?? 'worker',

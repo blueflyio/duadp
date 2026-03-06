@@ -1,26 +1,26 @@
-"""UADP conformance test runner -- validates any UADP node."""
+"""DUADP conformance test runner -- validates any DUADP node."""
 from __future__ import annotations
 import asyncio
 import sys
-from .client import UadpClient, UadpError
+from .client import DuadpClient, DuadpError
 from .validate import validate_manifest, validate_response
 
 
 async def run_conformance_tests(base_url: str) -> dict:
-    """Run conformance tests against a live UADP node."""
+    """Run conformance tests against a live DUADP node."""
     results: list[dict] = []
 
-    async with UadpClient(base_url, timeout=15.0) as client:
+    async with DuadpClient(base_url, timeout=15.0) as client:
         # Test 1: Discovery
         try:
             manifest = await client.discover()
             validation = validate_manifest(manifest.model_dump())
             if validation.valid:
-                results.append({"test": "GET /.well-known/uadp.json", "passed": True})
+                results.append({"test": "GET /.well-known/duadp.json", "passed": True})
             else:
-                results.append({"test": "GET /.well-known/uadp.json", "passed": False, "error": "; ".join(validation.errors)})
+                results.append({"test": "GET /.well-known/duadp.json", "passed": False, "error": "; ".join(validation.errors)})
         except Exception as e:
-            results.append({"test": "GET /.well-known/uadp.json", "passed": False, "error": str(e)})
+            results.append({"test": "GET /.well-known/duadp.json", "passed": False, "error": str(e)})
             return {"url": base_url, "passed": 0, "failed": 1, "results": results}
 
         # Test 2: Skills
@@ -29,11 +29,11 @@ async def run_conformance_tests(base_url: str) -> dict:
             if m.endpoints.skills:
                 skills = await client.list_skills(limit=5)
                 v = validate_response(skills.model_dump())
-                results.append({"test": "GET /uadp/v1/skills", "passed": v.valid, "error": "; ".join(v.errors) if not v.valid else None})
+                results.append({"test": "GET /api/v1/skills", "passed": v.valid, "error": "; ".join(v.errors) if not v.valid else None})
             else:
-                results.append({"test": "GET /uadp/v1/skills", "passed": True, "error": "Skipped (not advertised)"})
+                results.append({"test": "GET /api/v1/skills", "passed": True, "error": "Skipped (not advertised)"})
         except Exception as e:
-            results.append({"test": "GET /uadp/v1/skills", "passed": False, "error": str(e)})
+            results.append({"test": "GET /api/v1/skills", "passed": False, "error": str(e)})
 
         # Test 3: Agents
         try:
@@ -41,11 +41,11 @@ async def run_conformance_tests(base_url: str) -> dict:
             if m.endpoints.agents:
                 agents = await client.list_agents(limit=5)
                 v = validate_response(agents.model_dump())
-                results.append({"test": "GET /uadp/v1/agents", "passed": v.valid, "error": "; ".join(v.errors) if not v.valid else None})
+                results.append({"test": "GET /api/v1/agents", "passed": v.valid, "error": "; ".join(v.errors) if not v.valid else None})
             else:
-                results.append({"test": "GET /uadp/v1/agents", "passed": True, "error": "Skipped (not advertised)"})
+                results.append({"test": "GET /api/v1/agents", "passed": True, "error": "Skipped (not advertised)"})
         except Exception as e:
-            results.append({"test": "GET /uadp/v1/agents", "passed": False, "error": str(e)})
+            results.append({"test": "GET /api/v1/agents", "passed": False, "error": str(e)})
 
         # Test 4: Federation
         try:
@@ -53,11 +53,11 @@ async def run_conformance_tests(base_url: str) -> dict:
             if m.endpoints.federation:
                 fed = await client.get_federation()
                 valid = bool(fed.protocol_version and fed.node_name and isinstance(fed.peers, list))
-                results.append({"test": "GET /uadp/v1/federation", "passed": valid, "error": None if valid else "Invalid response shape"})
+                results.append({"test": "GET /api/v1/federation", "passed": valid, "error": None if valid else "Invalid response shape"})
             else:
-                results.append({"test": "GET /uadp/v1/federation", "passed": True, "error": "Skipped (not advertised)"})
+                results.append({"test": "GET /api/v1/federation", "passed": True, "error": "Skipped (not advertised)"})
         except Exception as e:
-            results.append({"test": "GET /uadp/v1/federation", "passed": False, "error": str(e)})
+            results.append({"test": "GET /api/v1/federation", "passed": False, "error": str(e)})
 
         # Test 5: Pagination
         try:
@@ -75,14 +75,14 @@ async def run_conformance_tests(base_url: str) -> dict:
 
 
 def main():
-    """CLI entry point: uadp-test <url>"""
+    """CLI entry point: duadp-test <url>"""
     if len(sys.argv) < 2:
-        print("Usage: uadp-test <base-url>")
-        print("Example: uadp-test https://marketplace.example.com")
+        print("Usage: duadp-test <base-url>")
+        print("Example: duadp-test https://marketplace.example.com")
         sys.exit(1)
 
     url = sys.argv[1]
-    print(f"Running UADP conformance tests against {url}...")
+    print(f"Running DUADP conformance tests against {url}...")
     result = asyncio.run(run_conformance_tests(url))
 
     for r in result["results"]:

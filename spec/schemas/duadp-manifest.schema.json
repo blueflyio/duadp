@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openstandardagents.org/spec/uadp/v0.2/schemas/uadp-manifest.schema.json",
-  "title": "UADP Node Manifest",
-  "description": "Schema for /.well-known/uadp.json — the discovery manifest for a UADP node.",
+  "$id": "https://openstandardagents.org/spec/duadp/v0.2/schemas/duadp-manifest.schema.json",
+  "title": "DUADP Node Manifest",
+  "description": "Schema for /.well-known/duadp.json — the discovery manifest for a DUADP node.",
   "type": "object",
   "required": ["protocol_version", "node_name", "endpoints"],
   "properties": {
     "protocol_version": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
-      "description": "Semantic version of the UADP protocol this node implements."
+      "description": "Semantic version of the DUADP protocol this node implements."
     },
     "node_id": {
       "type": "string",
@@ -19,7 +19,7 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 256,
-      "description": "Human-readable name of this UADP node."
+      "description": "Human-readable name of this DUADP node."
     },
     "node_description": {
       "type": "string",
@@ -34,18 +34,18 @@
       "type": "object",
       "description": "Map of capability name to relative or absolute URL.",
       "properties": {
-        "skills": { "type": "string", "description": "URL for /uadp/v1/skills" },
-        "agents": { "type": "string", "description": "URL for /uadp/v1/agents" },
-        "tools": { "type": "string", "description": "URL for /uadp/v1/tools" },
-        "federation": { "type": "string", "description": "URL for /uadp/v1/federation" },
-        "validate": { "type": "string", "description": "URL for /uadp/v1/validate" },
-        "publish": { "type": "string", "description": "URL for /uadp/v1/publish" },
-        "governance": { "type": "string", "description": "URL for /uadp/v1/governance" },
-        "provenance": { "type": "string", "description": "URL for /uadp/v1/provenance" },
-        "revocations": { "type": "string", "description": "URL for /uadp/v1/revocations" },
-        "audit_log": { "type": "string", "description": "URL for /uadp/v1/governance/audit" },
-        "events": { "type": "string", "description": "URL for /uadp/v1/events" },
-        "identity": { "type": "string", "description": "URL for /uadp/v1/identity" }
+        "skills": { "type": "string", "description": "URL for /api/v1/skills" },
+        "agents": { "type": "string", "description": "URL for /api/v1/agents" },
+        "tools": { "type": "string", "description": "URL for /api/v1/tools" },
+        "federation": { "type": "string", "description": "URL for /api/v1/federation" },
+        "validate": { "type": "string", "description": "URL for /api/v1/validate" },
+        "publish": { "type": "string", "description": "URL for /api/v1/publish" },
+        "governance": { "type": "string", "description": "URL for /api/v1/governance" },
+        "provenance": { "type": "string", "description": "URL for /api/v1/provenance" },
+        "revocations": { "type": "string", "description": "URL for /api/v1/revocations" },
+        "audit_log": { "type": "string", "description": "URL for /api/v1/governance/audit" },
+        "events": { "type": "string", "description": "URL for /api/v1/events" },
+        "identity": { "type": "string", "description": "URL for /api/v1/identity" }
       },
       "anyOf": [
         { "required": ["skills"] },
@@ -60,7 +60,7 @@
         "type": "string",
         "enum": ["skills", "agents", "tools", "federation", "validation", "publishing", "governance", "provenance", "revocations", "audit", "events", "identity"]
       },
-      "description": "List of supported UADP capabilities."
+      "description": "List of supported DUADP capabilities."
     },
     "identity": {
       "type": "object",

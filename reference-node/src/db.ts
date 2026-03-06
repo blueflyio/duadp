@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS governance (
 `;
 
 export function initDb(path?: string): Database.Database {
-  const dbPath = path ?? './data/uadp.db';
+  const dbPath = path ?? './data/duadp.db';
   mkdirSync(dirname(dbPath), { recursive: true });
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');

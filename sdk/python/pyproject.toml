@@ -9,7 +9,7 @@ description = "DUADP — Decentralized Universal AI Discovery Protocol SDK"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-keywords = ["uadp", "duadp", "ossa", "agent", "discovery", "federation", "ai"]
+keywords = ["duadp", "duadp", "ossa", "agent", "discovery", "federation", "ai"]
 
 dependencies = [
     "httpx>=0.27.0",
@@ -28,4 +28,4 @@ test = ["pytest>=8.0", "pytest-asyncio>=0.24", "pytest-httpx>=0.30"]
 all = ["cryptography>=43.0", "fastapi>=0.115.0", "uvicorn>=0.30.0"]
 
 [project.scripts]
-uadp-test = "bluefly_uadp.conformance:main"
+duadp-test = "bluefly_uadp.conformance:main"

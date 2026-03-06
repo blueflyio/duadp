@@ -1,4 +1,4 @@
-"""DID resolution for UADP identity verification."""
+"""DID resolution for DUADP identity verification."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

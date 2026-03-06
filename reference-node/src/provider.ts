@@ -1,5 +1,5 @@
 import type Database from 'better-sqlite3';
-import type { UadpDataProvider } from '@bluefly/duadp/server';
+import type { DuadpDataProvider } from '@bluefly/duadp/server';
 import type {
   OssaSkill,
   OssaAgent,
@@ -35,7 +35,7 @@ function auditLog(
   ).run(eventType, gaid ?? null, actor ?? 'system', detail ? JSON.stringify(detail) : null);
 }
 
-export function createSqliteProvider(db: Database.Database): UadpDataProvider {
+export function createSqliteProvider(db: Database.Database): DuadpDataProvider {
   // Generic list helper
   function listResources<T extends OssaResource>(
     kind: string,
@@ -339,7 +339,7 @@ export function createSqliteProvider(db: Database.Database): UadpDataProvider {
           {
             rel: 'describedby',
             type: 'application/json',
-            href: `/uadp/v1/${res.kind.toLowerCase()}s/${res.metadata.name}`,
+            href: `/api/v1/${res.kind.toLowerCase()}s/${res.metadata.name}`,
           },
         ],
         properties: {

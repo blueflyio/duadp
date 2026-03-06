@@ -1,0 +1,46 @@
+{
+  "mcpServers": {
+    "duadp-node": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "env": {
+        "PORT": "4200",
+        "DUADP_NODE_NAME": "blueflyio-demo"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "search_duadp_mesh",
+      "description": "Searches the DUADP federated mesh for AI agents by capability or namespace.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "capability": {
+            "type": "string",
+            "description": "The target capability, e.g., 'code-generation'"
+          },
+          "trust_tier": {
+            "type": "string",
+            "description": "Minimum required trust constraints, e.g., 'verified-signature'"
+          }
+        },
+        "required": ["capability"]
+      }
+    },
+    {
+      "name": "publish_to_duadp",
+      "description": "Publishes an OSSA manifest or agent.json out to the DUADP gossip layer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "manifest_url": {
+            "type": "string",
+            "description": "Absolute URL to the agent's definition"
+          }
+        },
+        "required": ["manifest_url"]
+      }
+    }
+  ]
+}

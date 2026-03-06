@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openstandardagents.org/spec/uadp/schemas/uadp-tools-response.schema.json",
-  "title": "UADP Tools Response",
-  "description": "Response from GET /uadp/v1/tools",
+  "$id": "https://openstandardagents.org/spec/duadp/schemas/duadp-tools-response.schema.json",
+  "title": "DUADP Tools Response",
+  "description": "Response from GET /api/v1/tools",
   "type": "object",
   "required": ["data", "meta"],
   "properties": {
@@ -14,13 +14,13 @@
         "properties": {
           "apiVersion": { "type": "string", "pattern": "^ossa/v\\d+\\.\\d+$" },
           "kind": { "type": "string", "const": "Tool" },
-          "metadata": { "$ref": "uadp-manifest.schema.json#/$defs/OssaMetadata" },
+          "metadata": { "$ref": "duadp-manifest.schema.json#/$defs/OssaMetadata" },
           "spec": { "type": "object" },
           "signature": { "$ref": "#/$defs/ResourceSignature" }
         }
       }
     },
-    "meta": { "$ref": "uadp-manifest.schema.json#/$defs/PaginationMeta" }
+    "meta": { "$ref": "duadp-manifest.schema.json#/$defs/PaginationMeta" }
   },
   "$defs": {
     "ResourceSignature": {

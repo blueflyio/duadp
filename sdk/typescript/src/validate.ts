@@ -1,6 +1,6 @@
 import type { UadpManifest, ValidationResult } from './types.js';
 
-/** Validate a /.well-known/uadp.json manifest object. */
+/** Validate a /.well-known/duadp.json manifest object. */
 export function validateManifest(manifest: unknown): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -41,7 +41,7 @@ export function validateManifest(manifest: unknown): ValidationResult {
   return { valid: errors.length === 0, errors, warnings };
 }
 
-/** Validate a UADP skills/agents response envelope. */
+/** Validate a DUADP skills/agents response envelope. */
 export function validateResponse(response: unknown): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];

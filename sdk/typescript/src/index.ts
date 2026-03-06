@@ -1,5 +1,5 @@
-export { UadpClient, UadpError, resolveGaid, CircuitBreaker, deduplicateResources, type UadpClientOptions } from './client.js';
-export { createUadpRouter, type UadpDataProvider, type UadpNodeConfig } from './server.js';
+export { DuadpClient, DuadpError, resolveGaid, CircuitBreaker, deduplicateResources, type DuadpClientOptions } from './client.js';
+export { createUadpRouter, type DuadpDataProvider, type DuadpNodeConfig } from './server.js';
 export * from './types.js';
 export { isUadpManifest, validateManifest, validateResponse } from './validate.js';
 export {

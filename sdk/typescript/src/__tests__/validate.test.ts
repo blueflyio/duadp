@@ -7,8 +7,8 @@ function validManifest() {
     node_name: 'test-node',
     node_description: 'A test node',
     endpoints: {
-      skills: '/uadp/v1/skills',
-      agents: '/uadp/v1/agents',
+      skills: '/api/v1/skills',
+      agents: '/api/v1/agents',
     },
     ossa_versions: ['0.3.0'],
   };

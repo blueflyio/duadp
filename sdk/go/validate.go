@@ -1,8 +1,8 @@
-package uadp
+package duadp
 
 import "fmt"
 
-// ValidateManifestData validates a /.well-known/uadp.json manifest map.
+// ValidateManifestData validates a /.well-known/duadp.json manifest map.
 func ValidateManifestData(m map[string]interface{}) *ValidationResult {
 	var errors []string
 	var warnings []string
@@ -39,7 +39,7 @@ func ValidateManifestData(m map[string]interface{}) *ValidationResult {
 	}
 }
 
-// ValidateResponseData validates a UADP skills/agents response envelope.
+// ValidateResponseData validates a DUADP skills/agents response envelope.
 func ValidateResponseData(r map[string]interface{}) *ValidationResult {
 	var errors []string
 

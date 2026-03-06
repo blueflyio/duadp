@@ -1,4 +1,4 @@
-/** UADP Node Discovery Manifest (/.well-known/uadp.json) */
+/** DUADP Node Discovery Manifest (/.well-known/duadp.json) */
 export interface UadpManifest {
   protocol_version: string;
   node_id?: string;
@@ -493,7 +493,7 @@ export interface AgentKey {
 
 // ─── Node Health & Search ────────────────────────────────────────
 
-/** Node health status from GET /uadp/v1/health */
+/** Node health status from GET /api/v1/health */
 export interface NodeHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
   version?: string;
@@ -523,7 +523,7 @@ export interface SearchResponse {
 
 /** Multi-protocol endpoint map for an agent */
 export interface ProtocolEndpoints {
-  uadp?: string;
+  duadp?: string;
   a2a?: string;
   mcp?: string;
   openai?: string;
@@ -579,7 +579,7 @@ export type AgentStatus = 'registered' | 'active' | 'inactive' | 'suspended' | '
 
 // ─── Context Awareness & Token Efficiency ────────────────────────
 
-/** Context negotiation — how an agent receives work context from a UADP node */
+/** Context negotiation — how an agent receives work context from a DUADP node */
 export interface ContextNegotiation {
   /** Maximum tokens this agent should receive as context */
   max_context_tokens?: number;

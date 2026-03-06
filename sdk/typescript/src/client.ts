@@ -112,7 +112,7 @@ export function deduplicateResources<T extends OssaResource>(resources: T[]): T[
   return [...seen.values()];
 }
 
-export interface UadpClientOptions {
+export interface DuadpClientOptions {
   /** Custom fetch implementation (defaults to global fetch) */
   fetch?: typeof fetch;
   /** Request timeout in ms (default: 10000) */
@@ -123,7 +123,7 @@ export interface UadpClientOptions {
   token?: string;
 }
 
-export class UadpClient {
+export class DuadpClient {
   private manifest: UadpManifest | null = null;
   private fetchFn: typeof fetch;
   private timeout: number;
@@ -131,9 +131,9 @@ export class UadpClient {
   private token?: string;
 
   constructor(
-    /** Base URL of the UADP node (e.g., "https://marketplace.example.com") */
+    /** Base URL of the DUADP node (e.g., "https://marketplace.example.com") */
     public readonly baseUrl: string,
-    options: UadpClientOptions = {},
+    options: DuadpClientOptions = {},
   ) {
     this.fetchFn = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.timeout = options.timeout ?? 10000;
@@ -143,9 +143,9 @@ export class UadpClient {
 
   // --- Discovery ---
 
-  /** Discover the node by fetching /.well-known/uadp.json */
+  /** Discover the node by fetching /.well-known/duadp.json */
   async discover(): Promise<UadpManifest> {
-    const url = new URL('/.well-known/uadp.json', this.baseUrl);
+    const url = new URL('/.well-known/duadp.json', this.baseUrl);
     const res = await this.request(url.toString());
     this.manifest = res as UadpManifest;
     return this.manifest;
@@ -401,7 +401,7 @@ export class UadpClient {
     try {
       endpoint = await this.resolveEndpoint('health');
     } catch {
-      endpoint = new URL('/uadp/v1/health', this.baseUrl).toString();
+      endpoint = new URL('/api/v1/health', this.baseUrl).toString();
     }
     return this.request(endpoint) as Promise<NodeHealth>;
   }
@@ -471,7 +471,7 @@ export class UadpClient {
 
   /** Advanced structured query with filters, sorting, and field selection */
   async query(q: StructuredQuery): Promise<PaginatedResponse<OssaResource>> {
-    const url = new URL('/uadp/v1/query', this.baseUrl);
+    const url = new URL('/api/v1/query', this.baseUrl);
     return this.request(url.toString(), {
       method: 'POST',
       body: JSON.stringify(q),
@@ -625,7 +625,7 @@ export class UadpClient {
   private async resolveEndpoint(name: string): Promise<string> {
     const manifest = await this.getManifest();
     const endpoint = manifest.endpoints[name];
-    if (!endpoint) throw new UadpError(`Node does not expose a ${name} endpoint`);
+    if (!endpoint) throw new DuadpError(`Node does not expose a ${name} endpoint`);
     // Handle relative URLs
     if (endpoint.startsWith('/')) {
       return new URL(endpoint, this.baseUrl).toString();
@@ -668,7 +668,7 @@ export class UadpClient {
       if (res.status === 204) return undefined;
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new UadpError(`HTTP ${res.status}: ${body}`, res.status);
+        throw new DuadpError(`HTTP ${res.status}: ${body}`, res.status);
       }
       return res.json();
     } finally {
@@ -677,15 +677,15 @@ export class UadpClient {
   }
 }
 
-export class UadpError extends Error {
+export class DuadpError extends Error {
   constructor(message: string, public readonly statusCode?: number) {
     super(message);
-    this.name = 'UadpError';
+    this.name = 'DuadpError';
   }
 }
 
 /**
- * Resolve a GAID URI to a UADP client and resource path.
+ * Resolve a GAID URI to a DUADP client and resource path.
  *
  * Example:
  * ```ts
@@ -693,14 +693,14 @@ export class UadpError extends Error {
  * const skill = await client.getSkill(name);
  * ```
  */
-export function resolveGaid(gaid: string, options?: UadpClientOptions): {
-  client: UadpClient;
+export function resolveGaid(gaid: string, options?: DuadpClientOptions): {
+  client: DuadpClient;
   kind: string;
   name: string;
 } {
-  const match = gaid.match(/^(?:agent|uadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
-  if (!match) throw new UadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or uadp://domain/kind/name`);
+  const match = gaid.match(/^(?:agent|duadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (!match) throw new DuadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or duadp://domain/kind/name`);
   const [, domain, kind, name] = match;
-  const client = new UadpClient(`https://${domain}`, options);
+  const client = new DuadpClient(`https://${domain}`, options);
   return { client, kind, name };
 }

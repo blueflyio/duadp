@@ -1,7 +1,7 @@
-// Package uadp provides types and client for the Universal AI Discovery Protocol.
-package uadp
+// Package duadp provides types and client for the Universal AI Discovery Protocol.
+package duadp
 
-// UadpManifest is the discovery manifest served at /.well-known/uadp.json.
+// UadpManifest is the discovery manifest served at /.well-known/duadp.json.
 type UadpManifest struct {
 	ProtocolVersion string            `json:"protocol_version"`
 	NodeID          string            `json:"node_id,omitempty"`
@@ -299,19 +299,19 @@ type PaginationMeta struct {
 	PrevCursor string            `json:"prev_cursor,omitempty"`
 }
 
-// SkillsResponse for GET /uadp/v1/skills.
+// SkillsResponse for GET /api/v1/skills.
 type SkillsResponse struct {
 	Data []OssaSkill    `json:"data"`
 	Meta PaginationMeta `json:"meta"`
 }
 
-// AgentsResponse for GET /uadp/v1/agents.
+// AgentsResponse for GET /api/v1/agents.
 type AgentsResponse struct {
 	Data []OssaAgent    `json:"data"`
 	Meta PaginationMeta `json:"meta"`
 }
 
-// ToolsResponse for GET /uadp/v1/tools.
+// ToolsResponse for GET /api/v1/tools.
 type ToolsResponse struct {
 	Data []OssaTool     `json:"data"`
 	Meta PaginationMeta `json:"meta"`
@@ -330,7 +330,7 @@ type Peer struct {
 	ToolCount    *int       `json:"tool_count,omitempty"`
 }
 
-// FederationResponse for GET /uadp/v1/federation.
+// FederationResponse for GET /api/v1/federation.
 type FederationResponse struct {
 	ProtocolVersion string `json:"protocol_version"`
 	NodeID          string `json:"node_id,omitempty"`
@@ -346,7 +346,7 @@ type PublishResponse struct {
 	Resource *OssaResource `json:"resource,omitempty"`
 }
 
-// ValidationResult from POST /uadp/v1/validate.
+// ValidationResult from POST /api/v1/validate.
 type ValidationResult struct {
 	Valid    bool     `json:"valid"`
 	Errors   []string `json:"errors"`
@@ -384,7 +384,7 @@ type WebFingerResponse struct {
 	Properties map[string]string `json:"properties,omitempty"`
 }
 
-// PeerRegistration for POST /uadp/v1/federation.
+// PeerRegistration for POST /api/v1/federation.
 type PeerRegistration struct {
 	URL    string `json:"url"`
 	Name   string `json:"name"`
@@ -523,14 +523,14 @@ type SyncChange struct {
 	Resource     *OssaResource `json:"resource,omitempty"`
 }
 
-// SyncResponse for GET /uadp/v1/federation/sync.
+// SyncResponse for GET /api/v1/federation/sync.
 type SyncResponse struct {
 	Changes   []SyncChange `json:"changes"`
 	SyncToken string       `json:"sync_token,omitempty"`
 	HasMore   bool         `json:"has_more,omitempty"`
 }
 
-// WebhookSubscription for POST /uadp/v1/events/subscribe.
+// WebhookSubscription for POST /api/v1/events/subscribe.
 type WebhookSubscription struct {
 	CallbackURL string              `json:"callback_url"`
 	Events      []string            `json:"events"`
@@ -581,7 +581,7 @@ type AgentKey struct {
 
 // ─── Node Health & Search ────────────────────────────────────
 
-// NodeHealth is the response from GET /uadp/v1/health.
+// NodeHealth is the response from GET /api/v1/health.
 type NodeHealth struct {
 	Status     string            `json:"status"` // healthy, degraded, unhealthy
 	Version    string            `json:"version,omitempty"`
@@ -611,7 +611,7 @@ type SearchResponse struct {
 
 // ProtocolEndpoints maps protocol names to their endpoint URLs.
 type ProtocolEndpoints struct {
-	UADP    string `json:"uadp,omitempty"`
+	DUADP    string `json:"duadp,omitempty"`
 	A2A     string `json:"a2a,omitempty"`
 	MCP     string `json:"mcp,omitempty"`
 	OpenAI  string `json:"openai,omitempty"`
@@ -963,7 +963,7 @@ type OrchestrationPlan struct {
 
 // ─── Batch Operations ────────────────────────────────────────
 
-// BatchPublishRequest for POST /uadp/v1/publish/batch.
+// BatchPublishRequest for POST /api/v1/publish/batch.
 type BatchPublishRequest struct {
 	Resources []OssaResource `json:"resources"`
 	Atomic    bool           `json:"atomic,omitempty"`
@@ -977,7 +977,7 @@ type BatchPublishResult struct {
 	Error    string        `json:"error,omitempty"`
 }
 
-// BatchPublishResponse for POST /uadp/v1/publish/batch.
+// BatchPublishResponse for POST /api/v1/publish/batch.
 type BatchPublishResponse struct {
 	Total     int                  `json:"total"`
 	Succeeded int                  `json:"succeeded"`
@@ -1029,7 +1029,7 @@ type A2ASkill struct {
 	Examples    []string `json:"examples,omitempty"`
 }
 
-// A2AUadpExtensions are UADP-specific extensions in an Agent Card.
+// A2AUadpExtensions are DUADP-specific extensions in an Agent Card.
 type A2AUadpExtensions struct {
 	GAID        string `json:"gaid,omitempty"`
 	TrustTier   string `json:"trust_tier,omitempty"`
@@ -1045,7 +1045,7 @@ type McpTool struct {
 	Uadp        *McpToolUadp   `json:"_uadp,omitempty"`
 }
 
-// McpToolUadp are UADP extensions on an MCP tool.
+// McpToolUadp are DUADP extensions on an MCP tool.
 type McpToolUadp struct {
 	GAID        string `json:"gaid,omitempty"`
 	TrustTier   string `json:"trust_tier,omitempty"`
@@ -1075,7 +1075,7 @@ type QuerySort struct {
 	Order string `json:"order,omitempty"` // asc, desc
 }
 
-// StructuredQuery for POST /uadp/v1/query.
+// StructuredQuery for POST /api/v1/query.
 type StructuredQuery struct {
 	Filters   []QueryFilter `json:"filters,omitempty"`
 	Sort      []QuerySort   `json:"sort,omitempty"`

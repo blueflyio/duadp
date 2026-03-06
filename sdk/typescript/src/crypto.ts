@@ -76,7 +76,7 @@ export async function verifySignature(
 }
 
 /**
- * Generate an Ed25519 key pair for signing UADP resources.
+ * Generate an Ed25519 key pair for signing DUADP resources.
  */
 export async function generateKeyPair(): Promise<CryptoKeyPair> {
   return crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']) as Promise<CryptoKeyPair>;

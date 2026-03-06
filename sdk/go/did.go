@@ -1,4 +1,4 @@
-package uadp
+package duadp
 
 import (
 	"encoding/json"

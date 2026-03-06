@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "openstandard-uadp",
+  "name": "openstandard-duadp",
   "description": "DUADP monorepo — spec, SDK, and reference node",
   "scripts": {
     "build": "npm run build --prefix sdk/typescript",

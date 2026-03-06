@@ -1,11 +1,11 @@
 # bluefly-duadp — Python SDK
 
-**The official Python SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
+**The official Python SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 
 [![PyPI](https://img.shields.io/pypi/v/bluefly-duadp)](https://pypi.org/project/bluefly-duadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 
-> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ## Install
 
@@ -18,9 +18,9 @@ uv add bluefly-duadp
 ## Quick Start — Client
 
 ```python
-from bluefly_uadp import UadpClient, resolve_gaid
+from bluefly_uadp import DuadpClient, resolve_gaid
 
-async with UadpClient("https://skills.sh", token="my-api-key") as client:
+async with DuadpClient("https://skills.sh", token="my-api-key") as client:
     # Discovery
     manifest = await client.discover()
     skills = await client.list_skills(search="code review")
@@ -44,9 +44,9 @@ skill = await client.get_skill(name)
 ## Features
 
 ### Core Discovery
-- **Client** — Async `UadpClient` with automatic manifest discovery and caching
-- **Server** — FastAPI router for building UADP nodes
-- **GAID resolution** — `resolve_gaid()` supports both `agent://` and `uadp://` schemes
+- **Client** — Async `DuadpClient` with automatic manifest discovery and caching
+- **Server** — FastAPI router for building DUADP nodes
+- **GAID resolution** — `resolve_gaid()` supports both `agent://` and `duadp://` schemes
 - **WebFinger** — `resolve_gaid()` for standard resource resolution
 - **Unified search** — `search()` with faceted results across all types
 - **Health** — `get_health()` for node status monitoring
@@ -91,7 +91,7 @@ skill = await client.get_skill(name)
 ## Client API
 
 ```python
-async with UadpClient("https://skills.sh", token="...") as client:
+async with DuadpClient("https://skills.sh", token="...") as client:
 
     # Core
     await client.discover()                          # Fetch manifest
@@ -183,7 +183,7 @@ The SDK exports 103 Pydantic models covering:
 ## Modules
 
 ```python
-from bluefly_uadp.client import UadpClient, UadpError, resolve_gaid
+from bluefly_uadp.client import DuadpClient, DuadpError, resolve_gaid
 from bluefly_uadp.server import create_uadp_router
 from bluefly_uadp.crypto import sign_resource, verify_signature, generate_key_pair
 from bluefly_uadp.did import resolve_did, build_did_web, verify_resource_identity

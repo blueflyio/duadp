@@ -1,10 +1,10 @@
-# uadp-go — Go SDK
+# duadp-go — Go SDK
 
-**The official Go SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
+**The official Go SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 
-> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ## Install
 
@@ -20,28 +20,28 @@ package main
 import (
     "context"
     "fmt"
-    uadp "github.com/blueflyio/duadp/sdk/go"
+    duadp "github.com/blueflyio/duadp/sdk/go"
 )
 
 func main() {
     ctx := context.Background()
-    client := uadp.NewClient("https://skills.sh", uadp.WithToken("my-api-key"))
+    client := duadp.NewClient("https://skills.sh", duadp.WithToken("my-api-key"))
 
     // Discovery
     manifest, _ := client.Discover(ctx)
     fmt.Printf("Node: %s (%d capabilities)\n", manifest.NodeName, len(manifest.Capabilities))
 
     // List resources
-    skills, _ := client.ListSkills(ctx, &uadp.ListParams{Search: "code review"})
-    tools, _ := client.ListTools(ctx, &uadp.ToolListParams{Protocol: "mcp"})
+    skills, _ := client.ListSkills(ctx, &duadp.ListParams{Search: "code review"})
+    tools, _ := client.ListTools(ctx, &duadp.ToolListParams{Protocol: "mcp"})
     agents, _ := client.ListAgents(ctx, nil)
 
     // Resolve a GAID URI from any node
-    c, kind, name, _ := uadp.ResolveGaid("agent://skills.sh/tools/web-search")
+    c, kind, name, _ := duadp.ResolveGaid("agent://skills.sh/tools/web-search")
     tool, _ := c.GetTool(ctx, name)
 
     // Unified search across all resource types
-    results, _ := client.UnifiedSearch(ctx, &uadp.SearchParams{
+    results, _ := client.UnifiedSearch(ctx, &duadp.SearchParams{
         Query: "code review", IncludeFacets: true,
     })
 
@@ -55,8 +55,8 @@ func main() {
 
 ### Core Discovery
 - **Client** — `Client` with automatic manifest discovery and caching
-- **Server** — `net/http` handler for building UADP nodes
-- **GAID resolution** — `ResolveGaid()` supports both `agent://` and `uadp://` schemes
+- **Server** — `net/http` handler for building DUADP nodes
+- **GAID resolution** — `ResolveGaid()` supports both `agent://` and `duadp://` schemes
 - **WebFinger** — Standard resource resolution at `/.well-known/webfinger`
 - **Unified search** — `UnifiedSearch()` with faceted results across all types
 - **Health** — `GetHealth()` for node status monitoring
@@ -102,7 +102,7 @@ func main() {
 
 ```go
 // Core
-client := uadp.NewClient(baseURL, opts...)
+client := duadp.NewClient(baseURL, opts...)
 client.Discover(ctx)                    // Fetch manifest
 client.GetManifest(ctx)                 // Get cached manifest
 client.ResolveWebFinger(ctx, gaid)      // WebFinger lookup
@@ -171,11 +171,11 @@ client.SubscribeWebhook(ctx, sub)       // Subscribe webhook
 ## Client Options
 
 ```go
-client := uadp.NewClient("https://skills.sh",
-    uadp.WithToken("my-bearer-token"),
-    uadp.WithTimeout(30 * time.Second),
-    uadp.WithHTTPClient(customClient),
-    uadp.WithHeaders(map[string]string{
+client := duadp.NewClient("https://skills.sh",
+    duadp.WithToken("my-bearer-token"),
+    duadp.WithTimeout(30 * time.Second),
+    duadp.WithHTTPClient(customClient),
+    duadp.WithHeaders(map[string]string{
         "X-Custom-Header": "value",
     }),
 )

@@ -27,4 +27,4 @@ RUN mkdir -p data
 EXPOSE 4200
 
 # Seed on first run if no DB exists, then start
-CMD ["sh", "-c", "[ -f data/uadp.db ] || npx tsx src/seed.ts; npx tsx src/index.ts"]
+CMD ["sh", "-c", "[ -f data/duadp.db ] || npx tsx src/seed.ts; npx tsx src/index.ts"]

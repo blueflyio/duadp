@@ -1,0 +1,7 @@
+# DUADP Reference Node Workspace Rules
+
+1. Do NOT use CommonJS. This project uses pure ESM (`"type": "module"`). Always use `.js` extensions in local relative imports.
+2. Whenever modifying API responses, ensure they match the corresponding `duadp-*.schema.json` format in `duadp/spec/schemas/`.
+3. Use `import type` for type-only imports.
+4. Document all new endpoints in `duadp.org/app/page.tsx` and `llms.txt`.
+5. Run `npm run build` after any TypeScript modifications to ensure types check out before notifying the user.

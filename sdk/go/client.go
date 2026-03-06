@@ -1,4 +1,4 @@
-package uadp
+package duadp
 
 import (
 	"bytes"
@@ -14,20 +14,20 @@ import (
 	"time"
 )
 
-// UadpError is returned when a UADP request fails.
-type UadpError struct {
+// DuadpError is returned when a DUADP request fails.
+type DuadpError struct {
 	Message    string
 	StatusCode int
 }
 
-func (e *UadpError) Error() string {
+func (e *DuadpError) Error() string {
 	if e.StatusCode > 0 {
-		return fmt.Sprintf("uadp: HTTP %d: %s", e.StatusCode, e.Message)
+		return fmt.Sprintf("duadp: HTTP %d: %s", e.StatusCode, e.Message)
 	}
-	return fmt.Sprintf("uadp: %s", e.Message)
+	return fmt.Sprintf("duadp: %s", e.Message)
 }
 
-// ClientOption configures the UADP client.
+// ClientOption configures the DUADP client.
 type ClientOption func(*Client)
 
 // WithHTTPClient sets a custom HTTP client.
@@ -50,7 +50,7 @@ func WithToken(token string) ClientOption {
 	return func(client *Client) { client.token = token }
 }
 
-// Client discovers and queries a UADP node.
+// Client discovers and queries a DUADP node.
 type Client struct {
 	BaseURL    string
 	httpClient *http.Client
@@ -60,7 +60,7 @@ type Client struct {
 	manifest   *UadpManifest
 }
 
-// NewClient creates a new UADP client for the given base URL.
+// NewClient creates a new DUADP client for the given base URL.
 func NewClient(baseURL string, opts ...ClientOption) *Client {
 	c := &Client{
 		BaseURL:    strings.TrimRight(baseURL, "/"),
@@ -76,9 +76,9 @@ func NewClient(baseURL string, opts ...ClientOption) *Client {
 
 // --- Discovery ---
 
-// Discover fetches /.well-known/uadp.json and caches the manifest.
+// Discover fetches /.well-known/duadp.json and caches the manifest.
 func (c *Client) Discover(ctx context.Context) (*UadpManifest, error) {
-	u := c.BaseURL + "/.well-known/uadp.json"
+	u := c.BaseURL + "/.well-known/duadp.json"
 	var manifest UadpManifest
 	if err := c.doGet(ctx, u, &manifest); err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
@@ -107,7 +107,7 @@ func (c *Client) ResolveWebFinger(ctx context.Context, gaid string) (*WebFingerR
 
 // --- Skills ---
 
-// ListSkills queries GET /uadp/v1/skills.
+// ListSkills queries GET /api/v1/skills.
 func (c *Client) ListSkills(ctx context.Context, params *ListParams) (*SkillsResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Skills")
 	if err != nil {
@@ -121,7 +121,7 @@ func (c *Client) ListSkills(ctx context.Context, params *ListParams) (*SkillsRes
 	return &resp, nil
 }
 
-// GetSkill fetches GET /uadp/v1/skills/{name}.
+// GetSkill fetches GET /api/v1/skills/{name}.
 func (c *Client) GetSkill(ctx context.Context, name string) (*OssaSkill, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Skills")
 	if err != nil {
@@ -134,7 +134,7 @@ func (c *Client) GetSkill(ctx context.Context, name string) (*OssaSkill, error) 
 	return &skill, nil
 }
 
-// PublishSkill sends POST /uadp/v1/skills.
+// PublishSkill sends POST /api/v1/skills.
 func (c *Client) PublishSkill(ctx context.Context, skill *OssaSkill) (*PublishResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Skills")
 	if err != nil {
@@ -150,7 +150,7 @@ func (c *Client) PublishSkill(ctx context.Context, skill *OssaSkill) (*PublishRe
 
 // --- Agents ---
 
-// ListAgents queries GET /uadp/v1/agents.
+// ListAgents queries GET /api/v1/agents.
 func (c *Client) ListAgents(ctx context.Context, params *ListParams) (*AgentsResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Agents")
 	if err != nil {
@@ -164,7 +164,7 @@ func (c *Client) ListAgents(ctx context.Context, params *ListParams) (*AgentsRes
 	return &resp, nil
 }
 
-// GetAgent fetches GET /uadp/v1/agents/{name}.
+// GetAgent fetches GET /api/v1/agents/{name}.
 func (c *Client) GetAgent(ctx context.Context, name string) (*OssaAgent, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Agents")
 	if err != nil {
@@ -177,7 +177,7 @@ func (c *Client) GetAgent(ctx context.Context, name string) (*OssaAgent, error) 
 	return &agent, nil
 }
 
-// PublishAgent sends POST /uadp/v1/agents.
+// PublishAgent sends POST /api/v1/agents.
 func (c *Client) PublishAgent(ctx context.Context, agent *OssaAgent) (*PublishResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Agents")
 	if err != nil {
@@ -193,7 +193,7 @@ func (c *Client) PublishAgent(ctx context.Context, agent *OssaAgent) (*PublishRe
 
 // --- Tools ---
 
-// ListTools queries GET /uadp/v1/tools.
+// ListTools queries GET /api/v1/tools.
 func (c *Client) ListTools(ctx context.Context, params *ToolListParams) (*ToolsResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Tools")
 	if err != nil {
@@ -214,7 +214,7 @@ func (c *Client) ListTools(ctx context.Context, params *ToolListParams) (*ToolsR
 	return &resp, nil
 }
 
-// GetTool fetches GET /uadp/v1/tools/{name}.
+// GetTool fetches GET /api/v1/tools/{name}.
 func (c *Client) GetTool(ctx context.Context, name string) (*OssaTool, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Tools")
 	if err != nil {
@@ -227,7 +227,7 @@ func (c *Client) GetTool(ctx context.Context, name string) (*OssaTool, error) {
 	return &tool, nil
 }
 
-// PublishTool sends POST /uadp/v1/tools.
+// PublishTool sends POST /api/v1/tools.
 func (c *Client) PublishTool(ctx context.Context, tool *OssaTool) (*PublishResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Tools")
 	if err != nil {
@@ -243,7 +243,7 @@ func (c *Client) PublishTool(ctx context.Context, tool *OssaTool) (*PublishRespo
 
 // --- Generic Publish ---
 
-// Publish sends POST /uadp/v1/publish for any OSSA resource.
+// Publish sends POST /api/v1/publish for any OSSA resource.
 func (c *Client) Publish(ctx context.Context, resource *OssaResource) (*PublishResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Publish")
 	if err != nil {
@@ -259,7 +259,7 @@ func (c *Client) Publish(ctx context.Context, resource *OssaResource) (*PublishR
 
 // --- Federation ---
 
-// GetFederation queries GET /uadp/v1/federation.
+// GetFederation queries GET /api/v1/federation.
 func (c *Client) GetFederation(ctx context.Context) (*FederationResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Federation")
 	if err != nil {
@@ -272,7 +272,7 @@ func (c *Client) GetFederation(ctx context.Context) (*FederationResponse, error)
 	return &resp, nil
 }
 
-// RegisterAsPeer sends POST /uadp/v1/federation to register.
+// RegisterAsPeer sends POST /api/v1/federation to register.
 func (c *Client) RegisterAsPeer(ctx context.Context, reg *PeerRegistration) (*PeerRegistrationResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Federation")
 	if err != nil {
@@ -288,7 +288,7 @@ func (c *Client) RegisterAsPeer(ctx context.Context, reg *PeerRegistration) (*Pe
 
 // --- Validation ---
 
-// Validate sends POST /uadp/v1/validate.
+// Validate sends POST /api/v1/validate.
 func (c *Client) Validate(ctx context.Context, manifest string) (*ValidationResult, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Validate")
 	if err != nil {
@@ -304,7 +304,7 @@ func (c *Client) Validate(ctx context.Context, manifest string) (*ValidationResu
 
 // --- Governance (NIST AI RMF) ---
 
-// GetGovernance queries GET /uadp/v1/governance.
+// GetGovernance queries GET /api/v1/governance.
 func (c *Client) GetGovernance(ctx context.Context) (*NodeGovernance, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Governance")
 	if err != nil {
@@ -317,7 +317,7 @@ func (c *Client) GetGovernance(ctx context.Context) (*NodeGovernance, error) {
 	return &gov, nil
 }
 
-// GetResourceRisk queries GET /uadp/v1/governance/risk/{gaid}.
+// GetResourceRisk queries GET /api/v1/governance/risk/{gaid}.
 func (c *Client) GetResourceRisk(ctx context.Context, gaid string) (*ResourceRisk, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Governance")
 	if err != nil {
@@ -339,7 +339,7 @@ type AuditParams struct {
 	Limit     int
 }
 
-// GetAuditLog queries GET /uadp/v1/governance/audit.
+// GetAuditLog queries GET /api/v1/governance/audit.
 func (c *Client) GetAuditLog(ctx context.Context, params *AuditParams) ([]AuditEvent, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "AuditLog")
 	if err != nil {
@@ -379,7 +379,7 @@ func (c *Client) GetAuditLog(ctx context.Context, params *AuditParams) ([]AuditE
 
 // --- Provenance (NIST SP 800-218A) ---
 
-// GetProvenance queries GET /uadp/v1/provenance/{gaid}.
+// GetProvenance queries GET /api/v1/provenance/{gaid}.
 func (c *Client) GetProvenance(ctx context.Context, gaid string) (*ResourceProvenance, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Provenance")
 	if err != nil {
@@ -402,7 +402,7 @@ type RevocationParams struct {
 	Limit    int
 }
 
-// GetRevocations queries GET /uadp/v1/revocations.
+// GetRevocations queries GET /api/v1/revocations.
 func (c *Client) GetRevocations(ctx context.Context, params *RevocationParams) ([]Revocation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Revocations")
 	if err != nil {
@@ -441,7 +441,7 @@ type SyncParams struct {
 	Limit     int
 }
 
-// FederationSync queries GET /uadp/v1/federation/sync.
+// FederationSync queries GET /api/v1/federation/sync.
 func (c *Client) FederationSync(ctx context.Context, params *SyncParams) (*SyncResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Federation")
 	if err != nil {
@@ -470,7 +470,7 @@ func (c *Client) FederationSync(ctx context.Context, params *SyncParams) (*SyncR
 
 // --- Events (Webhooks) ---
 
-// SubscribeWebhook sends POST /uadp/v1/events/subscribe.
+// SubscribeWebhook sends POST /api/v1/events/subscribe.
 func (c *Client) SubscribeWebhook(ctx context.Context, sub *WebhookSubscription) error {
 	endpoint, err := c.resolveEndpoint(ctx, "Events")
 	if err != nil {
@@ -482,7 +482,7 @@ func (c *Client) SubscribeWebhook(ctx context.Context, sub *WebhookSubscription)
 
 // --- Agent Identity ---
 
-// GetAgentIdentity queries GET /uadp/v1/identity/{gaid}.
+// GetAgentIdentity queries GET /api/v1/identity/{gaid}.
 func (c *Client) GetAgentIdentity(ctx context.Context, gaid string) (*AgentIdentity, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Identity")
 	if err != nil {
@@ -497,7 +497,7 @@ func (c *Client) GetAgentIdentity(ctx context.Context, gaid string) (*AgentIdent
 
 // --- Batch Operations ---
 
-// BatchPublish sends POST /uadp/v1/publish/batch.
+// BatchPublish sends POST /api/v1/publish/batch.
 func (c *Client) BatchPublish(ctx context.Context, req *BatchPublishRequest) (*BatchPublishResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Publish")
 	if err != nil {
@@ -513,7 +513,7 @@ func (c *Client) BatchPublish(ctx context.Context, req *BatchPublishRequest) (*B
 
 // --- Protocol Compatibility (A2A, MCP) ---
 
-// GetA2ACard queries GET /uadp/v1/agents/{name}/card.
+// GetA2ACard queries GET /api/v1/agents/{name}/card.
 func (c *Client) GetA2ACard(ctx context.Context, name string) (*A2AAgentCard, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Agents")
 	if err != nil {
@@ -526,7 +526,7 @@ func (c *Client) GetA2ACard(ctx context.Context, name string) (*A2AAgentCard, er
 	return &card, nil
 }
 
-// GetMcpManifest queries GET /uadp/v1/tools/mcp-manifest.
+// GetMcpManifest queries GET /api/v1/tools/mcp-manifest.
 func (c *Client) GetMcpManifest(ctx context.Context) (*McpServerManifest, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Tools")
 	if err != nil {
@@ -541,11 +541,11 @@ func (c *Client) GetMcpManifest(ctx context.Context) (*McpServerManifest, error)
 
 // --- Structured Query ---
 
-// Query sends POST /uadp/v1/query.
+// Query sends POST /api/v1/query.
 func (c *Client) Query(ctx context.Context, q *StructuredQuery) (*SearchResponse, error) {
 	body, _ := json.Marshal(q)
 	var resp SearchResponse
-	if err := c.doPost(ctx, c.BaseURL+"/uadp/v1/query", string(body), &resp); err != nil {
+	if err := c.doPost(ctx, c.BaseURL+"/api/v1/query", string(body), &resp); err != nil {
 		return nil, err
 	}
 	return &resp, nil
@@ -553,12 +553,12 @@ func (c *Client) Query(ctx context.Context, q *StructuredQuery) (*SearchResponse
 
 // --- Health ---
 
-// GetHealth queries GET /uadp/v1/health.
+// GetHealth queries GET /api/v1/health.
 func (c *Client) GetHealth(ctx context.Context) (*NodeHealth, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Health")
 	if err != nil {
-		// Fallback to base URL + /uadp/v1/health
-		endpoint = c.BaseURL + "/uadp/v1/health"
+		// Fallback to base URL + /api/v1/health
+		endpoint = c.BaseURL + "/api/v1/health"
 	}
 	var health NodeHealth
 	if err := c.doGet(ctx, endpoint, &health); err != nil {
@@ -582,7 +582,7 @@ type SearchParams struct {
 	IncludeFacets bool
 }
 
-// UnifiedSearch queries GET /uadp/v1/search.
+// UnifiedSearch queries GET /api/v1/search.
 func (c *Client) UnifiedSearch(ctx context.Context, params *SearchParams) (*SearchResponse, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Search")
 	if err != nil {
@@ -629,7 +629,7 @@ func (c *Client) UnifiedSearch(ctx context.Context, params *SearchParams) (*Sear
 
 // --- Agent Index (.ajson) ---
 
-// GetAgentIndex queries GET /uadp/v1/index/{gaid}.
+// GetAgentIndex queries GET /api/v1/index/{gaid}.
 func (c *Client) GetAgentIndex(ctx context.Context, gaid string) (*AgentIndexRecord, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Index")
 	if err != nil {
@@ -644,7 +644,7 @@ func (c *Client) GetAgentIndex(ctx context.Context, gaid string) (*AgentIndexRec
 
 // --- Context Negotiation ---
 
-// NegotiateContext sends POST /uadp/v1/context/negotiate.
+// NegotiateContext sends POST /api/v1/context/negotiate.
 func (c *Client) NegotiateContext(ctx context.Context, agentGAID string, task *DelegationTask) (*ContextNegotiation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Context")
 	if err != nil {
@@ -659,7 +659,7 @@ func (c *Client) NegotiateContext(ctx context.Context, agentGAID string, task *D
 	return &result, nil
 }
 
-// GetContextSummary queries GET /uadp/v1/context/summary.
+// GetContextSummary queries GET /api/v1/context/summary.
 func (c *Client) GetContextSummary(ctx context.Context, domain, taskType string) (*ContextNegotiation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Context")
 	if err != nil {
@@ -681,7 +681,7 @@ func (c *Client) GetContextSummary(ctx context.Context, domain, taskType string)
 
 // --- Token Analytics ---
 
-// ReportTokenUsage sends POST /uadp/v1/analytics/tokens.
+// ReportTokenUsage sends POST /api/v1/analytics/tokens.
 func (c *Client) ReportTokenUsage(ctx context.Context, analytics *TokenAnalytics) error {
 	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
 	if err != nil {
@@ -691,7 +691,7 @@ func (c *Client) ReportTokenUsage(ctx context.Context, analytics *TokenAnalytics
 	return c.doPost(ctx, endpoint+"/tokens", string(body), nil)
 }
 
-// GetTokenAnalytics queries GET /uadp/v1/analytics/tokens/{gaid}.
+// GetTokenAnalytics queries GET /api/v1/analytics/tokens/{gaid}.
 func (c *Client) GetTokenAnalytics(ctx context.Context, agentGAID, period string) (*TokenAnalyticsAggregate, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
 	if err != nil {
@@ -712,7 +712,7 @@ func (c *Client) GetTokenAnalytics(ctx context.Context, agentGAID, period string
 
 // --- Capability Fingerprint ---
 
-// GetCapabilityFingerprint queries GET /uadp/v1/analytics/fingerprint/{gaid}.
+// GetCapabilityFingerprint queries GET /api/v1/analytics/fingerprint/{gaid}.
 func (c *Client) GetCapabilityFingerprint(ctx context.Context, agentGAID string) (*CapabilityFingerprint, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Analytics")
 	if err != nil {
@@ -727,7 +727,7 @@ func (c *Client) GetCapabilityFingerprint(ctx context.Context, agentGAID string)
 
 // --- Feedback & Rewards ---
 
-// SubmitFeedback sends POST /uadp/v1/feedback.
+// SubmitFeedback sends POST /api/v1/feedback.
 func (c *Client) SubmitFeedback(ctx context.Context, feedback *AgentFeedback) (*AgentFeedback, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
 	if err != nil {
@@ -748,7 +748,7 @@ type FeedbackParams struct {
 	Limit int
 }
 
-// GetAgentFeedback queries GET /uadp/v1/feedback/{gaid}.
+// GetAgentFeedback queries GET /api/v1/feedback/{gaid}.
 func (c *Client) GetAgentFeedback(ctx context.Context, agentGAID string, params *FeedbackParams) ([]AgentFeedback, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
 	if err != nil {
@@ -775,7 +775,7 @@ func (c *Client) GetAgentFeedback(ctx context.Context, agentGAID string, params 
 	return feedbacks, nil
 }
 
-// GetAgentReputation queries GET /uadp/v1/feedback/{gaid}/reputation.
+// GetAgentReputation queries GET /api/v1/feedback/{gaid}/reputation.
 func (c *Client) GetAgentReputation(ctx context.Context, agentGAID string) (*AgentReputation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
 	if err != nil {
@@ -788,7 +788,7 @@ func (c *Client) GetAgentReputation(ctx context.Context, agentGAID string) (*Age
 	return &result, nil
 }
 
-// RecordReward sends POST /uadp/v1/feedback/rewards.
+// RecordReward sends POST /api/v1/feedback/rewards.
 func (c *Client) RecordReward(ctx context.Context, reward *RewardEvent) (*RewardEvent, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Feedback")
 	if err != nil {
@@ -804,7 +804,7 @@ func (c *Client) RecordReward(ctx context.Context, reward *RewardEvent) (*Reward
 
 // --- Outcome Attestations ---
 
-// SubmitAttestation sends POST /uadp/v1/attestations.
+// SubmitAttestation sends POST /api/v1/attestations.
 func (c *Client) SubmitAttestation(ctx context.Context, attestation *OutcomeAttestation) (*OutcomeAttestation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Attestations")
 	if err != nil {
@@ -825,7 +825,7 @@ type AttestationParams struct {
 	Limit   int
 }
 
-// GetAttestations queries GET /uadp/v1/attestations/{gaid}.
+// GetAttestations queries GET /api/v1/attestations/{gaid}.
 func (c *Client) GetAttestations(ctx context.Context, agentGAID string, params *AttestationParams) ([]OutcomeAttestation, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Attestations")
 	if err != nil {
@@ -854,7 +854,7 @@ func (c *Client) GetAttestations(ctx context.Context, agentGAID string, params *
 
 // --- Multi-Agent Delegation ---
 
-// Delegate sends POST /uadp/v1/delegate.
+// Delegate sends POST /api/v1/delegate.
 func (c *Client) Delegate(ctx context.Context, request *DelegationRequest) (*DelegationResult, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
 	if err != nil {
@@ -868,7 +868,7 @@ func (c *Client) Delegate(ctx context.Context, request *DelegationRequest) (*Del
 	return &result, nil
 }
 
-// GetOrchestrationPlan queries GET /uadp/v1/delegate/plans/{planId}.
+// GetOrchestrationPlan queries GET /api/v1/delegate/plans/{planId}.
 func (c *Client) GetOrchestrationPlan(ctx context.Context, planID string) (*OrchestrationPlan, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
 	if err != nil {
@@ -881,7 +881,7 @@ func (c *Client) GetOrchestrationPlan(ctx context.Context, planID string) (*Orch
 	return &plan, nil
 }
 
-// CreateOrchestrationPlan sends POST /uadp/v1/delegate/plans.
+// CreateOrchestrationPlan sends POST /api/v1/delegate/plans.
 func (c *Client) CreateOrchestrationPlan(ctx context.Context, plan *OrchestrationPlan) (*OrchestrationPlan, error) {
 	endpoint, err := c.resolveEndpoint(ctx, "Delegate")
 	if err != nil {
@@ -946,7 +946,7 @@ func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, erro
 		endpoint = m.Endpoints.Index
 	}
 	if endpoint == "" {
-		return "", &UadpError{Message: fmt.Sprintf("node does not expose a %s endpoint", strings.ToLower(name))}
+		return "", &DuadpError{Message: fmt.Sprintf("node does not expose a %s endpoint", strings.ToLower(name))}
 	}
 	// Handle relative URLs
 	if strings.HasPrefix(endpoint, "/") {
@@ -1013,7 +1013,7 @@ func (c *Client) doGet(ctx context.Context, u string, out interface{}) error {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return &UadpError{Message: string(body), StatusCode: resp.StatusCode}
+		return &DuadpError{Message: string(body), StatusCode: resp.StatusCode}
 	}
 
 	return json.NewDecoder(resp.Body).Decode(out)
@@ -1044,7 +1044,7 @@ func (c *Client) doPost(ctx context.Context, u string, body string, out interfac
 
 	if resp.StatusCode >= 400 {
 		respBody, _ := io.ReadAll(resp.Body)
-		return &UadpError{Message: string(respBody), StatusCode: resp.StatusCode}
+		return &DuadpError{Message: string(respBody), StatusCode: resp.StatusCode}
 	}
 
 	if out != nil {
@@ -1055,13 +1055,13 @@ func (c *Client) doPost(ctx context.Context, u string, body string, out interfac
 
 // ResolveGaid parses a GAID URI and returns a client, kind, and name.
 //
-//	client, kind, name := uadp.ResolveGaid("agent://skills.sh/skills/web-search")
+//	client, kind, name := duadp.ResolveGaid("agent://skills.sh/skills/web-search")
 //	skill, _ := client.GetSkill(ctx, name)
 func ResolveGaid(gaid string, opts ...ClientOption) (*Client, string, string, error) {
-	re := regexp.MustCompile(`^(?:agent|uadp)://([^/]+)/([^/]+)/(.+)$`)
+	re := regexp.MustCompile(`^(?:agent|duadp)://([^/]+)/([^/]+)/(.+)$`)
 	m := re.FindStringSubmatch(gaid)
 	if m == nil {
-		return nil, "", "", &UadpError{Message: "invalid GAID: " + gaid}
+		return nil, "", "", &DuadpError{Message: "invalid GAID: " + gaid}
 	}
 	client := NewClient("https://"+m[1], opts...)
 	return client, m[2], m[3], nil

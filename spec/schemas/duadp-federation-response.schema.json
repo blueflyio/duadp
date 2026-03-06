@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openstandardagents.org/spec/uadp/v0.1/schemas/uadp-federation-response.schema.json",
-  "title": "UADP Federation Response",
-  "description": "Schema for GET /uadp/v1/federation response.",
+  "$id": "https://openstandardagents.org/spec/duadp/v0.1/schemas/duadp-federation-response.schema.json",
+  "title": "DUADP Federation Response",
+  "description": "Schema for GET /api/v1/federation response.",
   "type": "object",
   "required": ["protocol_version", "node_name", "peers"],
   "properties": {

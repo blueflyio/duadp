@@ -1,23 +1,23 @@
 services:
-  uadp-node:
+  duadp-node:
     build:
       context: ..
       dockerfile: reference-node/Dockerfile
-    container_name: uadp-reference-node
+    container_name: duadp-reference-node
     restart: unless-stopped
     ports:
       - "${PORT:-4200}:${PORT:-4200}"
     volumes:
-      - uadp-data:/app/reference-node/data
+      - duadp-data:/app/reference-node/data
     env_file:
       - .env
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT=${PORT:-4200}
-      - UADP_NODE_NAME=${UADP_NODE_NAME:-My UADP Node}
-      - UADP_BASE_URL=${UADP_BASE_URL:-http://localhost:4200}
-      - UADP_NODE_ID=${UADP_NODE_ID:-did:web:localhost}
-      - DB_PATH=${DB_PATH:-./data/uadp.db}
+      - DUADP_NODE_NAME=${DUADP_NODE_NAME:-My DUADP Node}
+      - DUADP_BASE_URL=${DUADP_BASE_URL:-http://localhost:4200}
+      - DUADP_NODE_ID=${DUADP_NODE_ID:-did:web:localhost}
+      - DB_PATH=${DB_PATH:-./data/duadp.db}
 
 volumes:
-  uadp-data:
+  duadp-data:

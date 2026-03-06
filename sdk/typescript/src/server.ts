@@ -13,7 +13,7 @@ import type {
     WebFingerResponse
 } from './types.js';
 
-export interface UadpNodeConfig {
+export interface DuadpNodeConfig {
   /** Human-readable node name */
   nodeName: string;
   /** Optional DID for this node (e.g., did:web:example.com) */
@@ -32,37 +32,37 @@ export interface UadpNodeConfig {
   federation?: { gossip?: boolean; max_hops?: number };
 }
 
-export interface UadpDataProvider {
-  /** Return paginated skills. Called on GET /uadp/v1/skills */
+export interface DuadpDataProvider {
+  /** Return paginated skills. Called on GET /api/v1/skills */
   listSkills?(params: { search?: string; category?: string; tag?: string; trust_tier?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaSkill>>;
-  /** Get single skill by name. Called on GET /uadp/v1/skills/:name */
+  /** Get single skill by name. Called on GET /api/v1/skills/:name */
   getSkill?(name: string): Promise<OssaSkill | null>;
-  /** Return paginated agents. Called on GET /uadp/v1/agents */
+  /** Return paginated agents. Called on GET /api/v1/agents */
   listAgents?(params: { search?: string; category?: string; tag?: string; trust_tier?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaAgent>>;
   /** Get single agent by name */
   getAgent?(name: string): Promise<OssaAgent | null>;
-  /** Return paginated tools. Called on GET /uadp/v1/tools */
+  /** Return paginated tools. Called on GET /api/v1/tools */
   listTools?(params: { search?: string; category?: string; tag?: string; protocol?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaTool>>;
   /** Get single tool by name */
   getTool?(name: string): Promise<OssaTool | null>;
-  /** Publish a resource. Called on POST /uadp/v1/publish or POST /uadp/v1/{type} */
+  /** Publish a resource. Called on POST /api/v1/publish or POST /api/v1/{type} */
   publishResource?(resource: OssaResource, token?: string): Promise<PublishResponse>;
-  /** Update a resource. Called on PUT /uadp/v1/{type}/:name */
+  /** Update a resource. Called on PUT /api/v1/{type}/:name */
   updateResource?(kind: string, name: string, resource: OssaResource, token?: string): Promise<PublishResponse>;
-  /** Delete a resource. Called on DELETE /uadp/v1/{type}/:name */
+  /** Delete a resource. Called on DELETE /api/v1/{type}/:name */
   deleteResource?(kind: string, name: string, token?: string): Promise<boolean>;
-  /** Return federation peers. Called on GET /uadp/v1/federation */
+  /** Return federation peers. Called on GET /api/v1/federation */
   listPeers?(): Promise<Peer[]>;
-  /** Handle incoming peer registration. Called on POST /uadp/v1/federation */
+  /** Handle incoming peer registration. Called on POST /api/v1/federation */
   addPeer?(url: string, name: string, nodeId?: string, hop?: number): Promise<{ success: boolean; peer?: Peer; peers?: Peer[] }>;
-  /** Validate a manifest. Called on POST /uadp/v1/validate */
+  /** Validate a manifest. Called on POST /api/v1/validate */
   validateManifest?(manifest: string): Promise<ValidationResult>;
   /** Resolve a GAID via WebFinger. Called on GET /.well-known/webfinger */
   resolveWebFinger?(resource: string): Promise<WebFingerResponse | null>;
 }
 
 /**
- * Mount UADP protocol endpoints on an Express router.
+ * Mount DUADP protocol endpoints on an Express router.
  *
  * Usage:
  * ```ts
@@ -73,7 +73,7 @@ export interface UadpDataProvider {
  * app.use(createUadpRouter(config, myProvider));
  * ```
  */
-export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvider): Router {
+export function createUadpRouter(config: DuadpNodeConfig, provider: DuadpDataProvider): Router {
   // Dynamic import to keep express as optional peer dep
   // Use createRequire for ESM/CJS compatibility
   const esmRequire = createRequire(import.meta.url);
@@ -106,8 +106,8 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     limit: Math.min(100, parseInt((((req.query as any)).limit as string) || '50', 10)),
   });
 
-  // /.well-known/uadp.json
-  router.get('/.well-known/uadp.json', (_req: Request, res: Response) => {
+  // /.well-known/duadp.json
+  router.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
     const manifest: UadpManifest = {
       protocol_version: '0.2.0',
       node_id: config.nodeId,
@@ -115,12 +115,12 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
       node_description: config.nodeDescription,
       contact: config.contact,
       endpoints: {
-        ...(provider.listSkills ? { skills: `${config.baseUrl}/uadp/v1/skills` } : {}),
-        ...(provider.listAgents ? { agents: `${config.baseUrl}/uadp/v1/agents` } : {}),
-        ...(provider.listTools ? { tools: `${config.baseUrl}/uadp/v1/tools` } : {}),
-        ...(provider.listPeers ? { federation: `${config.baseUrl}/uadp/v1/federation` } : {}),
-        ...(provider.validateManifest ? { validate: `${config.baseUrl}/uadp/v1/validate` } : {}),
-        ...(provider.publishResource ? { publish: `${config.baseUrl}/uadp/v1/publish` } : {}),
+        ...(provider.listSkills ? { skills: `${config.baseUrl}/api/v1/skills` } : {}),
+        ...(provider.listAgents ? { agents: `${config.baseUrl}/api/v1/agents` } : {}),
+        ...(provider.listTools ? { tools: `${config.baseUrl}/api/v1/tools` } : {}),
+        ...(provider.listPeers ? { federation: `${config.baseUrl}/api/v1/federation` } : {}),
+        ...(provider.validateManifest ? { validate: `${config.baseUrl}/api/v1/validate` } : {}),
+        ...(provider.publishResource ? { publish: `${config.baseUrl}/api/v1/publish` } : {}),
       },
       capabilities,
       identity: config.identity,
@@ -148,7 +148,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // --- Skills ---
   if (provider.listSkills) {
-    router.get('/uadp/v1/skills', async (req: Request, res: Response) => {
+    router.get('/api/v1/skills', async (req: Request, res: Response) => {
       try {
         const result = await provider.listSkills!(parseListParams(req));
         result.meta.node_name = config.nodeName;
@@ -160,7 +160,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     });
   }
   if (provider.getSkill) {
-    router.get('/uadp/v1/skills/:name', async (req: Request, res: Response) => {
+    router.get('/api/v1/skills/:name', async (req: Request, res: Response) => {
       try {
         const skill = await provider.getSkill!(req.params.name as string);
         if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
@@ -173,7 +173,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // --- Agents ---
   if (provider.listAgents) {
-    router.get('/uadp/v1/agents', async (req: Request, res: Response) => {
+    router.get('/api/v1/agents', async (req: Request, res: Response) => {
       try {
         const result = await provider.listAgents!(parseListParams(req));
         result.meta.node_name = config.nodeName;
@@ -185,7 +185,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     });
   }
   if (provider.getAgent) {
-    router.get('/uadp/v1/agents/:name', async (req: Request, res: Response) => {
+    router.get('/api/v1/agents/:name', async (req: Request, res: Response) => {
       try {
         const agent = await provider.getAgent!(req.params.name as string);
         if (!agent) { res.status(404).json({ error: 'Agent not found' }); return; }
@@ -198,7 +198,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // --- Tools ---
   if (provider.listTools) {
-    router.get('/uadp/v1/tools', async (req: Request, res: Response) => {
+    router.get('/api/v1/tools', async (req: Request, res: Response) => {
       try {
         const params = {
           ...parseListParams(req),
@@ -214,7 +214,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
     });
   }
   if (provider.getTool) {
-    router.get('/uadp/v1/tools/:name', async (req: Request, res: Response) => {
+    router.get('/api/v1/tools/:name', async (req: Request, res: Response) => {
       try {
         const tool = await provider.getTool!(req.params.name as string);
         if (!tool) { res.status(404).json({ error: 'Tool not found' }); return; }
@@ -228,7 +228,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   // --- Publishing ---
   if (provider.publishResource) {
     // Generic publish
-    router.post('/uadp/v1/publish', async (req: Request, res: Response) => {
+    router.post('/api/v1/publish', async (req: Request, res: Response) => {
       try {
         const token = getToken(req);
         if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
@@ -241,7 +241,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
     // Type-specific publish
     for (const kind of ['skills', 'agents', 'tools']) {
-      router.post(`/uadp/v1/${kind}`, async (req: Request, res: Response) => {
+      router.post(`/api/v1/${kind}`, async (req: Request, res: Response) => {
         try {
           const token = getToken(req);
           if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
@@ -257,7 +257,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   // Update
   if (provider.updateResource) {
     for (const kind of ['skills', 'agents', 'tools']) {
-      router.put(`/uadp/v1/${kind}/:name`, async (req: Request, res: Response) => {
+      router.put(`/api/v1/${kind}/:name`, async (req: Request, res: Response) => {
         try {
           const token = getToken(req);
           if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
@@ -273,7 +273,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   // Delete
   if (provider.deleteResource) {
     for (const kind of ['skills', 'agents', 'tools']) {
-      router.delete(`/uadp/v1/${kind}/:name`, async (req: Request, res: Response) => {
+      router.delete(`/api/v1/${kind}/:name`, async (req: Request, res: Response) => {
         try {
           const token = getToken(req);
           if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
@@ -289,7 +289,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // --- Validation ---
   if (provider.validateManifest) {
-    router.post('/uadp/v1/validate', async (req: Request, res: Response) => {
+    router.post('/api/v1/validate', async (req: Request, res: Response) => {
       try {
         const { manifest } = req.body ?? {};
         if (!manifest) {
@@ -306,7 +306,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
 
   // --- Federation ---
   if (provider.listPeers) {
-    router.get('/uadp/v1/federation', async (_req: Request, res: Response) => {
+    router.get('/api/v1/federation', async (_req: Request, res: Response) => {
       try {
         const peers = await provider.listPeers!();
         const response: FederationResponse = {
@@ -325,7 +325,7 @@ export function createUadpRouter(config: UadpNodeConfig, provider: UadpDataProvi
   }
 
   if (provider.addPeer) {
-    router.post('/uadp/v1/federation', async (req: Request, res: Response) => {
+    router.post('/api/v1/federation', async (req: Request, res: Response) => {
       try {
         const { url, name, node_id, hop } = req.body ?? {};
         if (!url || !name) {

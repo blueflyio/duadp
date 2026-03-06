@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * UADP CLI — conformance testing and node discovery.
+ * DUADP CLI — conformance testing and node discovery.
  *
  * Usage:
  *   npx @bluefly/duadp conformance https://node.example.com
@@ -8,7 +8,7 @@
  *   npx @bluefly/duadp verify agent://acme.com/agents/my-agent
  */
 
-import { UadpClient } from './client.js';
+import { DuadpClient } from './client.js';
 import { runConformanceTests, formatConformanceResults } from './conformance.js';
 import { resolveDID, didWebToUrl } from './did.js';
 import { resolveGaid } from './client.js';
@@ -18,11 +18,11 @@ const [,, command, target, ...flags] = process.argv;
 async function main() {
   if (!command || command === '--help' || command === '-h') {
     console.log(`
-UADP CLI — Universal AI Discovery Protocol
+DUADP CLI — Universal AI Discovery Protocol
 
 Commands:
-  conformance <url>    Run conformance tests against a UADP node
-  discover <url>       Discover a UADP node and show its manifest
+  conformance <url>    Run conformance tests against a DUADP node
+  discover <url>       Discover a DUADP node and show its manifest
   resolve <gaid>       Resolve a GAID URI to node + resource
   did <did>            Resolve a DID document
   search <url> <q>     Search skills/agents/tools on a node
@@ -40,8 +40,8 @@ Examples:
   switch (command) {
     case 'conformance':
     case 'test': {
-      if (!target) { console.error('Usage: uadp conformance <url>'); process.exit(1); }
-      console.log(`Running UADP conformance tests against ${target}...\n`);
+      if (!target) { console.error('Usage: duadp conformance <url>'); process.exit(1); }
+      console.log(`Running DUADP conformance tests against ${target}...\n`);
       const token = flags.find(f => f.startsWith('--token='))?.split('=')[1];
       const result = await runConformanceTests(target, { token });
       console.log(formatConformanceResults(result));
@@ -50,15 +50,15 @@ Examples:
     }
 
     case 'discover': {
-      if (!target) { console.error('Usage: uadp discover <url>'); process.exit(1); }
-      const client = new UadpClient(target, { timeout: 10000 });
+      if (!target) { console.error('Usage: duadp discover <url>'); process.exit(1); }
+      const client = new DuadpClient(target, { timeout: 10000 });
       const manifest = await client.discover();
       console.log(JSON.stringify(manifest, null, 2));
       break;
     }
 
     case 'resolve': {
-      if (!target) { console.error('Usage: uadp resolve <gaid>'); process.exit(1); }
+      if (!target) { console.error('Usage: duadp resolve <gaid>'); process.exit(1); }
       const { client, kind, name } = resolveGaid(target);
       console.log(`Domain: ${new URL(client.baseUrl).hostname}`);
       console.log(`Kind:   ${kind}`);
@@ -77,7 +77,7 @@ Examples:
     }
 
     case 'did': {
-      if (!target) { console.error('Usage: uadp did <did>'); process.exit(1); }
+      if (!target) { console.error('Usage: duadp did <did>'); process.exit(1); }
       console.log(`Resolving ${target}...`);
       console.log(`URL: ${didWebToUrl(target)}`);
       const result = await resolveDID(target);
@@ -87,14 +87,14 @@ Examples:
       for (const key of result.publicKeys) {
         console.log(`  ${key.id} (${key.type}) — ${key.purpose.join(', ')}`);
       }
-      if (result.uadpEndpoint) console.log(`\nUADP Endpoint: ${result.uadpEndpoint}`);
+      if (result.uadpEndpoint) console.log(`\nDUADP Endpoint: ${result.uadpEndpoint}`);
       break;
     }
 
     case 'search': {
-      if (!target) { console.error('Usage: uadp search <url> <query>'); process.exit(1); }
+      if (!target) { console.error('Usage: duadp search <url> <query>'); process.exit(1); }
       const query = flags[0] || '';
-      const client = new UadpClient(target, { timeout: 10000 });
+      const client = new DuadpClient(target, { timeout: 10000 });
       await client.discover();
       const manifest = await client.getManifest();
 
@@ -123,7 +123,7 @@ Examples:
     }
 
     default:
-      console.error(`Unknown command: ${command}. Run 'uadp --help' for usage.`);
+      console.error(`Unknown command: ${command}. Run 'duadp --help' for usage.`);
       process.exit(1);
   }
 }

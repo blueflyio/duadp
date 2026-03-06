@@ -1,11 +1,11 @@
 import { initDb } from './db.js';
 import platformAgents from './platform-agents-seed.json' with { type: 'json' };
 
-const DB_PATH = process.env.DB_PATH || './data/uadp.db';
-const SEED_DOMAIN = process.env.UADP_SEED_DOMAIN || 'example.uadp.dev';
+const DB_PATH = process.env.DB_PATH || './data/duadp.db';
+const SEED_DOMAIN = process.env.DUADP_SEED_DOMAIN || 'example.duadp.dev';
 const db = initDb(DB_PATH);
 
-console.log(`Seeding UADP reference database (domain: ${SEED_DOMAIN})...`);
+console.log(`Seeding DUADP reference database (domain: ${SEED_DOMAIN})...`);
 
 // Helper to insert a resource
 const insertResource = db.prepare(

@@ -1,4 +1,4 @@
-import { UadpClient, UadpError } from './client.js';
+import { DuadpClient, DuadpError } from './client.js';
 import { validateManifest, validateResponse } from './validate.js';
 
 export interface ConformanceResult {
@@ -9,7 +9,7 @@ export interface ConformanceResult {
 }
 
 /**
- * Run UADP conformance tests against a live node.
+ * Run DUADP conformance tests against a live node.
  *
  * Usage:
  * ```ts
@@ -19,19 +19,19 @@ export interface ConformanceResult {
  */
 export async function runConformanceTests(baseUrl: string): Promise<ConformanceResult> {
   const results: ConformanceResult['results'] = [];
-  const client = new UadpClient(baseUrl, { timeout: 15000 });
+  const client = new DuadpClient(baseUrl, { timeout: 15000 });
 
   // Test 1: Discovery
   try {
     const manifest = await client.discover();
     const validation = validateManifest(manifest);
     if (validation.valid) {
-      results.push({ test: 'GET /.well-known/uadp.json', passed: true });
+      results.push({ test: 'GET /.well-known/duadp.json', passed: true });
     } else {
-      results.push({ test: 'GET /.well-known/uadp.json', passed: false, error: validation.errors.join('; ') });
+      results.push({ test: 'GET /.well-known/duadp.json', passed: false, error: validation.errors.join('; ') });
     }
   } catch (err) {
-    results.push({ test: 'GET /.well-known/uadp.json', passed: false, error: String(err) });
+    results.push({ test: 'GET /.well-known/duadp.json', passed: false, error: String(err) });
   }
 
   // Test 2: Skills endpoint
@@ -40,12 +40,12 @@ export async function runConformanceTests(baseUrl: string): Promise<ConformanceR
     if (manifest.endpoints.skills) {
       const skills = await client.listSkills({ limit: 5 });
       const validation = validateResponse(skills);
-      results.push({ test: 'GET /uadp/v1/skills', passed: validation.valid, error: validation.valid ? undefined : validation.errors.join('; ') });
+      results.push({ test: 'GET /api/v1/skills', passed: validation.valid, error: validation.valid ? undefined : validation.errors.join('; ') });
     } else {
-      results.push({ test: 'GET /uadp/v1/skills', passed: true, error: 'Skipped (not advertised)' });
+      results.push({ test: 'GET /api/v1/skills', passed: true, error: 'Skipped (not advertised)' });
     }
   } catch (err) {
-    results.push({ test: 'GET /uadp/v1/skills', passed: false, error: String(err) });
+    results.push({ test: 'GET /api/v1/skills', passed: false, error: String(err) });
   }
 
   // Test 3: Agents endpoint
@@ -54,12 +54,12 @@ export async function runConformanceTests(baseUrl: string): Promise<ConformanceR
     if (manifest.endpoints.agents) {
       const agents = await client.listAgents({ limit: 5 });
       const validation = validateResponse(agents);
-      results.push({ test: 'GET /uadp/v1/agents', passed: validation.valid, error: validation.valid ? undefined : validation.errors.join('; ') });
+      results.push({ test: 'GET /api/v1/agents', passed: validation.valid, error: validation.valid ? undefined : validation.errors.join('; ') });
     } else {
-      results.push({ test: 'GET /uadp/v1/agents', passed: true, error: 'Skipped (not advertised)' });
+      results.push({ test: 'GET /api/v1/agents', passed: true, error: 'Skipped (not advertised)' });
     }
   } catch (err) {
-    results.push({ test: 'GET /uadp/v1/agents', passed: false, error: String(err) });
+    results.push({ test: 'GET /api/v1/agents', passed: false, error: String(err) });
   }
 
   // Test 4: Federation endpoint
@@ -68,12 +68,12 @@ export async function runConformanceTests(baseUrl: string): Promise<ConformanceR
     if (manifest.endpoints.federation) {
       const fed = await client.getFederation();
       const valid = fed.protocol_version && fed.node_name && Array.isArray(fed.peers);
-      results.push({ test: 'GET /uadp/v1/federation', passed: !!valid, error: valid ? undefined : 'Invalid federation response shape' });
+      results.push({ test: 'GET /api/v1/federation', passed: !!valid, error: valid ? undefined : 'Invalid federation response shape' });
     } else {
-      results.push({ test: 'GET /uadp/v1/federation', passed: true, error: 'Skipped (not advertised)' });
+      results.push({ test: 'GET /api/v1/federation', passed: true, error: 'Skipped (not advertised)' });
     }
   } catch (err) {
-    results.push({ test: 'GET /uadp/v1/federation', passed: false, error: String(err) });
+    results.push({ test: 'GET /api/v1/federation', passed: false, error: String(err) });
   }
 
   // Test 5: Pagination

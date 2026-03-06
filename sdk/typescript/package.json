@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "uadp": "dist/cli.js"
+    "duadp": "dist/cli.js"
   },
   "types": "dist/index.d.ts",
   "repository": {
@@ -13,7 +13,7 @@
     "url": "https://gitlab.com/blueflyio/ossa/lab/duadp.git",
     "directory": "sdk/typescript"
   },
-  "homepage": "https://openstandardagents.org/uadp/",
+  "homepage": "https://openstandardagents.org/duadp/",
   "bugs": {
     "url": "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
   },
@@ -65,7 +65,7 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
-    "uadp",
+    "duadp",
     "ossa",
     "agent",
     "discovery",

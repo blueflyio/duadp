@@ -1,4 +1,4 @@
-package uadp
+package duadp
 
 import (
 	"crypto/ed25519"
@@ -109,7 +109,7 @@ func VerifySignature(resource OssaResource, publicKey ed25519.PublicKey) (bool, 
 	return ed25519.Verify(publicKey, []byte(canonical), sigBytes), nil
 }
 
-// GenerateKeyPair generates an Ed25519 key pair for signing UADP resources.
+// GenerateKeyPair generates an Ed25519 key pair for signing DUADP resources.
 func GenerateKeyPair() (ed25519.PublicKey, ed25519.PrivateKey, error) {
 	pub, priv, err := ed25519.GenerateKey(nil)
 	return pub, priv, err

@@ -1,11 +1,11 @@
-"""Validation utilities for UADP manifests and responses."""
+"""Validation utilities for DUADP manifests and responses."""
 from __future__ import annotations
 import re
 from .types import ValidationResult
 
 
 def validate_manifest(manifest: dict) -> ValidationResult:
-    """Validate a /.well-known/uadp.json manifest."""
+    """Validate a /.well-known/duadp.json manifest."""
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -40,7 +40,7 @@ def validate_manifest(manifest: dict) -> ValidationResult:
 
 
 def validate_response(response: dict) -> ValidationResult:
-    """Validate a UADP skills/agents response envelope."""
+    """Validate a DUADP skills/agents response envelope."""
     errors: list[str] = []
     warnings: list[str] = []
 

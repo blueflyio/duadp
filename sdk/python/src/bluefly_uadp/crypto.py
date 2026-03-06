@@ -1,4 +1,4 @@
-"""Cryptographic signing, verification, and content hashing for UADP resources."""
+"""Cryptographic signing, verification, and content hashing for DUADP resources."""
 from __future__ import annotations
 
 import hashlib
@@ -98,7 +98,7 @@ def verify_signature(resource: dict, public_key: Ed25519PublicKey) -> bool:
 
 
 def generate_key_pair() -> tuple[Ed25519PrivateKey, Ed25519PublicKey]:
-    """Generate an Ed25519 key pair for signing UADP resources."""
+    """Generate an Ed25519 key pair for signing DUADP resources."""
     private_key = Ed25519PrivateKey.generate()
     public_key = private_key.public_key()
     return private_key, public_key

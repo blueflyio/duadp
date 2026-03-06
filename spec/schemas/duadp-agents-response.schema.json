@@ -1,31 +1,30 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openstandardagents.org/spec/uadp/v0.1/schemas/uadp-skills-response.schema.json",
-  "title": "UADP Skills Response",
-  "description": "Schema for GET /uadp/v1/skills response.",
+  "$id": "https://openstandardagents.org/spec/duadp/v0.1/schemas/duadp-agents-response.schema.json",
+  "title": "DUADP Agents Response",
+  "description": "Schema for GET /api/v1/agents response.",
   "type": "object",
   "required": ["data", "meta"],
   "properties": {
     "data": {
       "type": "array",
-      "items": { "$ref": "#/$defs/OssaSkill" }
+      "items": { "$ref": "#/$defs/OssaAgent" }
     },
     "meta": { "$ref": "#/$defs/PaginationMeta" }
   },
   "additionalProperties": false,
   "$defs": {
-    "OssaSkill": {
+    "OssaAgent": {
       "type": "object",
       "required": ["apiVersion", "kind", "metadata"],
       "properties": {
         "apiVersion": {
           "type": "string",
-          "pattern": "^ossa/v\\d+\\.\\d+$",
-          "description": "OSSA specification version."
+          "pattern": "^ossa/v\\d+\\.\\d+$"
         },
         "kind": {
           "type": "string",
-          "const": "Skill"
+          "const": "Agent"
         },
         "metadata": {
           "type": "object",
@@ -36,10 +35,8 @@
             "description": { "type": "string" },
             "uri": {
               "type": "string",
-              "pattern": "^agent://",
-              "description": "Global Agent Identifier (GAID)."
+              "pattern": "^agent://"
             },
-            "category": { "type": "string" },
             "trust_tier": {
               "type": "string",
               "enum": ["official", "verified-signature", "signed", "community", "experimental"]
@@ -51,7 +48,6 @@
         },
         "spec": {
           "type": "object",
-          "description": "OSSA skill specification body.",
           "additionalProperties": true
         }
       },

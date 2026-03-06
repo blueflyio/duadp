@@ -1,6 +1,6 @@
-# Contributing to UADP
+# Contributing to DUADP
 
-Thank you for your interest in contributing to the Universal AI Discovery Protocol (UADP).
+Thank you for your interest in contributing to the Universal AI Discovery Protocol (DUADP).
 
 ## Getting Started
 
@@ -21,7 +21,7 @@ npx tsx src/index.ts           # starts on PORT (default 4200)
 ## Project Structure
 
 ```
-spec/           UADP protocol specification
+spec/           DUADP protocol specification
 sdk/typescript/ TypeScript SDK (@bluefly/duadp)
 reference-node/ Express + SQLite reference implementation
 ```

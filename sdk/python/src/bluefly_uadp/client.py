@@ -1,4 +1,4 @@
-"""UADP client for discovering and querying any UADP node."""
+"""DUADP client for discovering and querying any DUADP node."""
 from __future__ import annotations
 from urllib.parse import urljoin, urlencode
 import httpx
@@ -18,18 +18,18 @@ from .types import (
 )
 
 
-class UadpError(Exception):
+class DuadpError(Exception):
     def __init__(self, message: str, status_code: int | None = None):
         super().__init__(message)
         self.status_code = status_code
 
 
-class UadpClient:
-    """Client for discovering and querying a UADP node.
+class DuadpClient:
+    """Client for discovering and querying a DUADP node.
 
     Usage::
 
-        async with UadpClient("https://marketplace.example.com") as client:
+        async with DuadpClient("https://marketplace.example.com") as client:
             manifest = await client.discover()
             skills = await client.list_skills(search="code-review")
             tools = await client.list_tools(protocol="mcp")
@@ -60,11 +60,11 @@ class UadpClient:
     # --- Discovery ---
 
     async def discover(self) -> UadpManifest:
-        """Fetch /.well-known/uadp.json and cache the manifest."""
-        url = f"{self.base_url}/.well-known/uadp.json"
+        """Fetch /.well-known/duadp.json and cache the manifest."""
+        url = f"{self.base_url}/.well-known/duadp.json"
         resp = await self._client.get(url)
         if resp.status_code != 200:
-            raise UadpError(f"Discovery failed: HTTP {resp.status_code}", resp.status_code)
+            raise DuadpError(f"Discovery failed: HTTP {resp.status_code}", resp.status_code)
         self._manifest = UadpManifest.model_validate(resp.json())
         return self._manifest
 
@@ -231,7 +231,7 @@ class UadpClient:
         """Get audit log entries."""
         try:
             endpoint = await self._resolve_endpoint("audit_log")
-        except UadpError:
+        except DuadpError:
             endpoint = (await self._resolve_endpoint("governance")) + "/audit"
         params: dict[str, str] = {}
         if event_type:
@@ -330,8 +330,8 @@ class UadpClient:
         """Get node health status."""
         try:
             endpoint = await self._resolve_endpoint("health")
-        except UadpError:
-            endpoint = f"{self.base_url}/uadp/v1/health"
+        except DuadpError:
+            endpoint = f"{self.base_url}/api/v1/health"
         resp = await self._client.get(endpoint)
         resp.raise_for_status()
         return NodeHealth.model_validate(resp.json())
@@ -581,7 +581,7 @@ class UadpClient:
             dry_run: If True, validate without persisting.
         """
         resp = await self._client.post(
-            f"{self.base_url}/uadp/v1/publish/batch",
+            f"{self.base_url}/api/v1/publish/batch",
             json={
                 "resources": resources,
                 "atomic": atomic,
@@ -600,7 +600,7 @@ class UadpClient:
         for cross-protocol agent discovery.
         """
         resp = await self._client.get(
-            f"{self.base_url}/uadp/v1/agents/{agent_name}/card"
+            f"{self.base_url}/api/v1/agents/{agent_name}/card"
         )
         resp.raise_for_status()
         return A2AAgentCard.model_validate(resp.json())
@@ -614,7 +614,7 @@ class UadpClient:
         for use with MCP-compatible clients.
         """
         resp = await self._client.get(
-            f"{self.base_url}/uadp/v1/tools/mcp-manifest"
+            f"{self.base_url}/api/v1/tools/mcp-manifest"
         )
         resp.raise_for_status()
         return McpServerManifest.model_validate(resp.json())
@@ -630,7 +630,7 @@ class UadpClient:
         """
         data = query.model_dump() if isinstance(query, StructuredQuery) else query
         resp = await self._client.post(
-            f"{self.base_url}/uadp/v1/query",
+            f"{self.base_url}/api/v1/query",
             json=data,
         )
         resp.raise_for_status()
@@ -642,7 +642,7 @@ class UadpClient:
         manifest = await self.get_manifest()
         endpoint = getattr(manifest.endpoints, name, None)
         if not endpoint:
-            raise UadpError(f"Node does not expose a {name} endpoint")
+            raise DuadpError(f"Node does not expose a {name} endpoint")
         # Handle relative URLs
         if endpoint.startswith("/"):
             return f"{self.base_url}{endpoint}"
@@ -668,8 +668,8 @@ class UadpClient:
         return params
 
 
-def resolve_gaid(gaid: str, **client_kwargs) -> tuple[UadpClient, str, str]:
-    """Resolve a GAID URI to a UadpClient, kind, and name.
+def resolve_gaid(gaid: str, **client_kwargs) -> tuple[DuadpClient, str, str]:
+    """Resolve a GAID URI to a DuadpClient, kind, and name.
 
     Example::
 
@@ -677,9 +677,9 @@ def resolve_gaid(gaid: str, **client_kwargs) -> tuple[UadpClient, str, str]:
         skill = await client.get_skill(name)
     """
     import re
-    match = re.match(r"^(?:agent|uadp)://([^/]+)/([^/]+)/(.+)$", gaid)
+    match = re.match(r"^(?:agent|duadp)://([^/]+)/([^/]+)/(.+)$", gaid)
     if not match:
-        raise UadpError(f"Invalid GAID: {gaid}")
+        raise DuadpError(f"Invalid GAID: {gaid}")
     domain, kind, name = match.groups()
-    client = UadpClient(f"https://{domain}", **client_kwargs)
+    client = DuadpClient(f"https://{domain}", **client_kwargs)
     return client, kind, name

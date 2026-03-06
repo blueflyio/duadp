@@ -3,8 +3,8 @@ import express from 'express';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createUadpRouter } from '../server.js';
-import type { UadpDataProvider } from '../server.js';
-import { UadpClient, UadpError } from '../client.js';
+import type { DuadpDataProvider } from '../server.js';
+import { DuadpClient, DuadpError } from '../client.js';
 import type {
   OssaSkill,
   OssaAgent,
@@ -52,7 +52,7 @@ function createInMemoryProvider(
   agents: Map<string, OssaAgent>,
   tools: Map<string, OssaTool>,
   peers: Map<string, Peer>,
-): UadpDataProvider {
+): DuadpDataProvider {
   return {
     listSkills: async (params) => {
       let items = [...skills.values()];
@@ -198,12 +198,12 @@ function createInMemoryProvider(
 
 // ── Test suite ──────────────────────────────────────────────────
 
-describe('UADP SDK integration (client + server)', () => {
+describe('DUADP SDK integration (client + server)', () => {
   let server: Server;
   let port: number;
   let baseUrl: string;
-  let client: UadpClient;
-  let authedClient: UadpClient;
+  let client: DuadpClient;
+  let authedClient: DuadpClient;
 
   // Data stores
   const skillsMap = new Map<string, OssaSkill>();
@@ -261,8 +261,8 @@ describe('UADP SDK integration (client + server)', () => {
       });
     });
 
-    client = new UadpClient(baseUrl, { timeout: 5000 });
-    authedClient = new UadpClient(baseUrl, { timeout: 5000, token: AUTH_TOKEN });
+    client = new DuadpClient(baseUrl, { timeout: 5000 });
+    authedClient = new DuadpClient(baseUrl, { timeout: 5000, token: AUTH_TOKEN });
   });
 
   afterAll(async () => {
@@ -274,7 +274,7 @@ describe('UADP SDK integration (client + server)', () => {
   // ── Discovery ────────────────────────────────────────────────
 
   describe('Discovery', () => {
-    it('GET /.well-known/uadp.json returns valid manifest', async () => {
+    it('GET /.well-known/duadp.json returns valid manifest', async () => {
       const manifest = await client.discover();
       expect(manifest).toBeDefined();
       expect(manifest.protocol_version).toBe('0.2.0');
@@ -284,12 +284,12 @@ describe('UADP SDK integration (client + server)', () => {
 
     it('manifest includes correct endpoints', async () => {
       const manifest = await client.discover();
-      expect(manifest.endpoints.skills).toBe(`${baseUrl}/uadp/v1/skills`);
-      expect(manifest.endpoints.agents).toBe(`${baseUrl}/uadp/v1/agents`);
-      expect(manifest.endpoints.tools).toBe(`${baseUrl}/uadp/v1/tools`);
-      expect(manifest.endpoints.federation).toBe(`${baseUrl}/uadp/v1/federation`);
-      expect(manifest.endpoints.validate).toBe(`${baseUrl}/uadp/v1/validate`);
-      expect(manifest.endpoints.publish).toBe(`${baseUrl}/uadp/v1/publish`);
+      expect(manifest.endpoints.skills).toBe(`${baseUrl}/api/v1/skills`);
+      expect(manifest.endpoints.agents).toBe(`${baseUrl}/api/v1/agents`);
+      expect(manifest.endpoints.tools).toBe(`${baseUrl}/api/v1/tools`);
+      expect(manifest.endpoints.federation).toBe(`${baseUrl}/api/v1/federation`);
+      expect(manifest.endpoints.validate).toBe(`${baseUrl}/api/v1/validate`);
+      expect(manifest.endpoints.publish).toBe(`${baseUrl}/api/v1/publish`);
     });
 
     it('manifest includes correct capabilities', async () => {
@@ -353,13 +353,13 @@ describe('UADP SDK integration (client + server)', () => {
       expect(skill.apiVersion).toBe('ossa/v0.4');
     });
 
-    it('getSkill(nonexistent) throws UadpError with 404', async () => {
-      await expect(client.getSkill('nonexistent-skill')).rejects.toThrow(UadpError);
+    it('getSkill(nonexistent) throws DuadpError with 404', async () => {
+      await expect(client.getSkill('nonexistent-skill')).rejects.toThrow(DuadpError);
       try {
         await client.getSkill('nonexistent-skill');
       } catch (err) {
-        expect(err).toBeInstanceOf(UadpError);
-        expect((err as UadpError).statusCode).toBe(404);
+        expect(err).toBeInstanceOf(DuadpError);
+        expect((err as DuadpError).statusCode).toBe(404);
       }
     });
 
@@ -375,15 +375,15 @@ describe('UADP SDK integration (client + server)', () => {
     });
 
     it('publishSkill() without token returns 401', async () => {
-      const noAuthClient = new UadpClient(baseUrl, { timeout: 5000 });
+      const noAuthClient = new DuadpClient(baseUrl, { timeout: 5000 });
       // Force manifest cache
       await noAuthClient.discover();
       const newSkill = makeSkill('should-fail');
-      await expect(noAuthClient.publishSkill(newSkill)).rejects.toThrow(UadpError);
+      await expect(noAuthClient.publishSkill(newSkill)).rejects.toThrow(DuadpError);
       try {
         await noAuthClient.publishSkill(newSkill);
       } catch (err) {
-        expect((err as UadpError).statusCode).toBe(401);
+        expect((err as DuadpError).statusCode).toBe(401);
       }
     });
 
@@ -411,11 +411,11 @@ describe('UADP SDK integration (client + server)', () => {
       await authedClient.deleteSkill('to-be-deleted');
 
       // Verify it's gone
-      await expect(client.getSkill('to-be-deleted')).rejects.toThrow(UadpError);
+      await expect(client.getSkill('to-be-deleted')).rejects.toThrow(DuadpError);
       try {
         await client.getSkill('to-be-deleted');
       } catch (err) {
-        expect((err as UadpError).statusCode).toBe(404);
+        expect((err as DuadpError).statusCode).toBe(404);
       }
     });
   });
@@ -437,8 +437,8 @@ describe('UADP SDK integration (client + server)', () => {
       expect(agent.kind).toBe('Agent');
     });
 
-    it('getAgent(nonexistent) throws UadpError with 404', async () => {
-      await expect(client.getAgent('nonexistent-agent')).rejects.toThrow(UadpError);
+    it('getAgent(nonexistent) throws DuadpError with 404', async () => {
+      await expect(client.getAgent('nonexistent-agent')).rejects.toThrow(DuadpError);
     });
 
     it('publishAgent() creates agent', async () => {
@@ -482,8 +482,8 @@ describe('UADP SDK integration (client + server)', () => {
       expect(tool.kind).toBe('Tool');
     });
 
-    it('getTool(nonexistent) throws UadpError with 404', async () => {
-      await expect(client.getTool('nonexistent-tool')).rejects.toThrow(UadpError);
+    it('getTool(nonexistent) throws DuadpError with 404', async () => {
+      await expect(client.getTool('nonexistent-tool')).rejects.toThrow(DuadpError);
     });
   });
 
@@ -545,7 +545,7 @@ describe('UADP SDK integration (client + server)', () => {
   // ── Generic Publishing ───────────────────────────────────────
 
   describe('Generic Publishing', () => {
-    it('publish() via /uadp/v1/publish creates resource', async () => {
+    it('publish() via /api/v1/publish creates resource', async () => {
       const skill = makeSkill('generic-published');
       const result = await authedClient.publish(skill);
       expect(result.success).toBe(true);
@@ -582,18 +582,18 @@ describe('UADP SDK integration (client + server)', () => {
         await client.getSkill('absolutely-does-not-exist');
         expect.fail('Should have thrown');
       } catch (err) {
-        expect(err).toBeInstanceOf(UadpError);
-        expect((err as UadpError).statusCode).toBe(404);
+        expect(err).toBeInstanceOf(DuadpError);
+        expect((err as DuadpError).statusCode).toBe(404);
       }
     });
 
-    it('UadpError contains status code and message', async () => {
+    it('DuadpError contains status code and message', async () => {
       try {
         await client.getAgent('no-such-agent');
         expect.fail('Should have thrown');
       } catch (err) {
-        expect(err).toBeInstanceOf(UadpError);
-        const uadpErr = err as UadpError;
+        expect(err).toBeInstanceOf(DuadpError);
+        const uadpErr = err as DuadpError;
         expect(uadpErr.statusCode).toBe(404);
         expect(uadpErr.message).toContain('404');
       }
@@ -604,8 +604,8 @@ describe('UADP SDK integration (client + server)', () => {
         await client.publish(makeSkill('no-auth'));
         expect.fail('Should have thrown');
       } catch (err) {
-        expect(err).toBeInstanceOf(UadpError);
-        expect((err as UadpError).statusCode).toBe(401);
+        expect(err).toBeInstanceOf(DuadpError);
+        expect((err as DuadpError).statusCode).toBe(401);
       }
     });
 
@@ -614,8 +614,8 @@ describe('UADP SDK integration (client + server)', () => {
         await client.deleteSkill('web-search');
         expect.fail('Should have thrown');
       } catch (err) {
-        expect(err).toBeInstanceOf(UadpError);
-        expect((err as UadpError).statusCode).toBe(401);
+        expect(err).toBeInstanceOf(DuadpError);
+        expect((err as DuadpError).statusCode).toBe(401);
       }
     });
   });

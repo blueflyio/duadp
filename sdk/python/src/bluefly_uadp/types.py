@@ -1,4 +1,4 @@
-"""UADP protocol types as Pydantic models."""
+"""DUADP protocol types as Pydantic models."""
 from __future__ import annotations
 from typing import Literal
 from pydantic import BaseModel, Field
@@ -510,7 +510,7 @@ class WebhookFilter(BaseModel):
 
 
 class WebhookSubscription(BaseModel):
-    """Webhook subscription for POST /uadp/v1/events/subscribe."""
+    """Webhook subscription for POST /api/v1/events/subscribe."""
     callback_url: str
     events: list[Literal["resource.published", "resource.updated", "resource.revoked", "peer.added", "peer.removed"]]
     secret: str | None = None
@@ -555,7 +555,7 @@ class AgentIdentity(BaseModel):
 # ─── Node Health & Search ────────────────────────────────────
 
 class NodeHealth(BaseModel):
-    """Node health status from GET /uadp/v1/health."""
+    """Node health status from GET /api/v1/health."""
     status: Literal["healthy", "degraded", "unhealthy"]
     version: str | None = None
     uptime: int | None = None
@@ -577,7 +577,7 @@ class SearchFacets(BaseModel):
 
 class ProtocolEndpoints(BaseModel):
     """Multi-protocol endpoint map for an agent."""
-    uadp: str | None = None
+    duadp: str | None = None
     a2a: str | None = None
     mcp: str | None = None
     openai: str | None = None
@@ -970,7 +970,7 @@ class A2ASkill(BaseModel):
 
 
 class A2AUadpExtensions(BaseModel):
-    """UADP-specific extensions in an Agent Card."""
+    """DUADP-specific extensions in an Agent Card."""
     gaid: str | None = None
     trust_tier: str | None = None
     content_hash: str | None = None
@@ -993,7 +993,7 @@ class A2AAgentCard(BaseModel):
 
 
 class McpToolUadp(BaseModel):
-    """UADP extensions on an MCP tool."""
+    """DUADP extensions on an MCP tool."""
     gaid: str | None = None
     trust_tier: str | None = None
     content_hash: str | None = None

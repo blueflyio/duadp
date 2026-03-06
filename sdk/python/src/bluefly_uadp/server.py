@@ -1,4 +1,4 @@
-"""FastAPI router for serving UADP endpoints."""
+"""FastAPI router for serving DUADP endpoints."""
 from __future__ import annotations
 from typing import Protocol
 from .types import (
@@ -8,8 +8,8 @@ from .types import (
 )
 
 
-class UadpDataProvider(Protocol):
-    """Interface for providing data to UADP endpoints."""
+class DuadpDataProvider(Protocol):
+    """Interface for providing data to DUADP endpoints."""
 
     async def list_skills(self, search: str | None, category: str | None, page: int, limit: int) -> PaginatedResponse[OssaSkill]: ...
     async def list_agents(self, search: str | None, page: int, limit: int) -> PaginatedResponse[OssaAgent]: ...
@@ -22,13 +22,13 @@ def create_uadp_router(
     *,
     node_name: str,
     base_url: str,
-    provider: UadpDataProvider,
+    provider: DuadpDataProvider,
     node_description: str | None = None,
     contact: str | None = None,
     public_key: str | None = None,
     ossa_versions: list[str] | None = None,
 ):
-    """Create a FastAPI APIRouter with UADP protocol endpoints.
+    """Create a FastAPI APIRouter with DUADP protocol endpoints.
 
     Usage::
 
@@ -48,7 +48,7 @@ def create_uadp_router(
 
     router = APIRouter()
 
-    @router.get("/.well-known/uadp.json")
+    @router.get("/.well-known/duadp.json")
     async def well_known():
         manifest = UadpManifest(
             protocol_version="0.1.0",
@@ -56,10 +56,10 @@ def create_uadp_router(
             node_description=node_description,
             contact=contact,
             endpoints=UadpEndpoints(
-                skills=f"{base_url}/uadp/v1/skills",
-                agents=f"{base_url}/uadp/v1/agents",
-                federation=f"{base_url}/uadp/v1/federation",
-                validate=f"{base_url}/uadp/v1/skills/validate",
+                skills=f"{base_url}/api/v1/skills",
+                agents=f"{base_url}/api/v1/agents",
+                federation=f"{base_url}/api/v1/federation",
+                validate=f"{base_url}/api/v1/skills/validate",
             ),
             capabilities=["skills", "agents", "federation", "validation"],
             public_key=public_key,
@@ -67,7 +67,7 @@ def create_uadp_router(
         )
         return manifest.model_dump(exclude_none=True)
 
-    @router.get("/uadp/v1/skills")
+    @router.get("/api/v1/skills")
     async def list_skills(
         search: str | None = Query(None),
         category: str | None = Query(None),
@@ -77,7 +77,7 @@ def create_uadp_router(
         result = await provider.list_skills(search, category, page, limit)
         return result.model_dump()
 
-    @router.get("/uadp/v1/agents")
+    @router.get("/api/v1/agents")
     async def list_agents(
         search: str | None = Query(None),
         page: int = Query(1, ge=1),
@@ -86,7 +86,7 @@ def create_uadp_router(
         result = await provider.list_agents(search, page, limit)
         return result.model_dump()
 
-    @router.get("/uadp/v1/federation")
+    @router.get("/api/v1/federation")
     async def federation_list():
         peers = await provider.list_peers()
         response = FederationResponse(
@@ -96,7 +96,7 @@ def create_uadp_router(
         )
         return response.model_dump()
 
-    @router.post("/uadp/v1/federation", status_code=201)
+    @router.post("/api/v1/federation", status_code=201)
     async def federation_register(body: dict):
         url = body.get("url")
         name = body.get("name")
@@ -105,7 +105,7 @@ def create_uadp_router(
         result = await provider.add_peer(url, name)
         return result
 
-    @router.post("/uadp/v1/skills/validate")
+    @router.post("/api/v1/skills/validate")
     async def validate_skill(body: dict):
         manifest = body.get("manifest")
         if not manifest:

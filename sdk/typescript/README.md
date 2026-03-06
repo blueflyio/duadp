@@ -1,12 +1,12 @@
 # @bluefly/duadp
 
-**The official TypeScript SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
+**The official TypeScript SDK for [DUADP](https://openstandardagents.org/duadp/) (Decentralized Universal AI Discovery Protocol).**
 
 DUADP is an open protocol for decentralized discovery, publishing, and federation of AI agents, skills, and tools. It provides a standard HTTP interface that any system can implement — turning isolated AI registries into an interoperable, federated network. Think DNS for AI capabilities: any node that serves a few standard endpoints becomes discoverable by every other node in the mesh.
 
 The protocol addresses a fundamental problem in the AI ecosystem: **there is no standard way to find, publish, or verify AI capabilities across organizational boundaries.** Marketplaces, tool registries, and agent platforms are siloed. DUADP solves this with:
 
-- **Decentralized discovery** via `/.well-known/uadp.json` and DNS TXT records
+- **Decentralized discovery** via `/.well-known/duadp.json` and DNS TXT records
 - **Federated search** across peer nodes with gossip-based propagation
 - **Cryptographic trust** using Ed25519 signatures and W3C DIDs (`did:web`, `did:key`)
 - **OSSA-native payloads** in `.ajson` format with trust tiers, GAID identifiers, and governance metadata
@@ -17,7 +17,7 @@ This SDK provides both a **client** for consuming any DUADP node and a **server 
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
 
-> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ---
 
@@ -41,21 +41,21 @@ npm install @bluefly/duadp
                     └─────────────┘
 
 This SDK provides 15 core protocol endpoints:
-  GET  /.well-known/uadp.json         Discovery manifest
+  GET  /.well-known/duadp.json         Discovery manifest
   GET  /.well-known/webfinger          WebFinger resolution
-  GET  /uadp/v1/skills                 Paginated skill registry
-  GET  /uadp/v1/skills/:name           Single skill detail
-  GET  /uadp/v1/agents                 Paginated agent registry
-  GET  /uadp/v1/agents/:name           Single agent detail
-  GET  /uadp/v1/tools                  Paginated tool registry
-  GET  /uadp/v1/tools/:name            Single tool detail
-  POST /uadp/v1/publish                Publish any resource
-  POST /uadp/v1/{kind}                 Create resource by kind
-  PUT  /uadp/v1/{kind}/:name           Update resource
-  DELETE /uadp/v1/{kind}/:name         Delete resource
-  POST /uadp/v1/validate               Validate OSSA manifest
-  GET  /uadp/v1/federation             Peer node directory
-  POST /uadp/v1/federation             Register as peer
+  GET  /api/v1/skills                 Paginated skill registry
+  GET  /api/v1/skills/:name           Single skill detail
+  GET  /api/v1/agents                 Paginated agent registry
+  GET  /api/v1/agents/:name           Single agent detail
+  GET  /api/v1/tools                  Paginated tool registry
+  GET  /api/v1/tools/:name            Single tool detail
+  POST /api/v1/publish                Publish any resource
+  POST /api/v1/{kind}                 Create resource by kind
+  PUT  /api/v1/{kind}/:name           Update resource
+  DELETE /api/v1/{kind}/:name         Delete resource
+  POST /api/v1/validate               Validate OSSA manifest
+  GET  /api/v1/federation             Peer node directory
+  POST /api/v1/federation             Register as peer
 ```
 
 ## Quick Start
@@ -63,9 +63,9 @@ This SDK provides 15 core protocol endpoints:
 ### Client — consume any DUADP node
 
 ```typescript
-import { UadpClient } from '@bluefly/duadp/client';
+import { DuadpClient } from '@bluefly/duadp/client';
 
-const client = new UadpClient('https://your-uadp-node.example.com');
+const client = new DuadpClient('https://your-duadp-node.example.com');
 
 // Discover the node's capabilities
 const manifest = await client.discover();
@@ -95,11 +95,11 @@ const router = createUadpRouter({
   nodeId: 'did:web:registry.example.com',
   baseUrl: 'https://registry.example.com',
   federation: { gossip: true, max_hops: 3 },
-}, myDataProvider);   // implement UadpDataProvider interface
+}, myDataProvider);   // implement DuadpDataProvider interface
 
 app.use(router);
 app.listen(4200);
-// Your app now serves /.well-known/uadp.json and all /uadp/v1/* routes
+// Your app now serves /.well-known/duadp.json and all /api/v1/* routes
 ```
 
 ### Validate OSSA resource manifests
@@ -135,7 +135,7 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 | Import | Description |
 |--------|-------------|
 | `@bluefly/duadp` | Core types — `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
-| `@bluefly/duadp/client` | `UadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
+| `@bluefly/duadp/client` | `DuadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
 | `@bluefly/duadp/server` | `createUadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
 | `@bluefly/duadp/validate` | `validateResource()` — OSSA manifest validation against the spec |
 | `@bluefly/duadp/crypto` | `generateKeyPair()`, `signResource()`, `verifyResource()` — Ed25519 cryptographic operations |
@@ -146,7 +146,7 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 
 | Concept | Description |
 |---------|-------------|
-| **DUADP Node** | Any HTTP server implementing `/.well-known/uadp.json` and `/uadp/v1/*` endpoints |
+| **DUADP Node** | Any HTTP server implementing `/.well-known/duadp.json` and `/api/v1/*` endpoints |
 | **GAID** | Global Agent Identifier — `agent://namespace/kind/name` URI scheme for cross-registry resolution |
 | **DID** | W3C Decentralized Identifier — `did:web:example.com` for node and resource identity |
 | **Trust Tier** | `official` > `verified-signature` > `signed` > `community` > `experimental` |

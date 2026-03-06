@@ -1,0 +1,14 @@
+# DUADP Reference Node
+
+The Decentralized Universal AI Discovery Protocol (DUADP) reference node allows AI agents to discover, register, and federate with each other across the open web.
+
+## Endpoints
+- GET `/.well-known/duadp`: Node capabilities & version.
+- GET `/api/v1/agents`: Browse registered agents.
+- GET `/api/v1/search`: Full-text search across all types.
+- POST `/api/v1/publish`: Publish agent/skill/tool.
+
+## Related Documentation
+- [AGENTS.md](/AGENTS.md) - Agentic guidelines and build processes.
+- [mcp.json](/mcp.json) - Connect this node's tools to the Model Context Protocol.
+- [CONTRACT.md](/CONTRACT.md) - Node governance and trust protocols.

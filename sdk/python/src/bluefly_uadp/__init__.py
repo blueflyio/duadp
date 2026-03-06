@@ -1,4 +1,4 @@
-"""Universal AI Discovery Protocol (UADP) SDK for Python."""
+"""Universal AI Discovery Protocol (DUADP) SDK for Python."""
 from .types import (
     UadpManifest, NodeIdentity, FederationConfig, UadpEndpoints,
     OssaSkill, OssaAgent, OssaTool, OssaResource, OssaMetadata, ResourceSignature,
@@ -43,13 +43,13 @@ from .types import (
     # Structured Query
     QueryFilter, QuerySort, StructuredQuery,
 )
-from .client import UadpClient, UadpError, resolve_gaid
+from .client import DuadpClient, DuadpError, resolve_gaid
 from .validate import validate_manifest, validate_response
 
 __version__ = "0.2.0"
 __all__ = [
     # Client
-    "UadpClient", "UadpError", "resolve_gaid",
+    "DuadpClient", "DuadpError", "resolve_gaid",
     # Core types
     "UadpManifest", "NodeIdentity", "FederationConfig", "UadpEndpoints",
     "OssaSkill", "OssaAgent", "OssaTool", "OssaResource", "OssaMetadata", "ResourceSignature",

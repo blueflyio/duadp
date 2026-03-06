@@ -1,0 +1,22 @@
+{
+  "apiVersion": "ossa/v0.5",
+  "identity": {
+    "name": "blueflyio-duadp",
+    "description": "Decentralized Universal AI Discovery Protocol (DUADP) Reference Implementation",
+    "homepage": "https://uadp.blueflyagents.com",
+    "repository": "https://gitlab.com/blueflyio/platform/duadp"
+  },
+  "capabilities": {
+    "discovery": true,
+    "federation": true,
+    "mcp": true
+  },
+  "protocols": {
+    "anp": {
+      "did": "did:web:uadp.blueflyagents.com:registry"
+    }
+  },
+  "schemas": {
+    "agent": "https://uadp.blueflyagents.com/schemas/v1/agent.json"
+  }
+}
