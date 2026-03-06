@@ -4,6 +4,9 @@
   "description": "Universal AI Discovery Protocol (UADP) client and server SDK",
   "type": "module",
   "main": "dist/index.js",
+  "bin": {
+    "uadp": "dist/cli.js"
+  },
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
@@ -21,6 +24,18 @@
     "./validate": {
       "import": "./dist/validate.js",
       "types": "./dist/validate.d.ts"
+    },
+    "./crypto": {
+      "import": "./dist/crypto.js",
+      "types": "./dist/crypto.d.ts"
+    },
+    "./did": {
+      "import": "./dist/did.js",
+      "types": "./dist/did.d.ts"
+    },
+    "./conformance": {
+      "import": "./dist/conformance.js",
+      "types": "./dist/conformance.d.ts"
     }
   },
   "scripts": {

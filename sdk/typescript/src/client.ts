@@ -19,8 +19,79 @@ import type {
     Revocation,
     SyncResponse,
     WebhookSubscription,
-    AgentIdentity
+    AgentIdentity,
+    PeerStatus
 } from './types.js';
+
+// --- Circuit Breaker ---
+
+export interface CircuitBreakerState {
+  failures: number;
+  lastFailure: number;
+  status: PeerStatus;
+}
+
+export class CircuitBreaker {
+  private states = new Map<string, CircuitBreakerState>();
+
+  constructor(
+    private maxFailures: number = 3,
+    private resetTimeout: number = 24 * 60 * 60 * 1000, // 24 hours
+  ) {}
+
+  canRequest(url: string): boolean {
+    const state = this.states.get(url);
+    if (!state) return true;
+    if (state.status === 'healthy') return true;
+    if (state.status === 'unreachable') return false;
+    // degraded: check if backoff period expired
+    if (Date.now() - state.lastFailure > this.resetTimeout) {
+      state.status = 'healthy';
+      state.failures = 0;
+      return true;
+    }
+    return false;
+  }
+
+  recordSuccess(url: string): void {
+    this.states.set(url, { failures: 0, lastFailure: 0, status: 'healthy' });
+  }
+
+  recordFailure(url: string): void {
+    const state = this.states.get(url) ?? { failures: 0, lastFailure: 0, status: 'healthy' as PeerStatus };
+    state.failures++;
+    state.lastFailure = Date.now();
+    if (state.failures >= this.maxFailures) {
+      state.status = 'degraded';
+    }
+    this.states.set(url, state);
+  }
+
+  getStatus(url: string): PeerStatus {
+    return this.states.get(url)?.status ?? 'healthy';
+  }
+
+  reset(url: string): void {
+    this.states.delete(url);
+  }
+}
+
+// --- Federated Dedup ---
+
+/**
+ * Deduplicate resources from federated search by content_hash or GAID.
+ * Prefers resources from the first source (local node).
+ */
+export function deduplicateResources<T extends OssaResource>(resources: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const r of resources) {
+    const key = r.content_hash || r.identity?.gaid || r.metadata.uri || `${r.kind}:${r.metadata.name}`;
+    if (!seen.has(key)) {
+      seen.set(key, r);
+    }
+  }
+  return [...seen.values()];
+}
 
 export interface UadpClientOptions {
   /** Custom fetch implementation (defaults to global fetch) */

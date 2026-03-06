@@ -16,8 +16,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+crypto = ["cryptography>=43.0"]
 server = ["fastapi>=0.115.0", "uvicorn>=0.30.0"]
 test = ["pytest>=8.0", "pytest-asyncio>=0.24", "pytest-httpx>=0.30"]
+all = ["cryptography>=43.0", "fastapi>=0.115.0", "uvicorn>=0.30.0"]
 
 [project.scripts]
 uadp-test = "ossa_uadp.conformance:main"
