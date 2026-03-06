@@ -18,7 +18,7 @@ uv add bluefly-duadp
 ## Quick Start — Client
 
 ```python
-from bluefly_uadp import DuadpClient, resolve_gaid
+from bluefly_duadp import DuadpClient, resolve_gaid
 
 async with DuadpClient("https://skills.sh", token="my-api-key") as client:
     # Discovery
@@ -183,13 +183,13 @@ The SDK exports 103 Pydantic models covering:
 ## Modules
 
 ```python
-from bluefly_uadp.client import DuadpClient, DuadpError, resolve_gaid
-from bluefly_uadp.server import create_uadp_router
-from bluefly_uadp.crypto import sign_resource, verify_signature, generate_key_pair
-from bluefly_uadp.did import resolve_did, build_did_web, verify_resource_identity
-from bluefly_uadp.validate import validate_manifest, validate_response
-from bluefly_uadp.conformance import run_conformance_tests
-from bluefly_uadp.types import (
+from bluefly_duadp.client import DuadpClient, DuadpError, resolve_gaid
+from bluefly_duadp.server import create_uadp_router
+from bluefly_duadp.crypto import sign_resource, verify_signature, generate_key_pair
+from bluefly_duadp.did import resolve_did, build_did_web, verify_resource_identity
+from bluefly_duadp.validate import validate_manifest, validate_response
+from bluefly_duadp.conformance import run_conformance_tests
+from bluefly_duadp.types import (
     OssaResource, UadpManifest, ContextNegotiation, TokenAnalytics,
     AgentFeedback, RewardEvent, DelegationRequest, OrchestrationPlan,
     CapabilityFingerprint, OutcomeAttestation, AgentReputation,
@@ -202,7 +202,7 @@ from bluefly_uadp.types import (
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
+| Go | `github.com/blueflyio/uapd/sdk/go` | Go modules |
 
 ## License
 

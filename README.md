@@ -58,7 +58,7 @@ const skill = await c.getSkill(name);
 
 **Python:**
 ```python
-from bluefly_uadp import DuadpClient, resolve_gaid
+from bluefly_duadp import DuadpClient, resolve_gaid
 
 async with DuadpClient("https://skills.sh") as client:
     skills = await client.list_skills(search="code review")

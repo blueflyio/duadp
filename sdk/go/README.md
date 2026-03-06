@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-go get github.com/blueflyio/duadp/sdk/go
+go get github.com/blueflyio/uapd/sdk/go
 ```
 
 ## Quick Start — Client
@@ -20,7 +20,7 @@ package main
 import (
     "context"
     "fmt"
-    duadp "github.com/blueflyio/duadp/sdk/go"
+    duadp "github.com/blueflyio/uapd/sdk/go"
 )
 
 func main() {
