@@ -201,12 +201,47 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 - You can use `.ajson` without DUADP (local manifests)
 - You can use DUADP with any payload format (but `.ajson` is recommended)
 
+## Live Reference Node
+
+**Try it now** — the OSSA Reference Node is live at [`uadp.blueflyagents.com`](https://uadp.blueflyagents.com/.well-known/uadp.json):
+
+```bash
+# Discovery manifest
+curl https://uadp.blueflyagents.com/.well-known/uadp.json
+
+# Browse skills, agents, tools
+curl https://uadp.blueflyagents.com/uadp/v1/skills
+curl https://uadp.blueflyagents.com/uadp/v1/agents
+curl https://uadp.blueflyagents.com/uadp/v1/tools
+
+# Health check
+curl https://uadp.blueflyagents.com/uadp/v1/health
+
+# Governance (NIST AI RMF)
+curl https://uadp.blueflyagents.com/uadp/v1/governance
+
+# Search across all resources
+curl "https://uadp.blueflyagents.com/uadp/v1/search?q=code+review"
+
+# Agent reputation
+curl "https://uadp.blueflyagents.com/uadp/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
+
+# Publish a resource (POST)
+curl -X POST https://uadp.blueflyagents.com/uadp/v1/publish \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-token" \
+  -d '{"apiVersion":"ossa/v0.5","kind":"Skill","metadata":{"name":"my-skill","description":"My custom skill"}}'
+```
+
+Node ID: `did:web:uadp.blueflyagents.com` | Protocol: UADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
+
 ## Reference Implementations
 
 | Platform | Status | Description |
 |----------|--------|-------------|
+| [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | [Drupal Agent Marketplace](https://gitlab.com/blueflyio/agent-platform/drupal/ai_agents_marketplace) | Production | Full DUADP node with federation |
-| `@ossa/uadp` TypeScript SDK | Available | Client + Express server |
+| `@ossa/uadp` TypeScript SDK | Available | Client + Express server ([136 tests](sdk/typescript/src/__tests__/)) |
 | `ossa-uadp` Python SDK | Available | Client + FastAPI server |
 | `uadp-go` Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
