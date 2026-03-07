@@ -1,7 +1,7 @@
 {
   "protocol": "DUADP/1.0",
   "name": "duadp-reference-node",
-  "version": "1.0.0",
+  "version": "0.1.2",
   "description": "DUADP Reference Implementation",
   "capabilities": ["code-generation", "autonomous-research", "discovery", "federation"],
   "links": {
