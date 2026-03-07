@@ -11,7 +11,12 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { DuadpClient, resolveGaid } from './client.js';
+// @ts-ignore
+import Ajv2020 from 'ajv/dist/2020.js';
+// @ts-ignore
+import addFormats from 'ajv-formats';
 import { formatConformanceResults, runConformanceTests } from './conformance.js';
 import { didWebToUrl, resolveDID } from './did.js';
 
@@ -30,6 +35,7 @@ Commands:
   search <url> <q>     Search skills/agents/tools on a node
   init                 Scaffold .agents/ossa.config.yaml in the current directory
   publish <dir>        Scan directory for OSSA manifests and publish to a node
+  generate-gitlab <m>  Generate GitLab AI Catalog YAML with injectGatewayToken
 
 Examples:
   npx @bluefly/duadp conformance https://marketplace.example.com
@@ -37,6 +43,7 @@ Examples:
   npx @bluefly/duadp search https://skills.sh "code review"
   npx @bluefly/duadp init
   npx @bluefly/duadp publish .agents/ --node=https://blueflyagents.com --token=myToken
+  npx @bluefly/duadp generate-gitlab agent.ossa.yaml
 `);
     process.exit(0);
   }
@@ -177,6 +184,27 @@ Examples:
       const client = new DuadpClient(nodeUrl, { token, timeout: 15000 });
       console.log(`Publishing to node: ${nodeUrl}`);
 
+      // Initialize Strong OpenAPI Validation (Ajv)
+      const AjvClass = (Ajv2020 as any).default || Ajv2020;
+      const ajv = new AjvClass({ strict: false, allErrors: true });
+      // addFormats default export can also be strange in ESM if compiled weirdly
+      const addFmts = addFormats.default || addFormats;
+      addFmts(ajv);
+
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      // relative from dist/cli.js -> ../../../../api-schema-registry
+      const openApiPath = path.resolve(__dirname, '../../../../api-schema-registry/openapi/duadp/openapi.yaml');
+
+      let localValidationEnabled = false;
+      if (fs.existsSync(openApiPath)) {
+        console.log(`Loaded strong local OpenAPI validation from ${openApiPath}...`);
+        const openApiDoc = yaml.load(fs.readFileSync(openApiPath, 'utf8'));
+        ajv.addSchema(openApiDoc, 'openapi.yaml');
+        localValidationEnabled = true;
+      } else {
+        console.warn(`[!] Local OpenAPI schema not found at ${openApiPath}. Skipping strict local validation.`);
+      }
+
       let successCount = 0;
       let failCount = 0;
 
@@ -202,8 +230,46 @@ Examples:
           continue;
         }
 
+        // 1. Strict Local OpenAPI Validation
+        if (localValidationEnabled) {
+          console.log(`Validating ${resource.kind} '${resource.metadata.name}' strictly against OpenAPI Schema...`);
+          try {
+            const validate = ajv.compile({ $ref: 'openapi.yaml#/components/schemas/OssaResource' });
+            const valid = validate(resource);
+            if (!valid) {
+              console.error(`  -> Local strict OpenAPI validation failed for ${resource.metadata.name}:`);
+              validate.errors?.forEach((err: any) => console.error(`     - ${err.instancePath || 'root'} ${err.message}`));
+              failCount++;
+              continue; // Skip publishing
+            }
+          } catch (e: any) {
+            console.error(`  -> Error executing OpenAPI validation engine: ${e.message}`);
+            failCount++;
+            continue;
+          }
+        }
+
+        // 2. Node API-Level Validation
         try {
-           console.log(`Publishing ${resource.kind} '${resource.metadata.name}'...`);
+           console.log(`Validating ${resource.kind} '${resource.metadata.name}' via API Node...`);
+
+           // Call the API-first validation endpoint on the remote node
+           // We pass the raw string content if that's what the endpoint expects, or the parsed resource.
+           // Since client.validate expects a string:
+           const validation = await client.validate(content);
+
+           if (!validation || !validation.valid) {
+             console.error(`  -> Validation failed for ${resource.metadata.name}:`);
+             if (validation?.errors) {
+               validation.errors.forEach(err => console.error(`     - ${err}`));
+             } else {
+               console.error(`     - Unknown validation error`);
+             }
+             failCount++;
+             continue; // Skip publishing this resource
+           }
+
+           console.log(`  -> Validation passed! Publishing...`);
            const res = await client.publish(resource);
            console.log(`  -> Success! URI: ${res.resource?.metadata?.uri || 'Published'}`);
            successCount++;
@@ -213,6 +279,109 @@ Examples:
         }
       }
       console.log(`\nPublish complete. Success: ${successCount}, Failed: ${failCount}`);
+      break;
+    }
+
+    case 'generate-gitlab': {
+      if (!target) {
+        console.error('Usage: duadp generate-gitlab <manifest.ossa.yaml>');
+        process.exit(1);
+      }
+
+      const manifestPath = path.resolve(target);
+      if (!fs.existsSync(manifestPath)) {
+        console.error(`Error: File ${manifestPath} does not exist.`);
+        process.exit(1);
+      }
+
+      console.log(`Generating GitLab AI Catalog YAML from ${manifestPath}...`);
+      const content = fs.readFileSync(manifestPath, 'utf8');
+
+      let resource: any;
+      try {
+        if (target.endsWith('.yaml') || target.endsWith('.yml')) {
+           resource = yaml.load(content);
+        } else {
+           resource = JSON.parse(content);
+        }
+      } catch (e: any) {
+        console.error(`Error parsing ${target}: ${e.message}`);
+        process.exit(1);
+      }
+
+      const agentName = resource?.metadata?.name || 'agent';
+      const description = resource?.metadata?.description || 'External agent for GitLab Duo';
+
+      // Infer Runtime
+      let runtimeType = 'node';
+      let image = 'node:22-slim';
+      let commands = ['npm ci', 'npm run build', 'node dist/index.js'];
+
+      if (resource?.spec?.runtime?.type === 'python') {
+        runtimeType = 'python';
+        image = 'python:3.12-slim';
+        commands = ['pip install --no-cache-dir -r requirements.txt', 'python main.py'];
+      } else if (resource?.spec?.runtime?.type === 'go' || resource?.spec?.runtime?.type === 'golang') {
+        runtimeType = 'go';
+        image = 'golang:1.22-alpine';
+        commands = ['go build -o agent .', './agent'];
+      }
+
+      const gitlabYaml = [
+        '# GitLab Duo External Agent Configuration',
+        `# Agent: ${agentName}`,
+        '# Generated by DUADP CLI',
+        '',
+        `name: ${agentName}`,
+        `description: "${description.replace(/"/g, '\\"')}"`,
+        '',
+        '# Docker image for agent execution',
+        `image: ${image}`,
+        '',
+        '# Commands to execute agent',
+        'commands:',
+        ...commands.map(cmd => `  - ${cmd}`),
+        '',
+        '# Default required variables',
+        'variables:',
+        '  - GITLAB_HOST',
+        '  - GITLAB_TOKEN',
+        '  - AI_FLOW_CONTEXT',
+        '  - AI_FLOW_INPUT',
+        '  - AI_FLOW_EVENT',
+        '',
+        '# Inject AI Gateway token for secure model access',
+        'injectGatewayToken: true'
+      ];
+
+      if (resource?.spec?.llm) {
+        gitlabYaml.push('');
+        gitlabYaml.push('# LLM configuration for AI Gateway');
+        gitlabYaml.push('llm:');
+        if (resource.spec.llm.provider) gitlabYaml.push(`  provider: ${resource.spec.llm.provider}`);
+        if (resource.spec.llm.model) gitlabYaml.push(`  model: ${resource.spec.llm.model}`);
+        if (resource.spec.llm.temperature !== undefined) gitlabYaml.push(`  temperature: ${resource.spec.llm.temperature}`);
+      }
+
+      if (resource?.spec?.runtime?.type === 'webhook') {
+        gitlabYaml.push('');
+        gitlabYaml.push('# Webhook runtime configuration');
+        gitlabYaml.push('runtime:');
+        gitlabYaml.push(`  type: webhook`);
+        if (resource.spec.runtime.port) gitlabYaml.push(`  port: ${resource.spec.runtime.port}`);
+        if (resource.spec.runtime.path) gitlabYaml.push(`  path: ${resource.spec.runtime.path}`);
+      }
+
+      const outDir = path.resolve('.gitlab/agents');
+      if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
+      }
+
+      const outFile = path.join(outDir, `${agentName}.yaml`);
+      fs.writeFileSync(outFile, gitlabYaml.join('\\n'), 'utf8');
+
+      console.log(`✓ GitLab Duo AI Catalog agent generated out successfully to:`);
+      console.log(`  ${outFile}`);
       break;
     }
 

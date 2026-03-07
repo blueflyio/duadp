@@ -6,13 +6,16 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "seed": "tsx src/seed.ts"
+    "seed": "tsx src/seed.ts",
+    "demo": "tsx src/demo-mcp-client.ts"
   },
   "dependencies": {
-    "@bluefly/duadp": "^0.1.0",
+    "@bluefly/duadp": "^0.1.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
-    "express": "^5.0.0"
+    "express": "^5.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
