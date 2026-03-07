@@ -2,6 +2,9 @@ import cors from 'cors';
 import express from 'express';
 import type { Request, Response } from 'express';
 import type { UadpManifest, FederationResponse } from '@bluefly/duadp';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { initDb } from './db.js';
 import { createGovernanceRouter } from './governance.js';
 import { createMcpRouter } from './mcp.js';
@@ -12,6 +15,46 @@ const DB_PATH = process.env.DB_PATH || process.env.DUADP_DB_PATH || './data/duad
 const BASE_URL = process.env.BASE_URL || process.env.DUADP_BASE_URL || `http://localhost:${PORT}`;
 const NODE_NAME = process.env.NODE_NAME || process.env.DUADP_NODE_NAME || 'OSSA Reference Node';
 const NODE_ID = process.env.NODE_ID || process.env.DUADP_NODE_ID || 'did:web:localhost';
+
+const CEDAR_CATALOG_PATH =
+  process.env.CEDAR_CATALOG_PATH ||
+  resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'cedar-policies', 'catalog.json');
+
+// Load Cedar policy catalog (static JSON served at /api/v1/policies)
+interface CedarCatalogEntry {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  tags: string[];
+  classification: string;
+  complianceFrameworks: string[];
+  authors: string[];
+  approvers: string[];
+  cedarFile: string;
+  statementCount: number;
+  dependsOn: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface CedarCatalog {
+  version: string;
+  generatedAt: string;
+  policies: CedarCatalogEntry[];
+  totalPolicies: number;
+  tags: string[];
+}
+
+let cedarCatalog: CedarCatalog;
+try {
+  cedarCatalog = JSON.parse(readFileSync(CEDAR_CATALOG_PATH, 'utf-8'));
+} catch {
+  console.warn(`Cedar policy catalog not found at ${CEDAR_CATALOG_PATH}, using empty catalog`);
+  cedarCatalog = { version: '0.0.0', generatedAt: new Date().toISOString(), policies: [], totalPolicies: 0, tags: [] };
+}
+
+const CEDAR_POLICIES_BASE_URL = 'https://gitlab.com/blueflyio/cedar-policies/-/raw/main/policies';
 
 const db = initDb(DB_PATH);
 const provider = createSqliteProvider(db);
@@ -53,13 +96,14 @@ app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
       skills: `${config.baseUrl}/api/v1/skills`,
       agents: `${config.baseUrl}/api/v1/agents`,
       tools: `${config.baseUrl}/api/v1/tools`,
+      policies: `${config.baseUrl}/api/v1/policies`,
       federation: `${config.baseUrl}/api/v1/federation`,
       validate: `${config.baseUrl}/api/v1/validate`,
       publish: `${config.baseUrl}/api/v1/publish`,
       search: `${config.baseUrl}/api/v1/search`,
       health: `${config.baseUrl}/api/v1/health`,
     },
-    capabilities: ['skills', 'agents', 'tools', 'federation', 'validation', 'publishing'],
+    capabilities: ['skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing'],
     ossa_versions: ['v0.4', 'v0.5'],
     federation: config.federation,
   };
@@ -85,6 +129,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
     node_id: NODE_ID,
     uptime: process.uptime(),
     resources: resourceCount,
+    policies: cedarCatalog.totalPolicies,
     peers: peerCount,
     version: '0.2.0',
   });
@@ -134,6 +179,89 @@ app.get('/api/v1/tools/:name', async (req: Request, res: Response) => {
   const tool = await provider.getTool!(req.params.name);
   if (!tool) { res.status(404).json({ error: 'Tool not found' }); return; }
   res.json(tool);
+});
+
+// Policies (Cedar policy catalog)
+app.get('/api/v1/policies', (req: Request, res: Response) => {
+  const page = Math.max(1, parseInt((req.query as Record<string, string>).page) || 1);
+  const perPage = Math.min(100, parseInt((req.query as Record<string, string>).per_page || '20', 10));
+  const tag = (req.query as Record<string, string>).tag;
+  const search = (req.query as Record<string, string>).search;
+  const framework = (req.query as Record<string, string>).framework;
+
+  let filtered = cedarCatalog.policies;
+
+  if (tag) {
+    filtered = filtered.filter((p) => p.tags.includes(tag));
+  }
+  if (framework) {
+    filtered = filtered.filter((p) => p.complianceFrameworks.includes(framework));
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.id.toLowerCase().includes(q),
+    );
+  }
+
+  const total = filtered.length;
+  const pages = Math.ceil(total / perPage);
+  const offset = (page - 1) * perPage;
+  const paged = filtered.slice(offset, offset + perPage);
+
+  res.json({
+    data: paged.map((p) => ({
+      kind: 'Policy',
+      metadata: {
+        name: p.id,
+        version: p.version,
+        description: p.description,
+        tags: p.tags,
+        complianceFrameworks: p.complianceFrameworks,
+        classification: p.classification,
+        authors: p.authors,
+        approvers: p.approvers,
+        dependsOn: p.dependsOn,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      },
+      spec: {
+        format: 'cedar',
+        statementCount: p.statementCount,
+        url: `${CEDAR_POLICIES_BASE_URL}/${p.cedarFile}`,
+      },
+    })),
+    pagination: { total, page, per_page: perPage, pages },
+  });
+});
+
+app.get('/api/v1/policies/:name', (req: Request, res: Response) => {
+  const policy = cedarCatalog.policies.find((p) => p.id === req.params.name);
+  if (!policy) {
+    res.status(404).json({ error: 'Policy not found' });
+    return;
+  }
+  res.json({
+    kind: 'Policy',
+    metadata: {
+      name: policy.id,
+      version: policy.version,
+      description: policy.description,
+      tags: policy.tags,
+      complianceFrameworks: policy.complianceFrameworks,
+      classification: policy.classification,
+      authors: policy.authors,
+      approvers: policy.approvers,
+      dependsOn: policy.dependsOn,
+      createdAt: policy.createdAt,
+      updatedAt: policy.updatedAt,
+    },
+    spec: {
+      format: 'cedar',
+      statementCount: policy.statementCount,
+      url: `${CEDAR_POLICIES_BASE_URL}/${policy.cedarFile}`,
+    },
+  });
 });
 
 // Search (unified across all types)
