@@ -18,7 +18,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 
-const BASE_URL = process.argv[2] || 'http://localhost:4200';
+const BASE_URL = process.argv[2] || 'https://discover.duadp.org';
 const MCP_URL = `${BASE_URL}/mcp`;
 
 function header(text: string) {
