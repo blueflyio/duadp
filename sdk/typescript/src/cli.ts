@@ -378,7 +378,7 @@ Examples:
       }
 
       const outFile = path.join(outDir, `${agentName}.yaml`);
-      fs.writeFileSync(outFile, gitlabYaml.join('\\n'), 'utf8');
+      fs.writeFileSync(outFile, gitlabYaml.join('\n'), 'utf8');
 
       console.log(`✓ GitLab Duo AI Catalog agent generated out successfully to:`);
       console.log(`  ${outFile}`);

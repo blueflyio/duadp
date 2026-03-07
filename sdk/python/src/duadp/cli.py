@@ -17,8 +17,7 @@ def main():
 
     # Command: gen-gitlab
     gen_gitlab_parser = subparsers.add_parser("gen-gitlab", help="Generate GitLab AI Catalog YAML with injectGatewayToken")
-    gen_gitlab_parser.add_parser("gen-gitlab", help="Generate GitLab AI Catalog YAML with injectGatewayToken")
-    gen_gitlab_parser.add_argument("manifest", help="Path to the OSSA manifest (.yaml or .json)")
+    gen_gitlab_parser = subparsers.add_parser("gen-gitlab", help="Generate GitLab AI Catalog YAML with injectGatewayToken")
 
     # You can attach conformance and schema validation here in the future
     # conformance_parser = subparsers.add_parser("conformance")

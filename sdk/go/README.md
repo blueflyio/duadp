@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-go get github.com/blueflyio/uapd/sdk/go
+go get github.com/blueflyio/duadp/sdk/go
 ```
 
 ## Quick Start — Client
