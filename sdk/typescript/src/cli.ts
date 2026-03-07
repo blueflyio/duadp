@@ -42,7 +42,7 @@ Examples:
   npx @bluefly/duadp discover https://skills.sh
   npx @bluefly/duadp search https://skills.sh "code review"
   npx @bluefly/duadp init
-  npx @bluefly/duadp publish .agents/ --node=https://blueflyagents.com --token=myToken
+  npx @bluefly/duadp publish .agents/ --node=https://discover.duadp.org --token=myToken
   npx @bluefly/duadp generate-gitlab agent.ossa.yaml
 `);
     process.exit(0);
@@ -146,8 +146,8 @@ Examples:
         kind: 'ProjectConfiguration',
         spec: {
           duadp: {
-            publish_to: ['https://duadp.blueflyagents.com'],
-            discover_from: ['https://duadp.blueflyagents.com'],
+            publish_to: ['https://discover.duadp.org'],
+            discover_from: ['https://discover.duadp.org'],
             auto_publish: true,
             identity: 'did:web:example.com'
           }

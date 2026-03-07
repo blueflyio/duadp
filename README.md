@@ -58,7 +58,7 @@ const skill = await c.getSkill(name);
 
 **Python:**
 ```python
-from bluefly_duadp import DuadpClient, resolve_gaid
+from duadp import DuadpClient, resolve_gaid
 
 async with DuadpClient("https://skills.sh") as client:
     skills = await client.list_skills(search="code review")
@@ -121,7 +121,7 @@ spec/                    # The normative specification
   schemas/               # JSON Schema validation files
 sdk/
   typescript/            # @bluefly/duadp npm package
-  python/                # uadp (PyPI)
+  python/                # duadp (PyPI)
   go/                    # duadp-go module
 ```
 
@@ -220,7 +220,7 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 
 ## Live Reference Node
 
-**Try it now** — Bluefly's hosted reference node is live at [`discover.duadp.org`](https://discover.duadp.org/.well-known/duadp.json):
+**Try it now** — the hosted reference node is live at [`discover.duadp.org`](https://discover.duadp.org/.well-known/duadp.json):
 
 ```bash
 # Discovery manifest
@@ -353,7 +353,7 @@ cd sdk/typescript && npm test
 | [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
 | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| [`uadp`](https://pypi.org/project/uadp/) Python SDK | Available | Client + FastAPI server |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | Available | Client + FastAPI server |
 | DUADP Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
 
@@ -362,7 +362,7 @@ cd sdk/typescript && npm test
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Python | [`uadp`](https://pypi.org/project/uadp/) | PyPI |
+| Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
 | Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## Seeded Data
