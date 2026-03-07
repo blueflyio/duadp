@@ -9,7 +9,7 @@
 ## Install
 
 ```bash
-go get github.com/blueflyio/uapd/sdk/go
+go get github.com/blueflyio/duadp/sdk/go
 ```
 
 ## Quick Start — Client
@@ -20,7 +20,7 @@ package main
 import (
     "context"
     "fmt"
-    duadp "github.com/blueflyio/uapd/sdk/go"
+    duadp "github.com/blueflyio/duadp/sdk/go"
 )
 
 func main() {
@@ -204,7 +204,7 @@ The SDK exports 80+ types covering:
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Python | `uadp` | PyPI |
+| Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
 
 ## License
 

@@ -5,7 +5,7 @@
       "args": ["dist/mcp-server.js"],
       "env": {
         "PORT": "4200",
-        "DUADP_NODE_NAME": "blueflyio-demo"
+        "DUADP_NODE_NAME": "duadp-reference-node"
       }
     }
   },

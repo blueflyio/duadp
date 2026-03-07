@@ -95,7 +95,7 @@ export function createMcpRouter(baseUrl: string) {
       "duadp_resolve_gaid",
       "Resolve GAID URI via WebFinger",
       {
-        gaid: z.string().describe("The agent:// or uadp:// global agent identifier URI")
+        gaid: z.string().describe("The agent:// or duadp:// global agent identifier URI")
       },
       async ({ gaid }) => {
         const res = await resolveGaid(gaid);

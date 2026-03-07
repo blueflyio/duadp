@@ -4,7 +4,7 @@
 
 MCP connects tools. A2A connects agents. But how do agents *find* each other across organizational boundaries? There is no standard way to discover, publish, or verify AI capabilities on the open web. DUADP fills that gap.
 
-[![PyPI](https://img.shields.io/pypi/v/uadp)](https://pypi.org/project/uadp/)
+[![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 [![Live Node](https://img.shields.io/badge/live-discover.duadp.org-brightgreen)](https://discover.duadp.org/.well-known/duadp.json)
 
@@ -15,9 +15,9 @@ MCP connects tools. A2A connects agents. But how do agents *find* each other acr
 ## Install
 
 ```bash
-pip install uadp
+pip install duadp
 # or
-uv add uadp
+uv add duadp
 ```
 
 ## Architecture
@@ -89,10 +89,10 @@ skill = await client.get_skill(name)
 
 ```python
 from fastapi import FastAPI
-from duadp.server import create_uadp_router
+from duadp.server import create_duadp_router
 
 app = FastAPI()
-router = create_uadp_router(
+router = create_duadp_router(
     node_name="My Registry",
     node_id="did:web:registry.example.com",
     base_url="https://registry.example.com",
@@ -230,7 +230,7 @@ async with DuadpClient("https://discover.duadp.org", token="...") as client:
 
 ```python
 from duadp import DuadpClient, DuadpError, resolve_gaid
-from duadp.server import create_uadp_router
+from duadp.server import create_duadp_router
 from duadp.crypto import sign_resource, verify_signature, generate_key_pair
 from duadp.did import resolve_did, build_did_web, verify_resource_identity
 from duadp.validate import validate_manifest, validate_response
@@ -261,8 +261,8 @@ curl "https://discover.duadp.org/api/v1/search?q=security&facets=true"
 
 | Language | Package | Registry |
 |----------|---------|----------|
-| TypeScript | [`@duadp/sdk`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Go | `github.com/duadp/sdk-go` | Go modules |
+| TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
+| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## License
 

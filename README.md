@@ -58,7 +58,7 @@ const skill = await c.getSkill(name);
 
 **Python:**
 ```python
-from bluefly_duadp import DuadpClient, resolve_gaid
+from duadp import DuadpClient, resolve_gaid
 
 async with DuadpClient("https://skills.sh") as client:
     skills = await client.list_skills(search="code review")
@@ -121,7 +121,7 @@ spec/                    # The normative specification
   schemas/               # JSON Schema validation files
 sdk/
   typescript/            # @bluefly/duadp npm package
-  python/                # uadp (PyPI)
+  python/                # duadp (PyPI)
   go/                    # duadp-go module
 ```
 
@@ -220,37 +220,37 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 
 ## Live Reference Node
 
-**Try it now** — Bluefly's hosted reference node is live at [`duadp.blueflyagents.com`](https://duadp.blueflyagents.com/.well-known/duadp.json):
+**Try it now** — the hosted reference node is live at [`discover.duadp.org`](https://discover.duadp.org/.well-known/duadp.json):
 
 ```bash
 # Discovery manifest
-curl https://duadp.blueflyagents.com/.well-known/duadp.json
+curl https://discover.duadp.org/.well-known/duadp.json
 
 # Browse skills, agents, tools
-curl https://duadp.blueflyagents.com/api/v1/skills
-curl https://duadp.blueflyagents.com/api/v1/agents
-curl https://duadp.blueflyagents.com/api/v1/tools
+curl https://discover.duadp.org/api/v1/skills
+curl https://discover.duadp.org/api/v1/agents
+curl https://discover.duadp.org/api/v1/tools
 
 # Health check
-curl https://duadp.blueflyagents.com/api/v1/health
+curl https://discover.duadp.org/api/v1/health
 
 # Governance (NIST AI RMF)
-curl https://duadp.blueflyagents.com/api/v1/governance
+curl https://discover.duadp.org/api/v1/governance
 
 # Search across all resources
-curl "https://duadp.blueflyagents.com/api/v1/search?q=code+review"
+curl "https://discover.duadp.org/api/v1/search?q=code+review"
 
 # Agent reputation
-curl "https://duadp.blueflyagents.com/api/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
+curl "https://discover.duadp.org/api/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
 
 # Publish a resource (POST)
-curl -X POST https://duadp.blueflyagents.com/api/v1/publish \
+curl -X POST https://discover.duadp.org/api/v1/publish \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-token" \
   -d '{"apiVersion":"ossa/v0.5","kind":"Skill","metadata":{"name":"my-skill","description":"My custom skill"}}'
 ```
 
-Node ID: `did:web:duadp.blueflyagents.com` | Protocol: DUADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
+Node ID: `did:web:discover.duadp.org` | Protocol: DUADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
 
 ## Run the Reference Node Locally
 
@@ -350,10 +350,10 @@ cd sdk/typescript && npm test
 
 | Platform | Status | Description |
 |----------|--------|-------------|
-| [OSSA Reference Node](https://duadp.blueflyagents.com/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
+| [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
 | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| [`uadp`](https://pypi.org/project/uadp/) Python SDK | Available | Client + FastAPI server |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | Available | Client + FastAPI server |
 | DUADP Go SDK | Available | Client + net/http handler |
 | Static JSON template | Planned | GitHub Pages starter |
 
@@ -362,7 +362,7 @@ cd sdk/typescript && npm test
 | Language | Package | Registry |
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
-| Python | [`uadp`](https://pypi.org/project/uadp/) | PyPI |
+| Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
 | Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## Seeded Data

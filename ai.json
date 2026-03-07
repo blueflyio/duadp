@@ -3,8 +3,8 @@
   "identity": {
     "name": "blueflyio-duadp",
     "description": "Decentralized Universal AI Discovery Protocol (DUADP) Reference Implementation",
-    "homepage": "https://uadp.blueflyagents.com",
-    "repository": "https://gitlab.com/blueflyio/platform/duadp"
+    "homepage": "https://duadp.org",
+    "repository": "https://gitlab.com/blueflyio/ossa/lab/duadp"
   },
   "capabilities": {
     "discovery": true,
@@ -13,10 +13,10 @@
   },
   "protocols": {
     "anp": {
-      "did": "did:web:uadp.blueflyagents.com:registry"
+      "did": "did:web:duadp.org:registry"
     }
   },
   "schemas": {
-    "agent": "https://uadp.blueflyagents.com/schemas/v1/agent.json"
+    "agent": "https://duadp.org/schemas/v1/agent.json"
   }
 }
