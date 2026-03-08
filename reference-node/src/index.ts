@@ -1,9 +1,9 @@
-import cors from 'cors';
-import express from 'express';
-import type { Request, Response } from 'express';
 import type { DuadpManifest, FederationResponse } from '@bluefly/duadp';
+import cors from 'cors';
+import type { Request, Response } from 'express';
+import express from 'express';
 import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initDb } from './db.js';
 import { createGovernanceRouter } from './governance.js';
@@ -144,7 +144,7 @@ app.get('/api/v1/skills', async (req: Request, res: Response) => {
 });
 
 app.get('/api/v1/skills/:name', async (req: Request, res: Response) => {
-  const skill = await provider.getSkill!(req.params.name);
+  const skill = await provider.getSkill!(req.params.name as string);
   if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
   res.json(skill);
 });
@@ -158,9 +158,16 @@ app.get('/api/v1/agents', async (req: Request, res: Response) => {
 });
 
 app.get('/api/v1/agents/:name', async (req: Request, res: Response) => {
-  const agent = await provider.getAgent!(req.params.name);
+  const agent = await provider.getAgent!(req.params.name as string);
   if (!agent) { res.status(404).json({ error: 'Agent not found' }); return; }
   res.json(agent);
+});
+
+app.get('/api/v1/agents/:gaid/card', async (req: Request, res: Response) => {
+  if (!provider.getAgentCard) { res.status(501).json({ error: 'Agent Cards not supported by provider' }); return; }
+  const card = await provider.getAgentCard(req.params.gaid as string);
+  if (!card) { res.status(404).json({ error: 'Agent Card not found' }); return; }
+  res.type('application/agent-card+json').json(card);
 });
 
 // Tools
@@ -176,7 +183,7 @@ app.get('/api/v1/tools', async (req: Request, res: Response) => {
 });
 
 app.get('/api/v1/tools/:name', async (req: Request, res: Response) => {
-  const tool = await provider.getTool!(req.params.name);
+  const tool = await provider.getTool!(req.params.name as string);
   if (!tool) { res.status(404).json({ error: 'Tool not found' }); return; }
   res.json(tool);
 });
@@ -315,14 +322,14 @@ for (const kind of ['skills', 'agents', 'tools']) {
   app.put(`/api/v1/${kind}/:name`, async (req: Request, res: Response) => {
     const token = getToken(req);
     if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
-    const result = await provider.updateResource!(kind, req.params.name, req.body, token);
+    const result = await provider.updateResource!(kind, req.params.name as string, req.body, token);
     res.json(result);
   });
 
   app.delete(`/api/v1/${kind}/:name`, async (req: Request, res: Response) => {
     const token = getToken(req);
     if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
-    const deleted = await provider.deleteResource!(kind, req.params.name, token);
+    const deleted = await provider.deleteResource!(kind, req.params.name as string, token);
     if (!deleted) { res.status(404).json({ error: 'Resource not found' }); return; }
     res.status(204).end();
   });

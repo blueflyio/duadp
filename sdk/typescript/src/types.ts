@@ -1059,6 +1059,26 @@ export interface BatchPublishResponse {
 
 // ─── Protocol Compatibility ──────────────────────────────────────
 
+/** Universally understood Agent Card format for fast out-of-band vetting */
+export interface AgentCard {
+  uuid: string;
+  gaid: string;
+  name: string;
+  description?: string;
+  trust_tier: TrustTier;
+  capabilities?: string[];
+  publisher?: {
+    name?: string;
+    url?: string;
+  };
+  signature?: string;
+  endpoints?: {
+    a2a?: string;
+    mcp?: string;
+  };
+  [key: string]: unknown;
+}
+
 /** Google A2A-compatible Agent Card */
 export interface A2AAgentCard {
   name: string;

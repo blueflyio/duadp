@@ -1,16 +1,16 @@
-import type Database from 'better-sqlite3';
-import type { DuadpDataProvider } from '@bluefly/duadp/server';
 import type {
-  OssaSkill,
-  OssaAgent,
-  OssaTool,
-  OssaResource,
-  PaginatedResponse,
-  Peer,
-  PublishResponse,
-  ValidationResult,
-  WebFingerResponse,
+    OssaAgent,
+    OssaResource,
+    OssaSkill,
+    OssaTool,
+    PaginatedResponse,
+    Peer,
+    PublishResponse,
+    ValidationResult,
+    WebFingerResponse,
 } from '@bluefly/duadp';
+import type { DuadpDataProvider } from '@bluefly/duadp/server';
+import type Database from 'better-sqlite3';
 
 // Map plural route names to singular Kind values
 const PLURAL_TO_KIND: Record<string, string> = {
@@ -126,6 +126,37 @@ export function createSqliteProvider(db: Database.Database): DuadpDataProvider {
     async getAgent(name) {
       return getResource<OssaAgent>('Agent', name);
     },
+
+    async getAgentCard(gaid: string) {
+      // Find the agent by gaid (in identity), uuid, or name
+      const row = db.prepare(
+        "SELECT data FROM resources WHERE kind = 'Agent' AND (json_extract(data, '$.identity.gaid') = ? OR json_extract(data, '$.identity.uuid') = ? OR name = ?)"
+      ).get(gaid, gaid, gaid) as { data: string } | undefined;
+
+      if (!row) return null;
+
+      const agent = JSON.parse(row.data) as OssaAgent;
+
+      // Transform into a universally compatible Agent Card
+      return {
+        uuid: (agent.identity as any)?.uuid || agent.metadata.name,
+        gaid: agent.identity?.gaid || `agent://${agent.metadata.name}`,
+        name: agent.metadata.name,
+        description: agent.metadata.description,
+        trust_tier: agent.metadata.trust_tier || 'experimental',
+        capabilities: (agent.spec as any)?.capabilities || [],
+        publisher: {
+          name: agent.provenance?.publisher?.name,
+          url: agent.provenance?.publisher?.url,
+        },
+        signature: agent.signature?.value,
+        endpoints: {
+          a2a: (agent.identity?.operational as any)?.a2a,
+          mcp: (agent.identity?.operational as any)?.mcp || agent.identity?.operational?.endpoint
+        }
+      };
+    },
+
 
     async listTools(params) {
       return listResources<OssaTool>('Tool', params);

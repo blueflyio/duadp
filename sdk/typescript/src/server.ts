@@ -1,6 +1,8 @@
-import { createRequire } from 'node:module';
 import type { Request, Response, Router } from 'express';
+import { createRequire } from 'node:module';
 import type {
+    AgentCard,
+    DuadpManifest,
     FederationResponse,
     OssaAgent,
     OssaResource,
@@ -8,7 +10,6 @@ import type {
     OssaTool,
     PaginatedResponse,
     Peer, PublishResponse,
-    DuadpManifest,
     ValidationResult,
     WebFingerResponse
 } from './types.js';
@@ -41,6 +42,8 @@ export interface DuadpDataProvider {
   listAgents?(params: { search?: string; category?: string; tag?: string; trust_tier?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaAgent>>;
   /** Get single agent by name */
   getAgent?(name: string): Promise<OssaAgent | null>;
+  /** Get a universally compatible Agent Card by GAID or UUID. Called on GET /api/v1/agents/:gaid/card */
+  getAgentCard?(gaid: string): Promise<AgentCard | null>;
   /** Return paginated tools. Called on GET /api/v1/tools */
   listTools?(params: { search?: string; category?: string; tag?: string; protocol?: string; federated?: boolean; page: number; limit: number }): Promise<PaginatedResponse<OssaTool>>;
   /** Get single tool by name */
@@ -190,6 +193,17 @@ export function createDuadpRouter(config: DuadpNodeConfig, provider: DuadpDataPr
         const agent = await provider.getAgent!(req.params.name as string);
         if (!agent) { res.status(404).json({ error: 'Agent not found' }); return; }
         res.json(agent);
+      } catch (err) {
+        res.status(500).json({ error: String(err) });
+      }
+    });
+  }
+  if (provider.getAgentCard) {
+    router.get('/api/v1/agents/:gaid/card', async (req: Request, res: Response) => {
+      try {
+        const card = await provider.getAgentCard!(req.params.gaid as string);
+        if (!card) { res.status(404).json({ error: 'Agent Card not found' }); return; }
+        res.type('application/agent-card+json').json(card);
       } catch (err) {
         res.status(500).json({ error: String(err) });
       }
