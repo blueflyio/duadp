@@ -12,6 +12,10 @@ import type {
 import type { DuadpDataProvider } from '@bluefly/duadp/server';
 import type Database from 'better-sqlite3';
 
+type ExtendedDuadpDataProvider = DuadpDataProvider & {
+  getAgentCard?: (gaid: string) => Promise<Record<string, unknown> | null>;
+};
+
 // Map plural route names to singular Kind values
 const PLURAL_TO_KIND: Record<string, string> = {
   skills: 'Skill',
@@ -35,7 +39,7 @@ function auditLog(
   ).run(eventType, gaid ?? null, actor ?? 'system', detail ? JSON.stringify(detail) : null);
 }
 
-export function createSqliteProvider(db: Database.Database): DuadpDataProvider {
+export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataProvider {
   // Generic list helper
   function listResources<T extends OssaResource>(
     kind: string,

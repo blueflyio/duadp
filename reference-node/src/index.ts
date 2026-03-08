@@ -1,4 +1,4 @@
-import type { DuadpManifest, FederationResponse } from '@bluefly/duadp';
+import type { UadpManifest as DuadpManifest, FederationResponse } from '@bluefly/duadp';
 import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
@@ -70,6 +70,9 @@ const CEDAR_POLICIES_BASE_URL = 'https://gitlab.com/blueflyio/cedar-policies/-/r
 
 const db = initDb(DB_PATH);
 const provider = createSqliteProvider(db);
+const providerAny = provider as typeof provider & {
+  getAgentCard?: (gaid: string) => Promise<unknown | null>;
+};
 
 const app = express();
 app.use(cors());
@@ -132,7 +135,10 @@ app.get('/.well-known/webfinger', async (req: Request, res: Response) => {
   // Federated fallback — try peers
   const peerResult = await resolveGaidFromPeers(db, resource, NODE_ID);
   if (peerResult) {
-    res.type('application/jrd+json').json({ ...peerResult.resource, _source_node: peerResult.source_node });
+    const peerResource = (peerResult.resource && typeof peerResult.resource === 'object')
+      ? (peerResult.resource as Record<string, unknown>)
+      : { resource: peerResult.resource };
+    res.type('application/jrd+json').json({ ...peerResource, _source_node: peerResult.source_node });
     return;
   }
   res.status(404).json({ error: 'Resource not found' });
@@ -217,8 +223,8 @@ app.get('/api/v1/agents/:name', async (req: Request, res: Response) => {
 });
 
 app.get('/api/v1/agents/:gaid/card', async (req: Request, res: Response) => {
-  if (!provider.getAgentCard) { res.status(501).json({ error: 'Agent Cards not supported by provider' }); return; }
-  const card = await provider.getAgentCard(req.params.gaid as string);
+  if (!providerAny.getAgentCard) { res.status(501).json({ error: 'Agent Cards not supported by provider' }); return; }
+  const card = await providerAny.getAgentCard(req.params.gaid as string);
   if (!card) { res.status(404).json({ error: 'Agent Card not found' }); return; }
   res.type('application/agent-card+json').json(card);
 });
