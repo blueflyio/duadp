@@ -376,6 +376,94 @@ paths:
         "401":
           description: Authentication required
 
+  /api/v1/policies:
+    get:
+      operationId: listPolicies
+      summary: List Cedar Policies
+      description: Returns the Cedar policy catalog with filtering and pagination.
+      tags: [Policies]
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: framework
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated Cedar policy list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CedarPolicyResource"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api/v1/policies/{name}:
+    get:
+      operationId: getPolicy
+      summary: Get Cedar Policy by ID
+      tags: [Policies]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cedar policy resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CedarPolicyResource"
+        "404":
+          description: Policy not found
+
+  /api/v1/policies/evaluate:
+    post:
+      operationId: evaluateCedarPolicy
+      summary: Evaluate Cedar Authorization Request
+      description: |
+        Evaluates a Cedar authorization request against provided policies.
+        Returns Allow or Deny with diagnostics. Used for testing policies
+        before deployment or for runtime authorization checks.
+      tags: [Policies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CedarEvaluationRequest"
+      responses:
+        "200":
+          description: Cedar evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CedarEvaluationResult"
+        "400":
+          description: Invalid request (missing fields or unparseable policies)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/validate:
     post:
       operationId: validateManifest
@@ -3571,3 +3659,129 @@ components:
         cursor:
           type: string
           description: "Cursor-based pagination token (alternative to page/limit)."
+
+    CedarPolicyResource:
+      type: object
+      description: A Cedar policy resource from the catalog
+      properties:
+        kind:
+          type: string
+          enum: [Policy]
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            version:
+              type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            complianceFrameworks:
+              type: array
+              items:
+                type: string
+            classification:
+              type: string
+            authors:
+              type: array
+              items:
+                type: string
+        spec:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [cedar]
+            statementCount:
+              type: integer
+            url:
+              type: string
+              format: uri
+
+    CedarEvaluationRequest:
+      type: object
+      required: [principal, action, resource, policies]
+      properties:
+        principal:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        action:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        resource:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        context:
+          type: object
+          additionalProperties: true
+        policies:
+          type: string
+          description: Cedar policy source text
+        schema:
+          type: string
+          description: Cedar schema text (optional)
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  id:
+                    type: string
+              attrs:
+                type: object
+                additionalProperties: true
+              parents:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    id:
+                      type: string
+
+    CedarEvaluationResult:
+      type: object
+      required: [decision, diagnostics, evaluation_ms]
+      properties:
+        decision:
+          type: string
+          enum: [Allow, Deny]
+        diagnostics:
+          type: object
+          properties:
+            reason:
+              type: array
+              items:
+                type: string
+            errors:
+              type: array
+              items:
+                type: string
+        evaluation_ms:
+          type: number
+          description: Policy evaluation time in milliseconds

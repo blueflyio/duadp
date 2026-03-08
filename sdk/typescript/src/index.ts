@@ -1,4 +1,4 @@
-export { DuadpClient, DuadpError, resolveGaid, CircuitBreaker, deduplicateResources, type DuadpClientOptions } from './client.js';
+export { DuadpClient, DuadpError, resolveGaid, verifyDuadpDns, verifyAgentDns, CircuitBreaker, deduplicateResources, type DuadpClientOptions } from './client.js';
 export { createDuadpRouter, type DuadpDataProvider, type DuadpNodeConfig } from './server.js';
 export * from './types.js';
 export { isDuadpManifest, validateManifest, validateResponse } from './validate.js';

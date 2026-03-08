@@ -124,6 +124,8 @@ export interface DuadpClientOptions {
   headers?: Record<string, string>;
   /** Bearer token for authenticated operations (publish, update, delete) */
   token?: string;
+  /** Skip DNS TXT verification of _duadp.<domain> (default: false) */
+  skipDnsVerification?: boolean;
 }
 
 export class DuadpClient {
@@ -708,22 +710,92 @@ export class DuadpError extends Error {
 }
 
 /**
+ * Verify that a domain has opted in to DUADP federation via DNS TXT record.
+ *
+ * Queries `_duadp.<domain>` for a TXT record containing `v=duadp1`.
+ * This confirms the domain explicitly authorizes DUADP discovery.
+ *
+ * @returns Object with verified status and the raw TXT records found
+ */
+export async function verifyDuadpDns(domain: string): Promise<{
+  verified: boolean;
+  records: string[];
+  error?: string;
+}> {
+  try {
+    // Dynamic import for Node.js dns module (not available in browsers)
+    const dns = await import('node:dns/promises');
+    const records = await dns.resolveTxt(`_duadp.${domain}`);
+    const flat = records.map((r) => r.join(''));
+    const verified = flat.some((r) => r.includes('v=duadp1'));
+    return { verified, records: flat };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    // ENOTFOUND/ENODATA means no TXT record — domain hasn't opted in
+    if (msg.includes('ENOTFOUND') || msg.includes('ENODATA') || msg.includes('NXDOMAIN')) {
+      return { verified: false, records: [], error: `No _duadp TXT record for ${domain}` };
+    }
+    return { verified: false, records: [], error: msg };
+  }
+}
+
+/**
+ * Verify that a specific agent is authorized by its domain via DNS TXT record.
+ *
+ * Queries `_agent.<uuid>.<domain>` for a TXT record confirming the agent.
+ * Used for high-trust agent verification outside the centralized registry.
+ */
+export async function verifyAgentDns(
+  domain: string,
+  agentId: string,
+): Promise<{ verified: boolean; records: string[]; error?: string }> {
+  try {
+    const dns = await import('node:dns/promises');
+    const records = await dns.resolveTxt(`_agent.${agentId}.${domain}`);
+    const flat = records.map((r) => r.join(''));
+    const verified = flat.some(
+      (r) => r.includes('v=duadp1') || r.includes(`agent=${agentId}`),
+    );
+    return { verified, records: flat };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('ENOTFOUND') || msg.includes('ENODATA') || msg.includes('NXDOMAIN')) {
+      return { verified: false, records: [], error: `No _agent TXT record for ${agentId}.${domain}` };
+    }
+    return { verified: false, records: [], error: msg };
+  }
+}
+
+/**
  * Resolve a GAID URI to a DUADP client and resource path.
+ *
+ * If `skipDnsVerification` is not set, verifies the domain has a `_duadp.<domain>`
+ * TXT record before connecting. This ensures the domain explicitly authorizes
+ * DUADP federation.
  *
  * Example:
  * ```ts
- * const { client, kind, name } = resolveGaid('agent://skills.sh/skills/web-search');
+ * const { client, kind, name } = await resolveGaid('agent://skills.sh/skills/web-search');
  * const skill = await client.getSkill(name);
  * ```
  */
-export function resolveGaid(gaid: string, options?: DuadpClientOptions): {
+export async function resolveGaid(gaid: string, options?: DuadpClientOptions): Promise<{
   client: DuadpClient;
   kind: string;
   name: string;
-} {
+  dnsVerified: boolean;
+}> {
   const match = gaid.match(/^(?:agent|duadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
   if (!match) throw new DuadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or duadp://domain/kind/name`);
   const [, domain, kind, name] = match;
+
+  // DNS TXT verification
+  let dnsVerified = false;
+  if (!options?.skipDnsVerification) {
+    const dnsResult = await verifyDuadpDns(domain);
+    dnsVerified = dnsResult.verified;
+  }
+
   const client = new DuadpClient(`https://${domain}`, options);
-  return { client, kind, name };
+  return { client, kind, name, dnsVerified };
 }

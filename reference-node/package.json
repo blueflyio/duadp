@@ -1,7 +1,11 @@
 {
-  "name": "@bluefly/duadp-reference-node",
-  "version": "0.1.2",
+  "name": "@bluefly/duadp-node",
+  "version": "0.2.0",
+  "description": "DUADP Reference Node — federated AI agent discovery with trust verification",
   "type": "module",
+  "bin": {
+    "duadp-node": "./dist/index.js"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
@@ -11,6 +15,7 @@
   },
   "dependencies": {
     "@bluefly/duadp": "^0.1.2",
+    "@cedar-policy/cedar-wasm": "^4.9.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
