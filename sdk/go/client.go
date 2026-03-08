@@ -57,7 +57,7 @@ type Client struct {
 	timeout    time.Duration
 	headers    map[string]string
 	token      string
-	manifest   *UadpManifest
+	manifest   *DuadpManifest
 }
 
 // NewClient creates a new DUADP client for the given base URL.
@@ -77,9 +77,9 @@ func NewClient(baseURL string, opts ...ClientOption) *Client {
 // --- Discovery ---
 
 // Discover fetches /.well-known/duadp.json and caches the manifest.
-func (c *Client) Discover(ctx context.Context) (*UadpManifest, error) {
+func (c *Client) Discover(ctx context.Context) (*DuadpManifest, error) {
 	u := c.BaseURL + "/.well-known/duadp.json"
-	var manifest UadpManifest
+	var manifest DuadpManifest
 	if err := c.doGet(ctx, u, &manifest); err != nil {
 		return nil, fmt.Errorf("discovery failed: %w", err)
 	}
@@ -88,7 +88,7 @@ func (c *Client) Discover(ctx context.Context) (*UadpManifest, error) {
 }
 
 // GetManifest returns the cached manifest or discovers it.
-func (c *Client) GetManifest(ctx context.Context) (*UadpManifest, error) {
+func (c *Client) GetManifest(ctx context.Context) (*DuadpManifest, error) {
 	if c.manifest != nil {
 		return c.manifest, nil
 	}
@@ -239,6 +239,54 @@ func (c *Client) PublishTool(ctx context.Context, tool *OssaTool) (*PublishRespo
 		return nil, err
 	}
 	return &resp, nil
+}
+
+// --- Policies (Cedar) ---
+
+// ListPolicies queries GET /api/v1/policies.
+func (c *Client) ListPolicies(ctx context.Context, params *PolicyListParams) (*PoliciesResponse, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Policies")
+	if err != nil {
+		return nil, err
+	}
+	parsed, _ := url.Parse(endpoint)
+	q := parsed.Query()
+	if params != nil {
+		if params.Tag != "" {
+			q.Set("tag", params.Tag)
+		}
+		if params.Framework != "" {
+			q.Set("framework", params.Framework)
+		}
+		if params.Search != "" {
+			q.Set("search", params.Search)
+		}
+		if params.Page > 0 {
+			q.Set("page", fmt.Sprintf("%d", params.Page))
+		}
+		if params.Limit > 0 {
+			q.Set("limit", fmt.Sprintf("%d", params.Limit))
+		}
+	}
+	parsed.RawQuery = q.Encode()
+	var resp PoliciesResponse
+	if err := c.doGet(ctx, parsed.String(), &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// GetPolicy fetches GET /api/v1/policies/{name}.
+func (c *Client) GetPolicy(ctx context.Context, name string) (*CedarPolicy, error) {
+	endpoint, err := c.resolveEndpoint(ctx, "Policies")
+	if err != nil {
+		return nil, err
+	}
+	var policy CedarPolicy
+	if err := c.doGet(ctx, endpoint+"/"+url.PathEscape(name), &policy); err != nil {
+		return nil, err
+	}
+	return &policy, nil
 }
 
 // --- Generic Publish ---
@@ -944,6 +992,8 @@ func (c *Client) resolveEndpoint(ctx context.Context, name string) (string, erro
 		endpoint = m.Endpoints.Search
 	case "Index":
 		endpoint = m.Endpoints.Index
+	case "Policies":
+		endpoint = m.Endpoints.Policies
 	}
 	if endpoint == "" {
 		return "", &DuadpError{Message: fmt.Sprintf("node does not expose a %s endpoint", strings.ToLower(name))}

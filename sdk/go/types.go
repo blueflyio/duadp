@@ -1,14 +1,14 @@
 // Package duadp provides types and client for the Universal AI Discovery Protocol.
 package duadp
 
-// UadpManifest is the discovery manifest served at /.well-known/duadp.json.
-type UadpManifest struct {
+// DuadpManifest is the discovery manifest served at /.well-known/duadp.json.
+type DuadpManifest struct {
 	ProtocolVersion string            `json:"protocol_version"`
 	NodeID          string            `json:"node_id,omitempty"`
 	NodeName        string            `json:"node_name"`
 	NodeDescription string            `json:"node_description,omitempty"`
 	Contact         string            `json:"contact,omitempty"`
-	Endpoints       UadpEndpoints     `json:"endpoints"`
+	Endpoints       DuadpEndpoints     `json:"endpoints"`
 	Capabilities    []string          `json:"capabilities,omitempty"`
 	Identity        *NodeIdentity     `json:"identity,omitempty"`
 	PublicKey       string            `json:"public_key,omitempty"` // deprecated
@@ -17,8 +17,8 @@ type UadpManifest struct {
 	Governance      *NodeGovernance   `json:"governance,omitempty"`
 }
 
-// UadpEndpoints maps capability names to URLs (relative or absolute).
-type UadpEndpoints struct {
+// DuadpEndpoints maps capability names to URLs (relative or absolute).
+type DuadpEndpoints struct {
 	Skills      string `json:"skills,omitempty"`
 	Agents      string `json:"agents,omitempty"`
 	Tools       string `json:"tools,omitempty"`
@@ -39,6 +39,7 @@ type UadpEndpoints struct {
 	Health       string `json:"health,omitempty"`
 	Search       string `json:"search,omitempty"`
 	Index        string `json:"index,omitempty"`
+	Policies     string `json:"policies,omitempty"`
 }
 
 // NodeIdentity contains DID-based identity for signature verification.
@@ -315,6 +316,61 @@ type AgentsResponse struct {
 type ToolsResponse struct {
 	Data []OssaTool     `json:"data"`
 	Meta PaginationMeta `json:"meta"`
+}
+
+// ─── Cedar Policies ─────────────────────────────────────────────
+
+// PolicySpec is the specification for a Cedar authorization policy.
+type PolicySpec struct {
+	Format         string `json:"format"`
+	StatementCount int    `json:"statementCount"`
+	URL            string `json:"url,omitempty"`
+	CedarSource    string `json:"cedarSource,omitempty"`
+}
+
+// PolicyMetadata is metadata for a Cedar policy.
+type PolicyMetadata struct {
+	Name                 string   `json:"name"`
+	Version              string   `json:"version"`
+	Description          string   `json:"description"`
+	Tags                 []string `json:"tags,omitempty"`
+	ComplianceFrameworks []string `json:"complianceFrameworks,omitempty"`
+	Classification       string   `json:"classification,omitempty"`
+	Authors              []string `json:"authors,omitempty"`
+	Approvers            []string `json:"approvers,omitempty"`
+	DependsOn            []string `json:"dependsOn,omitempty"`
+	CreatedAt            string   `json:"createdAt,omitempty"`
+	UpdatedAt            string   `json:"updatedAt,omitempty"`
+}
+
+// CedarPolicy is a Cedar authorization policy resource.
+type CedarPolicy struct {
+	Kind     string          `json:"kind"`
+	Metadata PolicyMetadata  `json:"metadata"`
+	Spec     PolicySpec      `json:"spec"`
+}
+
+// PolicyPagination for policy list responses.
+type PolicyPagination struct {
+	Total   int `json:"total"`
+	Page    int `json:"page"`
+	PerPage int `json:"per_page"`
+	Pages   int `json:"pages"`
+}
+
+// PoliciesResponse for GET /api/v1/policies.
+type PoliciesResponse struct {
+	Data       []CedarPolicy    `json:"data"`
+	Pagination PolicyPagination `json:"pagination"`
+}
+
+// PolicyListParams for filtering policy queries.
+type PolicyListParams struct {
+	Tag       string
+	Framework string
+	Search    string
+	Page      int
+	Limit     int
 }
 
 // Peer in federation.
@@ -935,11 +991,36 @@ type DelegationResult struct {
 	DelegationChain  []DelegationChainEntry `json:"delegation_chain,omitempty"`
 }
 
+// CompressionConfig is memory compression configuration for AgentScope.
+type CompressionConfig struct {
+	Enable           bool `json:"enable,omitempty"`
+	TriggerThreshold int  `json:"trigger_threshold,omitempty"`
+	KeepRecent       int  `json:"keep_recent,omitempty"`
+}
+
+// AgentScopeExtension is AgentScope framework-specific runtime configuration.
+type AgentScopeExtension struct {
+	Version       string            `json:"version,omitempty"`
+	AgentClass    string            `json:"agent_class,omitempty"`    // ReActAgent, UserAgent, A2AAgent, RealtimeAgent, custom
+	Capabilities  []string          `json:"capabilities,omitempty"`   // rl_training, realtime_voice, evaluation, planning, rag, parallel_tool_calls, meta_tools, tts
+	MemoryBackend string            `json:"memory_backend,omitempty"` // in_memory, redis, sqlalchemy, mem0, reme_personal, reme_task, reme_tool
+	Orchestration string            `json:"orchestration,omitempty"`  // msghub, sequential_pipeline, fanout_pipeline, chatroom
+	MaxIters      int               `json:"max_iters,omitempty"`
+	Formatter     string            `json:"formatter,omitempty"` // openai, anthropic, gemini, dashscope, ollama, deepseek, a2a
+	Compression   *CompressionConfig `json:"compression,omitempty"`
+	SkillDirs     []string          `json:"skill_dirs,omitempty"`
+}
+
+// AgentExtensions contains framework-specific extensions for agent records.
+type AgentExtensions struct {
+	AgentScope *AgentScopeExtension `json:"agentscope,omitempty"`
+}
+
 // OrchestrationStep is a single step in an orchestration plan.
 type OrchestrationStep struct {
 	StepID    string            `json:"step_id"`
 	Name      string            `json:"name"`
-	AgentType string            `json:"agent_type,omitempty"` // orchestrator, worker, specialist, critic, monitor, gateway
+	AgentType string            `json:"agent_type,omitempty"` // orchestrator, worker, specialist, critic, monitor, gateway, agentscope
 	AgentGAID string            `json:"agent_gaid,omitempty"`
 	Task      DelegationTask    `json:"task"`
 	DependsOn []string          `json:"depends_on,omitempty"`
@@ -999,7 +1080,7 @@ type A2AAgentCard struct {
 	Skills         []A2ASkill          `json:"skills,omitempty"`
 	DefaultInputModes  []string        `json:"defaultInputModes,omitempty"`
 	DefaultOutputModes []string        `json:"defaultOutputModes,omitempty"`
-	UadpExtensions *A2AUadpExtensions  `json:"_uadp,omitempty"`
+	DuadpExtensions *A2ADuadpExtensions  `json:"_duadp,omitempty"`
 }
 
 // A2AProvider in an Agent Card.
@@ -1029,8 +1110,8 @@ type A2ASkill struct {
 	Examples    []string `json:"examples,omitempty"`
 }
 
-// A2AUadpExtensions are DUADP-specific extensions in an Agent Card.
-type A2AUadpExtensions struct {
+// A2ADuadpExtensions are DUADP-specific extensions in an Agent Card.
+type A2ADuadpExtensions struct {
 	GAID        string `json:"gaid,omitempty"`
 	TrustTier   string `json:"trust_tier,omitempty"`
 	ContentHash string `json:"content_hash,omitempty"`
@@ -1042,11 +1123,11 @@ type McpTool struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description,omitempty"`
 	InputSchema map[string]any `json:"inputSchema,omitempty"`
-	Uadp        *McpToolUadp   `json:"_uadp,omitempty"`
+	Duadp       *McpToolDuadp   `json:"_duadp,omitempty"`
 }
 
-// McpToolUadp are DUADP extensions on an MCP tool.
-type McpToolUadp struct {
+// McpToolDuadp are DUADP extensions on an MCP tool.
+type McpToolDuadp struct {
 	GAID        string `json:"gaid,omitempty"`
 	TrustTier   string `json:"trust_tier,omitempty"`
 	ContentHash string `json:"content_hash,omitempty"`

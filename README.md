@@ -7,7 +7,7 @@
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
-> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** for protocol details and the **[OSSA ecosystem](https://openstandardagents.org)**.
+> **[duadp.org](https://duadp.org)** | **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** for protocol details | **[OSSA ecosystem](https://openstandardagents.org)**
 
 ## What is DUADP?
 
@@ -18,7 +18,7 @@ DUADP is an open protocol that lets any system discover, publish, and exchange A
 **Any system that implements a few HTTP endpoints is a DUADP node.** There is no required language, framework, or database. Agents are distributed using the `.ajson` / `.jsona` (Agent JSON) payload format.
 
 ```
-              DNS TXT: _uadp.skills.sh → "v=uadp1 url=..."
+              DNS TXT: _duadp.skills.sh → "v=duadp1 url=..."
 
 Your App                              skills.sh (DUADP node)
   |                                          |
@@ -68,17 +68,6 @@ async with DuadpClient("https://skills.sh") as client:
     await client.publish_skill(my_skill)
 ```
 
-**Go:**
-```go
-client := duadp.NewClient("https://skills.sh")
-skills, _ := client.ListSkills(ctx, &duadp.ListParams{Search: "code review"})
-tools, _ := client.ListTools(ctx, &duadp.ToolListParams{Protocol: "mcp"})
-
-// Resolve a GAID
-c, kind, name, _ := duadp.ResolveGaid("agent://skills.sh/tools/web-search")
-tool, _ := c.GetTool(ctx, name)
-```
-
 ### Build a DUADP node
 
 The simplest node is two static JSON files:
@@ -91,16 +80,16 @@ your-site.com/
 
 Optional DNS TXT record for zero-configuration discovery:
 ```
-_uadp.your-site.com. IN TXT "v=uadp1 url=https://your-site.com/.well-known/duadp.json"
+_duadp.your-site.com. IN TXT "v=duadp1 url=https://your-site.com/.well-known/duadp.json"
 ```
 
 Or use an SDK to build a dynamic node with publishing, federation, and tools:
 
 **TypeScript (Express):**
 ```typescript
-import { createUadpRouter } from '@bluefly/duadp/server';
+import { createDuadpRouter } from '@bluefly/duadp/server';
 
-app.use(createUadpRouter({
+app.use(createDuadpRouter({
   nodeName: 'My AI Hub',
   nodeId: 'did:web:my-hub.com',
   baseUrl: 'https://my-hub.com',
@@ -122,7 +111,6 @@ spec/                    # The normative specification
 sdk/
   typescript/            # @bluefly/duadp npm package
   python/                # duadp (PyPI)
-  go/                    # duadp-go module
 ```
 
 ### DUADP Core File Suite
@@ -179,7 +167,7 @@ sdk/
 
 - **Tools as first-class resources** — MCP servers, A2A tools, function-calling tools alongside skills and agents
 - **Publishing API** — Authenticated write operations for community contributions
-- **DNS TXT discovery** — `_uadp.<domain>` for zero-configuration node finding
+- **DNS TXT discovery** — `_duadp.<domain>` for zero-configuration node finding
 - **WebFinger resolution** — Resolve any GAID URI (like `duadp://`) to its DUADP endpoint
 - **Gossip federation** — Automatic peer propagation with hop limits
 - **DID-based identity** — `did:web:` and `did:key:` with DIF standard resolvers
@@ -351,10 +339,9 @@ cd sdk/typescript && npm test
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
 | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
 | [`duadp`](https://pypi.org/project/duadp/) Python SDK | Available | Client + FastAPI server |
-| DUADP Go SDK | Available | Client + net/http handler |
+| Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |
 | Static JSON template | Planned | GitHub Pages starter |
 
 ## Also Available
@@ -363,7 +350,6 @@ cd sdk/typescript && npm test
 |----------|---------|----------|
 | TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
 | Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
-| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## Seeded Data
 

@@ -185,7 +185,7 @@ client := duadp.NewClient("https://skills.sh",
 
 The SDK exports 80+ types covering:
 
-- **Core**: `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `ResourceIdentity`
+- **Core**: `DuadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `ResourceIdentity`
 - **Discovery**: `WebFingerResponse`, `NodeHealth`, `SearchResponse`, `AgentIndexRecord`
 - **NIST RMF**: `NodeGovernance`, `ResourceRisk`, `ResourceProvenance`, `Attestation`, `Revocation`, `AuditEvent`
 - **Context**: `ContextNegotiation`, `ContextLayer`, `KnowledgeSource`, `ContextCacheRef`

@@ -1,7 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import type { Request, Response } from 'express';
-import type { UadpManifest, FederationResponse } from '@bluefly/duadp';
+import type { DuadpManifest, FederationResponse } from '@bluefly/duadp';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,7 +88,7 @@ const config = {
 
 // /.well-known/duadp.json
 app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
-  const manifest: UadpManifest = {
+  const manifest: DuadpManifest = {
     protocol_version: '0.2.0',
     node_id: config.nodeId,
     node_name: config.nodeName,

@@ -48,7 +48,7 @@ class ResolvedKey:
 class DIDResolutionResult:
     document: DIDDocument
     public_keys: list[ResolvedKey]
-    uadp_endpoint: str | None = None
+    duadp_endpoint: str | None = None
 
 
 def did_web_to_url(did: str) -> str:
@@ -189,15 +189,15 @@ def _extract_keys(document: DIDDocument) -> DIDResolutionResult:
             purpose=purpose,
         ))
 
-    uadp_endpoint = None
+    duadp_endpoint = None
     for svc in document.service:
-        if svc.type in ("UadpNode", "UadpResource"):
+        if svc.type in ("DuadpNode", "DuadpResource"):
             if isinstance(svc.service_endpoint, str):
-                uadp_endpoint = svc.service_endpoint
+                duadp_endpoint = svc.service_endpoint
             break
 
     return DIDResolutionResult(
         document=document,
         public_keys=public_keys,
-        uadp_endpoint=uadp_endpoint,
+        duadp_endpoint=duadp_endpoint,
     )

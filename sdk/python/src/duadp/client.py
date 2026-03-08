@@ -3,7 +3,7 @@ from __future__ import annotations
 from urllib.parse import urljoin, urlencode
 import httpx
 from .types import (
-    UadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
+    DuadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
     PaginatedResponse, FederationResponse, ValidationResult,
     ListParams, ToolListParams, PublishResponse, PeerRegistration,
     WebFingerResponse, NodeGovernance, ResourceRisk, ResourceProvenance,
@@ -15,6 +15,7 @@ from .types import (
     OrchestrationPlan, DelegationTask,
     BatchPublishResponse, A2AAgentCard, McpServerManifest,
     StructuredQuery,
+    CedarPolicy, PolicyListParams, PoliciesResponse,
 )
 
 
@@ -49,7 +50,7 @@ class DuadpClient:
         if token:
             auth_headers["Authorization"] = f"Bearer {token}"
         self._client = httpx.AsyncClient(timeout=timeout, headers=auth_headers)
-        self._manifest: UadpManifest | None = None
+        self._manifest: DuadpManifest | None = None
 
     async def __aenter__(self):
         return self
@@ -59,16 +60,16 @@ class DuadpClient:
 
     # --- Discovery ---
 
-    async def discover(self) -> UadpManifest:
+    async def discover(self) -> DuadpManifest:
         """Fetch /.well-known/duadp.json and cache the manifest."""
         url = f"{self.base_url}/.well-known/duadp.json"
         resp = await self._client.get(url)
         if resp.status_code != 200:
             raise DuadpError(f"Discovery failed: HTTP {resp.status_code}", resp.status_code)
-        self._manifest = UadpManifest.model_validate(resp.json())
+        self._manifest = DuadpManifest.model_validate(resp.json())
         return self._manifest
 
-    async def get_manifest(self) -> UadpManifest:
+    async def get_manifest(self) -> DuadpManifest:
         """Return cached manifest or discover."""
         if not self._manifest:
             await self.discover()
@@ -168,6 +169,34 @@ class DuadpClient:
         resp = await self._client.post(endpoint, json=tool.model_dump(by_alias=True))
         resp.raise_for_status()
         return PublishResponse.model_validate(resp.json())
+
+    # --- Policies (Cedar) ---
+
+    async def list_policies(self, params: PolicyListParams | None = None, **kwargs) -> PoliciesResponse:
+        """List Cedar authorization policies."""
+        endpoint = await self._resolve_endpoint("policies")
+        p = params or PolicyListParams(**kwargs)
+        query: dict[str, str] = {}
+        if p.tag:
+            query["tag"] = p.tag
+        if p.framework:
+            query["framework"] = p.framework
+        if p.search:
+            query["search"] = p.search
+        if p.page and p.page != 1:
+            query["page"] = str(p.page)
+        if p.limit and p.limit != 20:
+            query["limit"] = str(p.limit)
+        resp = await self._client.get(endpoint, params=query)
+        resp.raise_for_status()
+        return PoliciesResponse.model_validate(resp.json())
+
+    async def get_policy(self, name: str) -> CedarPolicy:
+        """Get a single Cedar policy by name."""
+        endpoint = await self._resolve_endpoint("policies")
+        resp = await self._client.get(f"{endpoint}/{name}")
+        resp.raise_for_status()
+        return CedarPolicy.model_validate(resp.json())
 
     # --- Generic Publishing ---
 

@@ -9,7 +9,7 @@ import type {
     PeerRegistration, PeerRegistrationResponse,
     PublishResponse,
     ToolListParams,
-    UadpManifest,
+    DuadpManifest,
     ValidationResult,
     WebFingerResponse,
     NodeGovernance,
@@ -40,6 +40,9 @@ import type {
     A2AAgentCard,
     McpServerManifest,
     StructuredQuery,
+    CedarPolicy,
+    PolicyListParams,
+    PoliciesResponse,
 } from './types.js';
 
 // --- Circuit Breaker ---
@@ -124,7 +127,7 @@ export interface DuadpClientOptions {
 }
 
 export class DuadpClient {
-  private manifest: UadpManifest | null = null;
+  private manifest: DuadpManifest | null = null;
   private fetchFn: typeof fetch;
   private timeout: number;
   private headers: Record<string, string>;
@@ -144,15 +147,15 @@ export class DuadpClient {
   // --- Discovery ---
 
   /** Discover the node by fetching /.well-known/duadp.json */
-  async discover(): Promise<UadpManifest> {
+  async discover(): Promise<DuadpManifest> {
     const url = new URL('/.well-known/duadp.json', this.baseUrl);
     const res = await this.request(url.toString());
-    this.manifest = res as UadpManifest;
+    this.manifest = res as DuadpManifest;
     return this.manifest;
   }
 
   /** Get the cached manifest, or discover if not yet fetched */
-  async getManifest(): Promise<UadpManifest> {
+  async getManifest(): Promise<DuadpManifest> {
     if (!this.manifest) await this.discover();
     return this.manifest!;
   }
@@ -254,6 +257,26 @@ export class DuadpClient {
       method: 'POST',
       body: JSON.stringify(tool),
     }) as Promise<PublishResponse>;
+  }
+
+  // --- Policies (Cedar) ---
+
+  /** List Cedar authorization policies */
+  async listPolicies(params?: PolicyListParams): Promise<PoliciesResponse> {
+    const endpoint = await this.resolveEndpoint('policies');
+    const url = new URL(endpoint);
+    if (params?.tag) url.searchParams.set('tag', params.tag);
+    if (params?.framework) url.searchParams.set('framework', params.framework);
+    if (params?.search) url.searchParams.set('search', params.search);
+    if (params?.page) url.searchParams.set('page', String(params.page));
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<PoliciesResponse>;
+  }
+
+  /** Get a single Cedar policy by name */
+  async getPolicy(name: string): Promise<CedarPolicy> {
+    const endpoint = await this.resolveEndpoint('policies');
+    return this.request(`${endpoint}/${encodeURIComponent(name)}`) as Promise<CedarPolicy>;
   }
 
   // --- Generic Publishing ---

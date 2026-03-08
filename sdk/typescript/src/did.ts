@@ -50,7 +50,7 @@ export interface DIDResolutionResult {
     publicKeyMultibase?: string;
     purpose: string[];
   }>;
-  uadpEndpoint?: string;
+  duadpEndpoint?: string;
 }
 
 // Singleton resolver instance — supports did:web and did:key out of the box
@@ -292,15 +292,15 @@ function extractKeys(document: DIDDocument): DIDResolutionResult {
   }
 
   // Find DUADP service endpoint
-  let uadpEndpoint: string | undefined;
+  let duadpEndpoint: string | undefined;
   for (const svc of document.service ?? []) {
-    if (svc.type === 'UadpNode' || svc.type === 'UadpResource') {
-      uadpEndpoint = typeof svc.serviceEndpoint === 'string'
+    if (svc.type === 'DuadpNode' || svc.type === 'DuadpResource') {
+      duadpEndpoint = typeof svc.serviceEndpoint === 'string'
         ? svc.serviceEndpoint
         : undefined;
       break;
     }
   }
 
-  return { document, publicKeys, uadpEndpoint };
+  return { document, publicKeys, duadpEndpoint };
 }

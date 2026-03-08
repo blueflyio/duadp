@@ -17,7 +17,7 @@ class FederationConfig(BaseModel):
     max_hops: int | None = None
 
 
-class UadpEndpoints(BaseModel):
+class DuadpEndpoints(BaseModel):
     skills: str | None = None
     agents: str | None = None
     tools: str | None = None
@@ -39,17 +39,19 @@ class UadpEndpoints(BaseModel):
     search: str | None = None
     index: str | None = None
 
+    policies: str | None = None
+
     class Config:
         extra = "allow"
 
 
-class UadpManifest(BaseModel):
+class DuadpManifest(BaseModel):
     protocol_version: str
     node_id: str | None = None
     node_name: str
     node_description: str | None = None
     contact: str | None = None
-    endpoints: UadpEndpoints
+    endpoints: DuadpEndpoints
     capabilities: list[str] | None = None
     identity: NodeIdentity | None = None
     public_key: str | None = None  # deprecated, use identity.public_key
@@ -901,11 +903,36 @@ class DelegationResult(BaseModel):
     delegation_chain: list[DelegationChainEntry] | None = None
 
 
+class CompressionConfig(BaseModel):
+    """Memory compression configuration for AgentScope."""
+    enable: bool = False
+    trigger_threshold: int | None = None
+    keep_recent: int = 3
+
+
+class AgentScopeExtension(BaseModel):
+    """AgentScope framework-specific runtime configuration."""
+    version: str | None = None
+    agent_class: Literal["ReActAgent", "UserAgent", "A2AAgent", "RealtimeAgent", "custom"] | None = None
+    capabilities: list[Literal["rl_training", "realtime_voice", "evaluation", "planning", "rag", "parallel_tool_calls", "meta_tools", "tts"]] | None = None
+    memory_backend: Literal["in_memory", "redis", "sqlalchemy", "mem0", "reme_personal", "reme_task", "reme_tool"] | None = None
+    orchestration: Literal["msghub", "sequential_pipeline", "fanout_pipeline", "chatroom"] | None = None
+    max_iters: int | None = None
+    formatter: Literal["openai", "anthropic", "gemini", "dashscope", "ollama", "deepseek", "a2a"] | None = None
+    compression: CompressionConfig | None = None
+    skill_dirs: list[str] | None = None
+
+
+class AgentExtensions(BaseModel):
+    """Framework extensions for agent records."""
+    agentscope: AgentScopeExtension | None = None
+
+
 class OrchestrationStep(BaseModel):
     """Single step in an orchestration plan."""
     step_id: str
     name: str
-    agent_type: Literal["orchestrator", "worker", "specialist", "critic", "monitor", "gateway"] | None = None
+    agent_type: Literal["orchestrator", "worker", "specialist", "critic", "monitor", "gateway", "agentscope"] | None = None
     agent_gaid: str | None = None
     task: DelegationTask
     depends_on: list[str] | None = None
@@ -969,7 +996,7 @@ class A2ASkill(BaseModel):
     examples: list[str] | None = None
 
 
-class A2AUadpExtensions(BaseModel):
+class A2ADuadpExtensions(BaseModel):
     """DUADP-specific extensions in an Agent Card."""
     gaid: str | None = None
     trust_tier: str | None = None
@@ -989,10 +1016,10 @@ class A2AAgentCard(BaseModel):
     skills: list[A2ASkill] | None = None
     defaultInputModes: list[Literal["text", "file", "data"]] | None = None
     defaultOutputModes: list[Literal["text", "file", "data"]] | None = None
-    _uadp: A2AUadpExtensions | None = None
+    _duadp: A2ADuadpExtensions | None = None
 
 
-class McpToolUadp(BaseModel):
+class McpToolDuadp(BaseModel):
     """DUADP extensions on an MCP tool."""
     gaid: str | None = None
     trust_tier: str | None = None
@@ -1004,7 +1031,7 @@ class McpTool(BaseModel):
     name: str
     description: str | None = None
     inputSchema: dict | None = None
-    _uadp: McpToolUadp | None = None
+    _duadp: McpToolDuadp | None = None
 
 
 class McpServerManifest(BaseModel):
@@ -1028,6 +1055,68 @@ class QuerySort(BaseModel):
     """Sort specification in a structured query."""
     field: str
     order: Literal["asc", "desc"] = "asc"
+
+
+# ─── Cedar Policies ──────────────────────────────────────────
+
+
+class PolicySpec(BaseModel):
+    """Cedar policy specification."""
+    format: Literal["cedar"] = "cedar"
+    statement_count: int = Field(alias="statementCount")
+    url: str | None = None
+    cedar_source: str | None = Field(None, alias="cedarSource")
+
+    class Config:
+        populate_by_name = True
+
+
+class PolicyMetadata(BaseModel):
+    """Cedar policy metadata."""
+    name: str
+    version: str
+    description: str
+    tags: list[str] | None = None
+    compliance_frameworks: list[str] | None = Field(None, alias="complianceFrameworks")
+    classification: Literal["OFFICIAL", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"] | None = None
+    authors: list[str] | None = None
+    approvers: list[str] | None = None
+    depends_on: list[str] | None = Field(None, alias="dependsOn")
+    created_at: str | None = Field(None, alias="createdAt")
+    updated_at: str | None = Field(None, alias="updatedAt")
+
+    class Config:
+        populate_by_name = True
+
+
+class CedarPolicy(BaseModel):
+    """Cedar authorization policy resource."""
+    kind: Literal["Policy"] = "Policy"
+    metadata: PolicyMetadata
+    spec: PolicySpec
+
+
+class PolicyListParams(BaseModel):
+    """Parameters for listing policies."""
+    tag: str | None = None
+    framework: str | None = None
+    search: str | None = None
+    page: int = 1
+    limit: int = 20
+
+
+class PolicyPagination(BaseModel):
+    """Pagination for policy responses."""
+    total: int
+    page: int
+    per_page: int
+    pages: int
+
+
+class PoliciesResponse(BaseModel):
+    """Response from the policies endpoint."""
+    data: list[CedarPolicy]
+    pagination: PolicyPagination
 
 
 class StructuredQuery(BaseModel):

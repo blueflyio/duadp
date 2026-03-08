@@ -2,7 +2,7 @@
 from __future__ import annotations
 from typing import Protocol
 from .types import (
-    UadpManifest, UadpEndpoints, OssaSkill, OssaAgent,
+    DuadpManifest, DuadpEndpoints, OssaSkill, OssaAgent,
     PaginatedResponse, PaginationMeta, FederationResponse,
     ValidationResult, Peer,
 )
@@ -18,7 +18,7 @@ class DuadpDataProvider(Protocol):
     async def validate_manifest(self, manifest: str) -> ValidationResult: ...
 
 
-def create_uadp_router(
+def create_duadp_router(
     *,
     node_name: str,
     base_url: str,
@@ -33,10 +33,10 @@ def create_uadp_router(
     Usage::
 
         from fastapi import FastAPI
-        from ossa_uadp.server import create_uadp_router
+        from ossa_duadp.server import create_duadp_router
 
         app = FastAPI()
-        router = create_uadp_router(
+        router = create_duadp_router(
             node_name="My Node",
             base_url="https://my-node.com",
             provider=my_data_provider,
@@ -50,12 +50,12 @@ def create_uadp_router(
 
     @router.get("/.well-known/duadp.json")
     async def well_known():
-        manifest = UadpManifest(
+        manifest = DuadpManifest(
             protocol_version="0.1.0",
             node_name=node_name,
             node_description=node_description,
             contact=contact,
-            endpoints=UadpEndpoints(
+            endpoints=DuadpEndpoints(
                 skills=f"{base_url}/api/v1/skills",
                 agents=f"{base_url}/api/v1/agents",
                 federation=f"{base_url}/api/v1/federation",

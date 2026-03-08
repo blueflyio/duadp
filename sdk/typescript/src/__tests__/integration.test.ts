@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { createUadpRouter } from '../server.js';
+import { createDuadpRouter } from '../server.js';
 import type { DuadpDataProvider } from '../server.js';
 import { DuadpClient, DuadpError } from '../client.js';
 import type {
@@ -243,7 +243,7 @@ describe('DUADP SDK integration (client + server)', () => {
         port = addr.port;
         baseUrl = `http://localhost:${port}`;
 
-        const router = createUadpRouter(
+        const router = createDuadpRouter(
           {
             nodeName: NODE_NAME,
             nodeId: NODE_ID,
@@ -593,9 +593,9 @@ describe('DUADP SDK integration (client + server)', () => {
         expect.fail('Should have thrown');
       } catch (err) {
         expect(err).toBeInstanceOf(DuadpError);
-        const uadpErr = err as DuadpError;
-        expect(uadpErr.statusCode).toBe(404);
-        expect(uadpErr.message).toContain('404');
+        const duadpErr = err as DuadpError;
+        expect(duadpErr.statusCode).toBe(404);
+        expect(duadpErr.message).toContain('404');
       }
     });
 

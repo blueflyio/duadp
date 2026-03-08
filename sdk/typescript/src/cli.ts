@@ -98,7 +98,7 @@ Examples:
       for (const key of result.publicKeys) {
         console.log(`  ${key.id} (${key.type}) — ${key.purpose.join(', ')}`);
       }
-      if (result.uadpEndpoint) console.log(`\nDUADP Endpoint: ${result.uadpEndpoint}`);
+      if (result.duadpEndpoint) console.log(`\nDUADP Endpoint: ${result.duadpEndpoint}`);
       break;
     }
 

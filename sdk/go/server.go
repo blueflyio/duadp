@@ -42,12 +42,12 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 
 	// GET /.well-known/duadp.json
 	mux.HandleFunc("GET /.well-known/duadp.json", func(w http.ResponseWriter, r *http.Request) {
-		manifest := UadpManifest{
+		manifest := DuadpManifest{
 			ProtocolVersion: "0.1.0",
 			NodeName:        config.NodeName,
 			NodeDescription: config.NodeDescription,
 			Contact:         config.Contact,
-			Endpoints: UadpEndpoints{
+			Endpoints: DuadpEndpoints{
 				Skills:     config.BaseURL + "/api/v1/skills",
 				Agents:     config.BaseURL + "/api/v1/agents",
 				Federation: config.BaseURL + "/api/v1/federation",

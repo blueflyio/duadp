@@ -1,4 +1,4 @@
-import type { UadpManifest, ValidationResult } from './types.js';
+import type { DuadpManifest, ValidationResult } from './types.js';
 
 /** Validate a /.well-known/duadp.json manifest object. */
 export function validateManifest(manifest: unknown): ValidationResult {
@@ -81,7 +81,7 @@ export function validateResponse(response: unknown): ValidationResult {
   return { valid: errors.length === 0, errors, warnings };
 }
 
-/** Type guard: is this a valid UadpManifest? */
-export function isUadpManifest(value: unknown): value is UadpManifest {
+/** Type guard: is this a valid DuadpManifest? */
+export function isDuadpManifest(value: unknown): value is DuadpManifest {
   return validateManifest(value).valid;
 }

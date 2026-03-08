@@ -71,7 +71,7 @@ describe('verifyResourceIdentity', () => {
         id: 'did:web:acme.com',
       },
       publicKeys: [],
-      uadpEndpoint: undefined,
+      duadpEndpoint: undefined,
     });
 
     const resource = mockResource({

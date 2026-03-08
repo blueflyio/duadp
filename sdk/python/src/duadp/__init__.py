@@ -1,6 +1,6 @@
 """Universal AI Discovery Protocol (DUADP) SDK for Python."""
 from .types import (
-    UadpManifest, NodeIdentity, FederationConfig, UadpEndpoints,
+    DuadpManifest, NodeIdentity, FederationConfig, DuadpEndpoints,
     OssaSkill, OssaAgent, OssaTool, OssaResource, OssaMetadata, ResourceSignature,
     ResourceIdentity,
     PaginationMeta, FederatedSource, PaginatedResponse,
@@ -37,11 +37,14 @@ from .types import (
     # Batch Operations
     BatchPublishResult, BatchPublishResponse,
     # A2A Interop
-    A2AAgentCard, A2ASkill, A2ACapabilities, A2AUadpExtensions, A2AProvider,
+    A2AAgentCard, A2ASkill, A2ACapabilities, A2ADuadpExtensions, A2AProvider,
     # MCP Interop
     McpServerManifest,
     # Structured Query
     QueryFilter, QuerySort, StructuredQuery,
+    # Cedar Policies
+    CedarPolicy, PolicySpec, PolicyMetadata, PolicyListParams,
+    PolicyPagination, PoliciesResponse,
 )
 from .client import DuadpClient, DuadpError, resolve_gaid
 from .validate import validate_manifest, validate_response
@@ -51,7 +54,7 @@ __all__ = [
     # Client
     "DuadpClient", "DuadpError", "resolve_gaid",
     # Core types
-    "UadpManifest", "NodeIdentity", "FederationConfig", "UadpEndpoints",
+    "DuadpManifest", "NodeIdentity", "FederationConfig", "DuadpEndpoints",
     "OssaSkill", "OssaAgent", "OssaTool", "OssaResource", "OssaMetadata", "ResourceSignature",
     "ResourceIdentity",
     "PaginationMeta", "FederatedSource", "PaginatedResponse",
@@ -88,11 +91,14 @@ __all__ = [
     # Batch Operations
     "BatchPublishResult", "BatchPublishResponse",
     # A2A Interop
-    "A2AAgentCard", "A2ASkill", "A2ACapabilities", "A2AUadpExtensions", "A2AProvider",
+    "A2AAgentCard", "A2ASkill", "A2ACapabilities", "A2ADuadpExtensions", "A2AProvider",
     # MCP Interop
     "McpServerManifest",
     # Structured Query
     "QueryFilter", "QuerySort", "StructuredQuery",
+    # Cedar Policies
+    "CedarPolicy", "PolicySpec", "PolicyMetadata", "PolicyListParams",
+    "PolicyPagination", "PoliciesResponse",
     # Validation
     "validate_manifest", "validate_response",
 ]

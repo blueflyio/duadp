@@ -48,7 +48,7 @@ type ResolvedKey struct {
 type DIDResolutionResult struct {
 	Document     DIDDocument  `json:"document"`
 	PublicKeys   []ResolvedKey `json:"public_keys"`
-	UadpEndpoint string       `json:"uadp_endpoint,omitempty"`
+	DduadpEndpoint string       `json:"duadp_endpoint,omitempty"`
 }
 
 // DidWebToURL converts a did:web DID to its HTTPS resolution URL.
@@ -184,11 +184,11 @@ func extractKeys(doc DIDDocument) *DIDResolutionResult {
 		})
 	}
 
-	var uadpEndpoint string
+	var duadpEndpoint string
 	for _, svc := range doc.Service {
-		if svc.Type == "UadpNode" || svc.Type == "UadpResource" {
+		if svc.Type == "DuadpNode" || svc.Type == "DuadpResource" {
 			if s, ok := svc.ServiceEndpoint.(string); ok {
-				uadpEndpoint = s
+				duadpEndpoint = s
 			}
 			break
 		}
@@ -197,6 +197,6 @@ func extractKeys(doc DIDDocument) *DIDResolutionResult {
 	return &DIDResolutionResult{
 		Document:     doc,
 		PublicKeys:   keys,
-		UadpEndpoint: uadpEndpoint,
+		DduadpEndpoint: duadpEndpoint,
 	}
 }

@@ -36,7 +36,7 @@ Every DUADP node MUST publish a JSON document at:
 GET /.well-known/duadp.json
 ```
 
-**Response** (`UadpManifest`):
+**Response** (`DuadpManifest`):
 
 ```json
 {
@@ -97,17 +97,17 @@ Endpoint values MAY be relative paths (resolved against the node's base URL) or 
 DUADP nodes MAY advertise themselves via DNS TXT records for zero-configuration discovery:
 
 ```
-_uadp.example.com. IN TXT "v=uadp1 url=https://example.com/.well-known/duadp.json"
+_duadp.example.com. IN TXT "v=duadp1 url=https://example.com/.well-known/duadp.json"
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `v` | MUST | Version tag. Current: `uadp1` |
+| `v` | MUST | Version tag. Current: `duadp1` |
 | `url` | MUST | Absolute URL to the DUADP manifest |
 | `name` | MAY | Human-readable node name |
 | `cap` | MAY | Comma-separated capabilities (e.g., `skills,agents,tools`) |
 
-Clients resolving a domain SHOULD check for a `_uadp` TXT record before attempting the well-known URL. This enables discovery of DUADP nodes hosted on subdomains or non-standard paths.
+Clients resolving a domain SHOULD check for a `_duadp` TXT record before attempting the well-known URL. This enables discovery of DUADP nodes hosted on subdomains or non-standard paths.
 
 Multiple TXT records on the same domain indicate multiple DUADP nodes (e.g., one for skills, one for agents).
 
@@ -150,7 +150,7 @@ This enables cross-registry resolution: given `agent://skills.sh/skills/web-sear
 ```
 Client                          DUADP Node
   |                                 |
-  |  DNS TXT _uadp.example.com     |
+  |  DNS TXT _duadp.example.com     |
   |  (optional, zero-config)        |
   |                                 |
   |  GET /.well-known/duadp.json     |
@@ -191,7 +191,7 @@ GET /api/v1/skills
 | `page` | integer | `1` | Page number (1-indexed) |
 | `limit` | integer | `20` | Items per page (max 100) |
 
-**Response** (`UadpSkillsResponse`):
+**Response** (`DuadpSkillsResponse`):
 
 ```json
 {
@@ -586,7 +586,7 @@ The DID document SHOULD include the node's DUADP manifest URL as a service endpo
   "id": "did:web:acme.com",
   "service": [{
     "id": "did:web:acme.com#duadp",
-    "type": "UadpNode",
+    "type": "DuadpNode",
     "serviceEndpoint": "https://acme.com/.well-known/duadp.json"
   }]
 }
@@ -647,7 +647,7 @@ Every agent, skill, or tool published to a DUADP node MUST have a complete ident
     "did": "did:web:acme.com:agents:security-auditor",
     "gaid": "agent://acme.com/agents/security-auditor",
     "dns": {
-      "record": "_uadp-agent.security-auditor.acme.com",
+      "record": "_duadp-agent.security-auditor.acme.com",
       "verified": true
     },
     "keys": {
@@ -907,16 +907,16 @@ Nodes MUST NOT serve resources with `status: revoked`. Nodes SHOULD warn consume
 Each resource SHOULD have a DNS TXT record under the node's domain:
 
 ```
-_uadp-agent.security-auditor.acme.com.  IN TXT "v=uadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
-_uadp-skill.code-review.acme.com.       IN TXT "v=uadp1 kind=Skill did=did:web:acme.com:skills:code-review"
-_uadp-tool.web-search.skills.sh.        IN TXT "v=uadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
+_duadp-agent.security-auditor.acme.com.  IN TXT "v=duadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
+_duadp-skill.code-review.acme.com.       IN TXT "v=duadp1 kind=Skill did=did:web:acme.com:skills:code-review"
+_duadp-tool.web-search.skills.sh.        IN TXT "v=duadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
 ```
 
 DNS TXT record fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `v` | MUST | Version tag. Current: `uadp1` |
+| `v` | MUST | Version tag. Current: `duadp1` |
 | `kind` | MUST | Resource kind: `Agent`, `Skill`, `Tool` |
 | `did` | MUST | DID of the resource |
 | `status` | MAY | `active`, `suspended`, `deprecated`, `revoked` |
@@ -963,7 +963,7 @@ The DID document for a resource MUST include:
   "service": [
     {
       "id": "did:web:acme.com:agents:security-auditor#duadp",
-      "type": "UadpResource",
+      "type": "DuadpResource",
       "serviceEndpoint": "https://acme.com/api/v1/agents/security-auditor"
     },
     {
@@ -1011,7 +1011,7 @@ When a consumer encounters a resource, it SHOULD verify identity through this ch
 
 ```
 1. Parse GAID → extract domain (e.g., acme.com)
-2. DNS TXT lookup → _uadp-agent.security-auditor.acme.com
+2. DNS TXT lookup → _duadp-agent.security-auditor.acme.com
    → Confirms domain claims this resource
    → Gets DID
 3. DID resolution → did:web:acme.com:agents:security-auditor
@@ -1067,7 +1067,7 @@ Examples:
 Given a GAID, a client resolves it through this chain:
 
 1. Extract the namespace (domain): `acme.com`
-2. Check DNS TXT record: `_uadp.acme.com`
+2. Check DNS TXT record: `_duadp.acme.com`
 3. If no TXT, try well-known: `https://acme.com/.well-known/duadp.json`
 4. From the manifest, find the appropriate endpoint (skills/agents/tools)
 5. Query `GET /api/v1/{type}/{name}` for the specific resource
@@ -1150,7 +1150,7 @@ See `openapi.yaml` for the complete OpenAPI 3.1 definition of all DUADP endpoint
 - Tools endpoint (`/api/v1/tools`) — MCP tools, A2A tools as first-class resources
 - Publishing API (`POST /api/v1/publish`) — write operations for resource creation
 - WebFinger resolution for individual resource lookup by GAID
-- DNS TXT record discovery (`_uadp.<domain>`) for zero-configuration
+- DNS TXT record discovery (`_duadp.<domain>`) for zero-configuration
 - Gossip protocol for automatic peer propagation
 - DID-based identity (`did:web:`, `did:key:`) for verifiable node identity
 - Resource signatures with Ed25519

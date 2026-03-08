@@ -36,7 +36,7 @@ interface OssaManifest {
   [key: string]: unknown;
 }
 
-interface UadpAgent {
+interface DuadpAgent {
   apiVersion: string;
   kind: string;
   metadata: {
@@ -65,7 +65,7 @@ interface UadpAgent {
   };
 }
 
-function manifestToUadpAgent(manifest: OssaManifest): UadpAgent | null {
+function manifestToDuadpAgent(manifest: OssaManifest): DuadpAgent | null {
   const meta = manifest.metadata;
   if (!meta?.name) return null;
 
@@ -126,7 +126,7 @@ const entries = readdirSync(AGENTS_DIR).filter((e) => {
   return statSync(full).isDirectory() && !e.startsWith('.') && e !== 'node_modules';
 });
 
-const agents: UadpAgent[] = [];
+const agents: DuadpAgent[] = [];
 
 for (const dir of entries) {
   const manifestPath = join(AGENTS_DIR, dir, 'manifest.ossa.yaml');
@@ -140,7 +140,7 @@ for (const dir of entries) {
       return def ? def[1] : 'default';
     });
     const manifest = parse(cleaned) as OssaManifest;
-    const agent = manifestToUadpAgent(manifest);
+    const agent = manifestToDuadpAgent(manifest);
     if (agent) agents.push(agent);
   } catch (err) {
     console.warn(`  ! Skipped ${dir}: ${(err as Error).message}`);

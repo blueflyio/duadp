@@ -1,6 +1,6 @@
 {
   "name": "@bluefly/duadp",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "DUADP — Decentralized Universal AI Discovery Protocol SDK for TypeScript",
   "type": "module",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
     "url": "https://gitlab.com/blueflyio/ossa/lab/duadp.git",
     "directory": "sdk/typescript"
   },
-  "homepage": "https://openstandardagents.org/duadp/",
+  "homepage": "https://duadp.org",
   "bugs": {
     "url": "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
   },

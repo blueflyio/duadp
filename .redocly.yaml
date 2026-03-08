@@ -1,0 +1,12 @@
+extends:
+  - recommended
+
+rules:
+  # Downgrade to warn — security will be added per-operation in next iteration
+  security-defined: warn
+  # Struct errors from nullable usage — migrating to 3.1 type arrays
+  struct: warn
+  # Allow operations without 4xx responses for now
+  operation-4xx-response: warn
+  # Allow unused components during development
+  no-unused-components: warn

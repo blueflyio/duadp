@@ -8,7 +8,7 @@ import type {
     OssaTool,
     PaginatedResponse,
     Peer, PublishResponse,
-    UadpManifest,
+    DuadpManifest,
     ValidationResult,
     WebFingerResponse
 } from './types.js';
@@ -67,13 +67,13 @@ export interface DuadpDataProvider {
  * Usage:
  * ```ts
  * import express from 'express';
- * import { createUadpRouter } from '@bluefly/duadp/server';
+ * import { createDuadpRouter } from '@bluefly/duadp/server';
  *
  * const app = express();
- * app.use(createUadpRouter(config, myProvider));
+ * app.use(createDuadpRouter(config, myProvider));
  * ```
  */
-export function createUadpRouter(config: DuadpNodeConfig, provider: DuadpDataProvider): Router {
+export function createDuadpRouter(config: DuadpNodeConfig, provider: DuadpDataProvider): Router {
   // Dynamic import to keep express as optional peer dep
   // Use createRequire for ESM/CJS compatibility
   const esmRequire = createRequire(import.meta.url);
@@ -108,7 +108,7 @@ export function createUadpRouter(config: DuadpNodeConfig, provider: DuadpDataPro
 
   // /.well-known/duadp.json
   router.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
-    const manifest: UadpManifest = {
+    const manifest: DuadpManifest = {
       protocol_version: '0.2.0',
       node_id: config.nodeId,
       node_name: config.nodeName,

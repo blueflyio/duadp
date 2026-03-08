@@ -17,7 +17,7 @@ This SDK provides both a **client** for consuming any DUADP node and a **server 
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
 
-> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
 
 ---
 
@@ -85,12 +85,12 @@ const tools = await client.listTools({ protocol: 'mcp' });
 
 ```typescript
 import express from 'express';
-import { createUadpRouter } from '@bluefly/duadp/server';
+import { createDuadpRouter } from '@bluefly/duadp/server';
 
 const app = express();
 
 // Mount all 15 DUADP protocol endpoints with one call
-const router = createUadpRouter({
+const router = createDuadpRouter({
   nodeName: 'My Registry',
   nodeId: 'did:web:registry.example.com',
   baseUrl: 'https://registry.example.com',
@@ -134,9 +134,9 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 
 | Import | Description |
 |--------|-------------|
-| `@bluefly/duadp` | Core types — `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
+| `@bluefly/duadp` | Core types — `DuadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
 | `@bluefly/duadp/client` | `DuadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
-| `@bluefly/duadp/server` | `createUadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
+| `@bluefly/duadp/server` | `createDuadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
 | `@bluefly/duadp/validate` | `validateResource()` — OSSA manifest validation against the spec |
 | `@bluefly/duadp/crypto` | `generateKeyPair()`, `signResource()`, `verifyResource()` — Ed25519 cryptographic operations |
 | `@bluefly/duadp/did` | `resolveDid()` — W3C Decentralized Identifier resolution (`did:web`, `did:key`) |
@@ -176,7 +176,6 @@ npm test
 | Language | Package | Registry |
 |----------|---------|----------|
 | Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
-| Go | `github.com/blueflyio/duadp/sdk/go` | Go modules |
 
 ## License
 

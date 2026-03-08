@@ -29,7 +29,7 @@ interface TestDef {
   name: string;
   category: ConformanceTestResult['category'];
   level: 'MUST' | 'SHOULD' | 'MAY';
-  run: (client: DuadpClient, manifest: import('./types.js').UadpManifest) => Promise<{ passed: boolean; detail?: string }>;
+  run: (client: DuadpClient, manifest: import('./types.js').DuadpManifest) => Promise<{ passed: boolean; detail?: string }>;
 }
 
 const tests: TestDef[] = [
@@ -398,7 +398,7 @@ export async function runConformanceTests(
     token: options?.token,
   });
 
-  let manifest: import('./types.js').UadpManifest;
+  let manifest: import('./types.js').DuadpManifest;
   try {
     manifest = await client.discover();
   } catch (err) {
