@@ -197,6 +197,14 @@ sdk/
 6. **Interoperable** — Built on the `.ajson` payload format, works with any AI framework.
 7. **Secure** — Trust tiers, DID-based identity, cryptographic signatures, circuit breakers.
 
+## 🇺🇸 NIST CAISI RFI Alignment (NIST-2025-0035)
+
+DUADP implements the discovery and governance infrastructure required by the [NIST CAISI Request for Information on Collaborative AI Systems Integration](https://www.regulations.gov/docket/NIST-2025-0035).
+
+- **Federated Open-Source Discovery**: DNS TXT records and `.well-known` endpoints solve the RFI's requirement for decentralized agent discovery without proprietary lock-in.
+- **Verifiable Identity**: Native support for W3C DID-based Global Agent Identifiers (GAIDs) ensures cryptographically sound origin authentication.
+- **Provable Authorization**: DUADP exposes formally verified AWS Cedar authorization policies, evaluating agent access across trust boundaries in under 100ms.
+
 ## Relationship to OSSA
 
 DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://openstandardagents.org) provides the semantic **payload format** (via `.ajson`).
