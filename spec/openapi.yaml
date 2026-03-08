@@ -244,6 +244,40 @@ paths:
         "404":
           description: Agent not found
 
+  /api/v1/agents/{gaid}/card:
+    get:
+      operationId: getAgentCard
+      summary: Get Universally Compatible Agent Card
+      description: |
+        Returns the Agent Card representation of the OSSA manifest.
+        The Agent Card is a universally understood format (similar to Google A2A format)
+        containing capabilities, endpoints, UUID constraints, and trust tiers.
+        Suitable for fast out-of-band vetting and cross-registry handshakes.
+      tags: [Agents, Identity]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          description: The Global Agent Identifier (DID) or UUID of the agent.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Signed Agent Card
+          content:
+            application/agent-card+json:
+              schema:
+                $ref: "#/components/schemas/AgentCard"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCard"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/v1/tools:
     get:
       operationId: listTools
@@ -1221,7 +1255,7 @@ paths:
 
   # ─── Protocol Compatibility Endpoints ───────────────────────
 
-  /api/v1/agents/{name}/card:
+  /api/v1/agents/{name}/a2a-card:
     get:
       operationId: getA2AAgentCard
       summary: A2A Agent Card
@@ -1748,6 +1782,60 @@ components:
               type: number
             incidents:
               type: integer
+
+    # ─── New: Agent Card Schema ──────────────────────────────────────
+    AgentCard:
+      type: object
+      description: |
+        A universally understood, compact representation of an AI Agent.
+        Suitable for fast vetting, cross-registry handshakes, and third-party integrations
+        like Google A2A or MCP discovery.
+      required: [uuid, gaid, name, trust_tier]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Version 5 UUID derived from the agent namespace and name.
+        gaid:
+          type: string
+          format: uri
+          description: Global Agent Identifier (DID) for verifiable identity tracing.
+        name:
+          type: string
+          description: Human-readable agent name.
+        description:
+          type: string
+          description: Summary of the agent's purpose.
+        trust_tier:
+          type: string
+          enum: [ tier_1_read, tier_2_write_limited, tier_3_write_elevated, tier_4_system_admin ]
+          description: Evaluated security trust tier.
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: High-level capabilities (e.g., 'filesystem-read', 'network-outbound').
+        publisher:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+        signature:
+          type: string
+          description: Base64-encoded signature of this specific card payload validating its provenance.
+        endpoints:
+          type: object
+          properties:
+            a2a:
+              type: string
+              format: uri
+            mcp:
+              type: string
+              format: uri
+          description: Direct connection URIs for standard interoperability protocols.
+      additionalProperties: true
 
     OssaResource:
       type: object
