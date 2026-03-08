@@ -669,7 +669,8 @@ class DuadpClient:
 
     async def _resolve_endpoint(self, name: str) -> str:
         manifest = await self.get_manifest()
-        endpoint = getattr(manifest.endpoints, name, None)
+        endpoint_attr = "validate_endpoint" if name == "validate" else name
+        endpoint = getattr(manifest.endpoints, endpoint_attr, None)
         if not endpoint:
             raise DuadpError(f"Node does not expose a {name} endpoint")
         # Handle relative URLs

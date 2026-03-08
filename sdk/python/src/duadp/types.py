@@ -1,7 +1,7 @@
 """DUADP protocol types as Pydantic models."""
 from __future__ import annotations
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 TrustTier = Literal["official", "verified-signature", "signed", "community", "experimental"]
 PeerStatus = Literal["healthy", "degraded", "unreachable"]
@@ -22,7 +22,7 @@ class DuadpEndpoints(BaseModel):
     agents: str | None = None
     tools: str | None = None
     federation: str | None = None
-    validate: str | None = None
+    validate_endpoint: str | None = Field(default=None, alias="validate", serialization_alias="validate")
     publish: str | None = None
     governance: str | None = None
     provenance: str | None = None
@@ -41,8 +41,7 @@ class DuadpEndpoints(BaseModel):
 
     policies: str | None = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
 
 class DuadpManifest(BaseModel):
@@ -71,8 +70,7 @@ class OssaMetadata(BaseModel):
     created: str | None = None
     updated: str | None = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class ResourceSignature(BaseModel):
@@ -257,9 +255,7 @@ class OssaResource(BaseModel):
     risk: "ResourceRisk | None" = None
     content_hash: str | None = None
 
-    class Config:
-        populate_by_name = True
-        extra = "allow"
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
 
 class OssaSkill(OssaResource):
@@ -1067,8 +1063,7 @@ class PolicySpec(BaseModel):
     url: str | None = None
     cedar_source: str | None = Field(None, alias="cedarSource")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class PolicyMetadata(BaseModel):
@@ -1085,8 +1080,7 @@ class PolicyMetadata(BaseModel):
     created_at: str | None = Field(None, alias="createdAt")
     updated_at: str | None = Field(None, alias="updatedAt")
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class CedarPolicy(BaseModel):

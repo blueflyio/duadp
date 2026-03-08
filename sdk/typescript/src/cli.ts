@@ -70,7 +70,7 @@ Examples:
 
     case 'resolve': {
       if (!target) { console.error('Usage: duadp resolve <gaid>'); process.exit(1); }
-      const { client, kind, name } = resolveGaid(target);
+      const { client, kind, name } = await resolveGaid(target);
       console.log(`Domain: ${new URL(client.baseUrl).hostname}`);
       console.log(`Kind:   ${kind}`);
       console.log(`Name:   ${name}`);

@@ -5,34 +5,32 @@ import type { OssaResource, ResourceIdentity } from '../types.js';
  * Override any field by passing partial data.
  */
 export function mockResource(overrides: Partial<OssaResource> = {}): OssaResource {
+  const baseMetadata = {
+    name: 'test-skill',
+    version: '1.0.0',
+    description: 'A test skill',
+    uri: 'ossa://test-node/skills/test-skill',
+    category: 'testing',
+    tags: ['test'],
+  };
+
+  const baseSpec = {
+    input: { type: 'string' },
+    output: { type: 'string' },
+  };
+
   return {
     apiVersion: 'ossa/v1',
     kind: 'Skill',
     metadata: {
-      name: 'test-skill',
-      version: '1.0.0',
-      description: 'A test skill',
-      uri: 'ossa://test-node/skills/test-skill',
-      category: 'testing',
-      tags: ['test'],
+      ...baseMetadata,
       ...overrides.metadata,
     },
     spec: {
-      input: { type: 'string' },
-      output: { type: 'string' },
+      ...baseSpec,
       ...overrides.spec,
     },
     ...overrides,
-    // Re-apply metadata after spread so nested overrides win
-    metadata: {
-      name: 'test-skill',
-      version: '1.0.0',
-      description: 'A test skill',
-      uri: 'ossa://test-node/skills/test-skill',
-      category: 'testing',
-      tags: ['test'],
-      ...overrides.metadata,
-    },
   };
 }
 
