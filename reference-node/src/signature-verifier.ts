@@ -14,6 +14,10 @@ export interface SignatureVerificationResult {
   requiresSignature: boolean;
 }
 
+interface SignatureVerifierDeps {
+  verifyIdentity?: typeof verifyResourceIdentity;
+}
+
 /**
  * Verify the signature on a published resource.
  *
@@ -24,6 +28,7 @@ export interface SignatureVerificationResult {
  */
 export async function verifyPublisherSignature(
   resource: Record<string, unknown>,
+  deps: SignatureVerifierDeps = {},
 ): Promise<SignatureVerificationResult> {
   const identity = resource.identity as
     | Record<string, unknown>
@@ -54,7 +59,8 @@ export async function verifyPublisherSignature(
   }
 
   // Run the full verification chain from the SDK
-  const result = await verifyResourceIdentity(resource as any, {
+  const verifyIdentity = deps.verifyIdentity ?? verifyResourceIdentity;
+  const result = await verifyIdentity(resource as any, {
     skipLifecycle: false,
   });
 
@@ -68,6 +74,17 @@ export async function verifyPublisherSignature(
 
 function parseTier(tier?: string): number {
   if (!tier) return 1;
+
+  const named: Record<string, number> = {
+    community: 1,
+    signed: 2,
+    'verified-signature': 3,
+    verified: 4,
+    official: 5,
+    certified: 5,
+  };
+  if (named[tier] !== undefined) return named[tier];
+
   const match = tier.match(/tier_(\d)/);
   return match ? parseInt(match[1]) : 1;
 }

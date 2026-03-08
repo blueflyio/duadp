@@ -126,6 +126,11 @@ export interface DuadpClientOptions {
   token?: string;
   /** Skip DNS TXT verification of _duadp.<domain> (default: false) */
   skipDnsVerification?: boolean;
+  /**
+   * Optional minimum trust tier required for resolution.
+   * When set to `verified` or higher, DNS verification is enforced.
+   */
+  requiredTrustTier?: 'community' | 'signed' | 'verified-signature' | 'verified' | 'official';
 }
 
 export class DuadpClient {
@@ -796,6 +801,29 @@ export async function resolveGaid(gaid: string, options?: DuadpClientOptions): P
     dnsVerified = dnsResult.verified;
   }
 
+  const requiredTier = options?.requiredTrustTier ?? 'community';
+  const requiredRank = trustTierToRank(requiredTier);
+  if (requiredRank >= 4 && !dnsVerified) {
+    throw new DuadpError(
+      `High-trust resolution requires DNS verification for ${domain} (_duadp TXT missing or invalid)`,
+    );
+  }
+
   const client = new DuadpClient(`https://${domain}`, options);
   return { client, kind, name, dnsVerified };
+}
+
+function trustTierToRank(tier: 'community' | 'signed' | 'verified-signature' | 'verified' | 'official'): number {
+  switch (tier) {
+    case 'official':
+      return 5;
+    case 'verified':
+      return 4;
+    case 'verified-signature':
+      return 3;
+    case 'signed':
+      return 2;
+    default:
+      return 1;
+  }
 }

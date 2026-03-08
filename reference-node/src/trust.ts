@@ -181,8 +181,34 @@ async function checkDomainOwnership(resource: OssaResource): Promise<TrustCheck>
     }
   } catch { /* fallthrough */ }
 
-  // Check DNS TXT record (would need DNS lookup — skip for now, log as not verified)
-  return { name: 'domain_ownership', tier: 'verified', passed: false, detail: `Could not verify domain ownership for ${domain} (no .well-known/duadp.json found)` };
+  // Fallback: DNS TXT proof on _duadp.<domain>
+  try {
+    const dns = await import('node:dns/promises');
+    const records = await dns.resolveTxt(`_duadp.${domain}`);
+    const txt = records.map((r) => r.join(''));
+    const hasDuadpMarker = txt.some((r) => r.includes('v=duadp1'));
+    if (hasDuadpMarker) {
+      return {
+        name: 'domain_ownership',
+        tier: 'verified',
+        passed: true,
+        detail: `Domain ${domain} verified via DNS TXT _duadp.${domain}`,
+      };
+    }
+    return {
+      name: 'domain_ownership',
+      tier: 'verified',
+      passed: false,
+      detail: `DNS TXT _duadp.${domain} found but missing v=duadp1 marker`,
+    };
+  } catch {
+    return {
+      name: 'domain_ownership',
+      tier: 'verified',
+      passed: false,
+      detail: `Could not verify domain ownership for ${domain} (no valid .well-known/duadp.json or _duadp TXT record)`,
+    };
+  }
 }
 
 /** Convert did:web to URL per W3C spec */
