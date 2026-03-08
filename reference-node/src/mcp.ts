@@ -322,6 +322,101 @@ export function createMcpRouter(baseUrl: string) {
       }
     );
 
+    // 18. duadp_verify_trust -> POST /api/v1/verify
+    server.tool(
+      "duadp_verify_trust",
+      "Verify the trust tier of an OSSA manifest — checks schema, signature, DID, domain ownership",
+      {
+        manifest: z.string().describe("Stringified JSON OSSA manifest to verify")
+      },
+      async ({ manifest }) => {
+        try {
+          const payload = JSON.parse(manifest);
+          const res = await fetch(`${baseUrl}/api/v1/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          return {
+            content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+          };
+        } catch (err: any) {
+          return {
+            content: [{ type: "text", text: `Error: ${err.message}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // 19. duadp_list_revocations -> GET /api/v1/revocations
+    server.tool(
+      "duadp_list_revocations",
+      "List all revoked agents, skills, and tools across the federation",
+      {
+        limit: z.number().optional().describe("Max results (default 50)")
+      },
+      async ({ limit }) => {
+        const qs = limit ? `?limit=${limit}` : '';
+        const res = await fetch(`${baseUrl}/api/v1/revocations${qs}`);
+        const data = await res.json();
+        return {
+          content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+        };
+      }
+    );
+
+    // 20. duadp_check_revocation -> GET /api/v1/revocations/:name
+    server.tool(
+      "duadp_check_revocation",
+      "Check if a specific resource has been revoked",
+      {
+        name: z.string().describe("Resource name to check revocation status")
+      },
+      async ({ name }) => {
+        const res = await fetch(`${baseUrl}/api/v1/revocations/${encodeURIComponent(name)}`);
+        const data = await res.json();
+        return {
+          content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+        };
+      }
+    );
+
+    // 21. duadp_evaluate_cedar -> POST /api/v1/policies/evaluate
+    server.tool(
+      "duadp_evaluate_cedar",
+      "Evaluate a Cedar authorization policy against a request context",
+      {
+        principal_type: z.string().describe("Cedar principal type (e.g., 'DUADP::Principal')"),
+        principal_id: z.string().describe("Principal identifier"),
+        action_type: z.string().describe("Cedar action type (e.g., 'DUADP::Action')"),
+        action_id: z.string().describe("Action identifier (e.g., 'publish', 'read', 'revoke')"),
+        resource_type: z.string().describe("Cedar resource type"),
+        resource_id: z.string().describe("Resource identifier"),
+        policies: z.string().describe("Cedar policy text to evaluate"),
+        context: z.record(z.string(), z.any()).optional().describe("Additional context for evaluation")
+      },
+      async (params) => {
+        const body = {
+          principal: { type: params.principal_type, id: params.principal_id },
+          action: { type: params.action_type, id: params.action_id },
+          resource: { type: params.resource_type, id: params.resource_id },
+          policies: params.policies,
+          context: params.context
+        };
+        const res = await fetch(`${baseUrl}/api/v1/policies/evaluate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        return {
+          content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+        };
+      }
+    );
+
     return server;
   }
 

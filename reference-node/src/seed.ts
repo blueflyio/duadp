@@ -1,9 +1,34 @@
+import { readFileSync, existsSync } from 'node:fs';
 import { initDb } from './db.js';
 import platformAgents from './platform-agents-seed.json' with { type: 'json' };
 
 const DB_PATH = process.env.DB_PATH || './data/duadp.db';
 const SEED_DOMAIN = process.env.DUADP_SEED_DOMAIN || 'example.duadp.dev';
+const SEED_FILE = process.env.DUADP_SEED_FILE;
 const db = initDb(DB_PATH);
+
+// --- External seed file support ---
+if (SEED_FILE && existsSync(SEED_FILE)) {
+  console.log(`Seeding from external file: ${SEED_FILE}`);
+  const insertResource = db.prepare('INSERT OR REPLACE INTO resources (kind, name, data) VALUES (?, ?, ?)');
+  const seedData = JSON.parse(readFileSync(SEED_FILE, 'utf-8'));
+  let count = 0;
+
+  for (const kind of ['agents', 'skills', 'tools']) {
+    for (const item of seedData[kind] ?? []) {
+      insertResource.run(item.kind, item.metadata.name, JSON.stringify(item));
+      count++;
+    }
+  }
+
+  // Insert governance config
+  db.prepare('INSERT OR REPLACE INTO governance (id, data) VALUES (1, ?)').run(
+    JSON.stringify({ compliance_frameworks: ['NIST AI RMF 1.0', 'ISO/IEC 42001'], risk_tolerance: 'moderate', data_classification: 'internal' }),
+  );
+
+  console.log(`Seeded ${count} resources from ${SEED_FILE}`);
+  process.exit(0);
+}
 
 console.log(`Seeding DUADP reference database (domain: ${SEED_DOMAIN})...`);
 

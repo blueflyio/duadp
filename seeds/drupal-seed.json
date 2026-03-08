@@ -1,0 +1,92 @@
+{
+  "agents": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "content-guardian", "version": "1.4.0", "description": "AI content quality guardian for Drupal CMS — checks accuracy, tone, brand compliance", "category": "content", "trust_tier": "verified-signature", "tags": ["drupal", "content", "quality", "cms", "ai"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/agents/content-guardian", "did": "did:web:discover.drupl.ai:agents:content-guardian" },
+      "spec": { "capabilities": ["content-review", "tone-analysis", "brand-compliance", "fact-checking"], "cms_integration": "drupal" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "seo-optimizer", "version": "2.1.0", "description": "SEO optimization agent for Drupal content — meta tags, schema.org, keyword analysis", "category": "marketing", "trust_tier": "verified-signature", "tags": ["drupal", "seo", "marketing", "optimization"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/agents/seo-optimizer", "did": "did:web:discover.drupl.ai:agents:seo-optimizer" },
+      "spec": { "capabilities": ["meta-tag-generation", "keyword-analysis", "schema-org-markup", "sitemap-optimization"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "accessibility-auditor", "version": "1.0.0", "description": "WCAG 2.2 accessibility auditor for Drupal sites — automated a11y testing and remediation", "category": "accessibility", "trust_tier": "verified-signature", "tags": ["drupal", "accessibility", "wcag", "a11y"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/agents/accessibility-auditor", "did": "did:web:discover.drupl.ai:agents:accessibility-auditor" },
+      "spec": { "capabilities": ["wcag-testing", "alt-text-generation", "color-contrast-analysis", "aria-validation"], "standards": ["WCAG 2.2 AA"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "media-processor", "version": "1.3.0", "description": "Intelligent media processing — auto-tagging, cropping, alt text, responsive images", "category": "media", "trust_tier": "community", "tags": ["drupal", "media", "images", "processing", "ai"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/agents/media-processor", "did": "did:web:discover.drupl.ai:agents:media-processor" },
+      "spec": { "capabilities": ["image-tagging", "smart-cropping", "alt-text-generation", "responsive-variants"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "workflow-automator", "version": "1.6.0", "description": "ECA-based workflow automation agent for Drupal — content workflows, approvals, notifications", "category": "automation", "trust_tier": "verified-signature", "tags": ["drupal", "workflow", "eca", "automation", "rules"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/agents/workflow-automator", "did": "did:web:discover.drupl.ai:agents:workflow-automator" },
+      "spec": { "capabilities": ["eca-rules", "content-workflows", "approval-chains", "notification-dispatch"], "cms_integration": "drupal" }
+    }
+  ],
+  "skills": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "content-analysis", "version": "1.2.0", "description": "Analyze Drupal content for quality, readability, and SEO", "category": "content", "trust_tier": "verified-signature", "tags": ["drupal", "content", "analysis"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/skills/content-analysis", "did": "did:web:discover.drupl.ai:skills:content-analysis" },
+      "spec": { "input_schema": { "type": "object", "properties": { "content": { "type": "string" }, "content_type": { "type": "string" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "seo-scoring", "version": "1.0.0", "description": "Score content for SEO effectiveness", "category": "marketing", "trust_tier": "verified-signature", "tags": ["seo", "scoring", "marketing"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/skills/seo-scoring", "did": "did:web:discover.drupl.ai:skills:seo-scoring" },
+      "spec": { "input_schema": { "type": "object", "properties": { "url": { "type": "string" }, "content": { "type": "string" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "a11y-checking", "version": "1.0.0", "description": "Check HTML content for WCAG accessibility compliance", "category": "accessibility", "trust_tier": "verified-signature", "tags": ["accessibility", "wcag", "html"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/skills/a11y-checking", "did": "did:web:discover.drupl.ai:skills:a11y-checking" },
+      "spec": { "input_schema": { "type": "object", "properties": { "html": { "type": "string" }, "level": { "type": "string", "default": "AA" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "media-tagging", "version": "1.1.0", "description": "Auto-generate tags, alt text, and metadata for media assets", "category": "media", "trust_tier": "community", "tags": ["media", "tagging", "ai", "images"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/skills/media-tagging", "did": "did:web:discover.drupl.ai:skills:media-tagging" },
+      "spec": { "input_schema": { "type": "object", "properties": { "image_url": { "type": "string" } } }, "execution_model": "stateless" }
+    }
+  ],
+  "tools": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "drush-cli", "version": "13.0.0", "description": "Drush command-line interface for Drupal site management", "category": "infrastructure", "trust_tier": "official", "tags": ["drupal", "drush", "cli", "admin"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/tools/drush-cli", "did": "did:web:discover.drupl.ai:tools:drush-cli" },
+      "spec": { "protocol": "rest", "transport": "stdio" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "drupal-jsonapi", "version": "2.0.0", "description": "Drupal JSON:API client for content CRUD operations", "category": "integration", "trust_tier": "verified-signature", "tags": ["drupal", "jsonapi", "rest", "content"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/tools/drupal-jsonapi", "did": "did:web:discover.drupl.ai:tools:drupal-jsonapi" },
+      "spec": { "protocol": "rest", "transport": "https" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "paragraphs-builder", "version": "1.0.0", "description": "Programmatic Paragraphs content builder for structured Drupal layouts", "category": "content", "trust_tier": "community", "tags": ["drupal", "paragraphs", "layout", "content"] },
+      "identity": { "gaid": "agent://discover.drupl.ai/tools/paragraphs-builder", "did": "did:web:discover.drupl.ai:tools:paragraphs-builder" },
+      "spec": { "protocol": "mcp", "transport": "stdio" }
+    }
+  ]
+}

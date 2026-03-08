@@ -1,0 +1,24 @@
+{
+  "name": "@bluefly/duadp-cli",
+  "version": "0.1.0",
+  "description": "DUADP CLI — register, verify, search, and manage agents across federated nodes",
+  "type": "module",
+  "bin": {
+    "duadp": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@bluefly/duadp": "^0.1.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  }
+}

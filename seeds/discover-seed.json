@@ -1,0 +1,125 @@
+{
+  "agents": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": {
+        "name": "orchestrator",
+        "version": "2.1.0",
+        "description": "Multi-agent coordinator that delegates tasks across federated agent networks",
+        "category": "orchestration",
+        "trust_tier": "official",
+        "tags": ["orchestration", "multi-agent", "delegation", "coordination"]
+      },
+      "identity": { "gaid": "agent://discover.duadp.org/agents/orchestrator", "did": "did:web:discover.duadp.org:agents:orchestrator" },
+      "spec": { "capabilities": ["task-delegation", "agent-discovery", "workflow-management"], "max_concurrent_tasks": 50, "supported_protocols": ["mcp", "a2a", "rest"] },
+      "risk": { "level": "medium", "autonomy_level": "supervised", "data_sensitivity": "internal" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": {
+        "name": "code-reviewer",
+        "version": "3.0.0",
+        "description": "Automated code review agent with security vulnerability detection and quality analysis",
+        "category": "development",
+        "trust_tier": "verified-signature",
+        "tags": ["code-review", "security", "quality", "static-analysis"]
+      },
+      "identity": { "gaid": "agent://discover.duadp.org/agents/code-reviewer", "did": "did:web:discover.duadp.org:agents:code-reviewer" },
+      "spec": { "capabilities": ["code-review", "security-scanning", "style-analysis"], "supported_languages": ["typescript", "python", "go", "rust", "php"] },
+      "risk": { "level": "low", "autonomy_level": "advisory", "data_sensitivity": "internal" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": {
+        "name": "security-auditor",
+        "version": "1.8.0",
+        "description": "NIST-compliant security auditing agent for infrastructure and code",
+        "category": "security",
+        "trust_tier": "official",
+        "tags": ["security", "audit", "nist", "compliance", "vulnerability"]
+      },
+      "identity": { "gaid": "agent://discover.duadp.org/agents/security-auditor", "did": "did:web:discover.duadp.org:agents:security-auditor" },
+      "spec": { "capabilities": ["vulnerability-scanning", "compliance-checking", "risk-assessment"], "frameworks": ["NIST AI RMF", "ISO 42001", "OWASP"] },
+      "risk": { "level": "low", "autonomy_level": "advisory", "data_sensitivity": "confidential" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": {
+        "name": "content-moderator",
+        "version": "1.2.0",
+        "description": "AI content moderation agent for safety and policy compliance",
+        "category": "safety",
+        "trust_tier": "official",
+        "tags": ["moderation", "safety", "content-policy", "trust"]
+      },
+      "identity": { "gaid": "agent://discover.duadp.org/agents/content-moderator", "did": "did:web:discover.duadp.org:agents:content-moderator" },
+      "spec": { "capabilities": ["content-classification", "toxicity-detection", "policy-enforcement"] },
+      "risk": { "level": "low", "autonomy_level": "supervised", "data_sensitivity": "public" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": {
+        "name": "task-planner",
+        "version": "1.5.0",
+        "description": "Hierarchical task decomposition and planning agent",
+        "category": "planning",
+        "trust_tier": "verified-signature",
+        "tags": ["planning", "task-decomposition", "scheduling", "project-management"]
+      },
+      "identity": { "gaid": "agent://discover.duadp.org/agents/task-planner", "did": "did:web:discover.duadp.org:agents:task-planner" },
+      "spec": { "capabilities": ["task-decomposition", "dependency-analysis", "scheduling", "resource-allocation"] },
+      "risk": { "level": "low", "autonomy_level": "advisory", "data_sensitivity": "internal" }
+    }
+  ],
+  "skills": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "web-search", "version": "1.2.0", "description": "Search the web for real-time information", "category": "information-retrieval", "trust_tier": "verified-signature", "tags": ["search", "web", "real-time"] },
+      "identity": { "gaid": "agent://discover.duadp.org/skills/web-search", "did": "did:web:discover.duadp.org:skills:web-search" },
+      "spec": { "input_schema": { "type": "object", "properties": { "query": { "type": "string" } } }, "execution_model": "stateless", "avg_latency_ms": 1200 }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "code-review", "version": "2.0.1", "description": "Automated code review with vulnerability detection", "category": "development", "trust_tier": "official", "tags": ["code", "review", "security"] },
+      "identity": { "gaid": "agent://discover.duadp.org/skills/code-review", "did": "did:web:discover.duadp.org:skills:code-review" },
+      "spec": { "input_schema": { "type": "object", "properties": { "code": { "type": "string" }, "language": { "type": "string" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "text-summarizer", "version": "1.5.0", "description": "Summarize documents into concise overviews", "category": "nlp", "trust_tier": "signed", "tags": ["nlp", "summarization", "text"] },
+      "identity": { "gaid": "agent://discover.duadp.org/skills/text-summarizer", "did": "did:web:discover.duadp.org:skills:text-summarizer" },
+      "spec": { "input_schema": { "type": "object", "properties": { "text": { "type": "string" } } }, "execution_model": "stateless" }
+    }
+  ],
+  "tools": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "mcp-filesystem", "version": "1.0.0", "description": "File system operations via MCP", "category": "infrastructure", "trust_tier": "official", "tags": ["mcp", "filesystem", "io"] },
+      "identity": { "gaid": "agent://discover.duadp.org/tools/mcp-filesystem", "did": "did:web:discover.duadp.org:tools:mcp-filesystem" },
+      "spec": { "protocol": "mcp", "transport": "stdio" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "a2a-email", "version": "1.1.0", "description": "Email operations via A2A protocol", "category": "communication", "trust_tier": "verified-signature", "tags": ["a2a", "email", "communication"] },
+      "identity": { "gaid": "agent://discover.duadp.org/tools/a2a-email", "did": "did:web:discover.duadp.org:tools:a2a-email" },
+      "spec": { "protocol": "a2a", "transport": "https" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "openapi-weather", "version": "2.0.0", "description": "Weather data via OpenAPI REST endpoint", "category": "data", "trust_tier": "community", "tags": ["rest", "weather", "api"] },
+      "identity": { "gaid": "agent://discover.duadp.org/tools/openapi-weather", "did": "did:web:discover.duadp.org:tools:openapi-weather" },
+      "spec": { "protocol": "rest", "transport": "https" }
+    }
+  ]
+}
