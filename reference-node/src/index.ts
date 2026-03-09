@@ -612,7 +612,7 @@ app.post('/api/v1/federation/revocations', (req: Request, res: Response) => {
 });
 
 // GAID Resolution (cross-node)
-app.get('/api/v1/resolve/:gaid(*)', async (req: Request, res: Response) => {
+app.get('/api/v1/resolve/:gaid(.*)', async (req: Request, res: Response) => {
   const gaid = req.params.gaid as string;
 
   // Try local first
