@@ -65,7 +65,7 @@ const config = {
 // /.well-known/duadp.json
 app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
   const manifest: DuadpManifest = {
-    protocol_version: '0.2.0',
+    protocol_version: '0.1.3',
     node_id: config.nodeId,
     node_name: config.nodeName,
     endpoints: {
@@ -117,7 +117,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
     resources: resourceCount,
     policies: 'dynamic',
     peers: peerCount,
-    version: '0.2.0',
+    version: '0.1.3',
   });
 });
 
@@ -552,7 +552,7 @@ app.post('/api/v1/validate', async (req: Request, res: Response) => {
 app.get('/api/v1/federation', async (_req: Request, res: Response) => {
   const peers = await provider.listPeers!();
   const response: FederationResponse = {
-    protocol_version: '0.2.0',
+    protocol_version: '0.1.3',
     node_id: config.nodeId,
     node_name: config.nodeName,
     gossip: config.federation.gossip,
