@@ -2,25 +2,22 @@ import type { UadpManifest as DuadpManifest, FederationResponse } from '@bluefly
 import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { evaluateCedar, evaluateManifestCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
 import { initDb } from './db.js';
 import {
-  deduplicateByGaid,
-  federatedFetch,
-  registerEnvPeers,
-  resolveGaidFromPeers,
-  resolveGaidLocally,
-  startHealthChecks,
+    deduplicateByGaid,
+    federatedFetch,
+    registerEnvPeers,
+    resolveGaidFromPeers,
+    resolveGaidLocally,
+    startHealthChecks,
 } from './federation.js';
-import { evaluateCedar, evaluateManifestCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
-import { verifyPublisherSignature } from './signature-verifier.js';
 import { createGovernanceRouter } from './governance.js';
-import { isRevoked, isNameRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
-import { verifyTrustTier } from './trust.js';
 import { createMcpRouter } from './mcp.js';
 import { createSqliteProvider } from './provider.js';
+import { isNameRevoked, isRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
+import { verifyPublisherSignature } from './signature-verifier.js';
+import { verifyTrustTier } from './trust.js';
 
 const PORT = parseInt(process.env.PORT || '4200');
 const DB_PATH = process.env.DB_PATH || process.env.DUADP_DB_PATH || './data/duadp.db';
@@ -28,44 +25,7 @@ const BASE_URL = process.env.BASE_URL || process.env.DUADP_BASE_URL || `http://l
 const NODE_NAME = process.env.NODE_NAME || process.env.DUADP_NODE_NAME || 'OSSA Reference Node';
 const NODE_ID = process.env.NODE_ID || process.env.DUADP_NODE_ID || 'did:web:localhost';
 
-const CEDAR_CATALOG_PATH =
-  process.env.CEDAR_CATALOG_PATH ||
-  resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'cedar-policies', 'catalog.json');
-
-// Load Cedar policy catalog (static JSON served at /api/v1/policies)
-interface CedarCatalogEntry {
-  id: string;
-  name: string;
-  description: string;
-  version: string;
-  tags: string[];
-  classification: string;
-  complianceFrameworks: string[];
-  authors: string[];
-  approvers: string[];
-  cedarFile: string;
-  statementCount: number;
-  dependsOn: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface CedarCatalog {
-  version: string;
-  generatedAt: string;
-  policies: CedarCatalogEntry[];
-  totalPolicies: number;
-  tags: string[];
-}
-
-let cedarCatalog: CedarCatalog;
-try {
-  cedarCatalog = JSON.parse(readFileSync(CEDAR_CATALOG_PATH, 'utf-8'));
-} catch {
-  console.warn(`Cedar policy catalog not found at ${CEDAR_CATALOG_PATH}, using empty catalog`);
-  cedarCatalog = { version: '0.0.0', generatedAt: new Date().toISOString(), policies: [], totalPolicies: 0, tags: [] };
-}
-
+const COMPLIANCE_ENGINE_URL = process.env.COMPLIANCE_ENGINE_URL || 'https://compliance.blueflyagents.com';
 const CEDAR_POLICIES_BASE_URL = 'https://gitlab.com/blueflyio/cedar-policies/-/raw/main/policies';
 
 const db = initDb(DB_PATH);
@@ -154,7 +114,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
     node_id: NODE_ID,
     uptime: process.uptime(),
     resources: resourceCount,
-    policies: cedarCatalog.totalPolicies,
+    policies: 'dynamic',
     peers: peerCount,
     version: '0.2.0',
   });
@@ -264,87 +224,104 @@ app.get('/api/v1/tools/:name', async (req: Request, res: Response) => {
   res.json(tool);
 });
 
-// Policies (Cedar policy catalog)
-app.get('/api/v1/policies', (req: Request, res: Response) => {
+// Policies (Proxy from Compliance Engine)
+app.get('/api/v1/policies', async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt((req.query as Record<string, string>).page) || 1);
   const perPage = Math.min(100, parseInt((req.query as Record<string, string>).per_page || '20', 10));
   const tag = (req.query as Record<string, string>).tag;
   const search = (req.query as Record<string, string>).search;
   const framework = (req.query as Record<string, string>).framework;
 
-  let filtered = cedarCatalog.policies;
+  try {
+    const engineRes = await fetch(`${COMPLIANCE_ENGINE_URL}/api/v1/cedar/policies`);
+    if (!engineRes.ok) throw new Error(`Engine returned ${engineRes.status}`);
+    const engineData = await engineRes.json();
+    let filtered = engineData.data || [];
 
-  if (tag) {
-    filtered = filtered.filter((p) => p.tags.includes(tag));
-  }
-  if (framework) {
-    filtered = filtered.filter((p) => p.complianceFrameworks.includes(framework));
-  }
-  if (search) {
-    const q = search.toLowerCase();
-    filtered = filtered.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q) || p.id.toLowerCase().includes(q),
-    );
-  }
+    if (tag) {
+      filtered = filtered.filter((p: any) => p.tags && p.tags.includes(tag));
+    }
+    if (framework) {
+      filtered = filtered.filter((p: any) => p.complianceFrameworks && p.complianceFrameworks.includes(framework));
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (p: any) => p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
+      );
+    }
 
-  const total = filtered.length;
-  const pages = Math.ceil(total / perPage);
-  const offset = (page - 1) * perPage;
-  const paged = filtered.slice(offset, offset + perPage);
+    const total = filtered.length;
+    const pages = Math.ceil(total / perPage);
+    const offset = (page - 1) * perPage;
+    const paged = filtered.slice(offset, offset + perPage);
 
-  res.json({
-    data: paged.map((p) => ({
+    res.json({
+      data: paged.map((p: any) => ({
+        kind: 'Policy',
+        metadata: {
+          name: p.name,
+          version: p.version || '1.0.0',
+          description: p.description,
+          tags: p.tags || [],
+          complianceFrameworks: p.complianceFrameworks || [],
+          classification: p.category || 'standard',
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        },
+        spec: {
+          format: 'cedar',
+          cedarSource: p.policyText,
+          statementCount: (p.policyText && typeof p.policyText === 'string')
+            ? (p.policyText.match(/^(permit|forbid)\s*\(/gm) || []).length
+            : 0
+        },
+      })),
+      pagination: { total, page, per_page: perPage, pages },
+    });
+  } catch (err) {
+    console.error('Failed to proxy policies:', err);
+    res.status(502).json({ error: 'Failed to proxy policies from compliance engine' });
+  }
+});
+
+app.get('/api/v1/policies/:name', async (req: Request, res: Response) => {
+  try {
+    const engineRes = await fetch(`${COMPLIANCE_ENGINE_URL}/api/v1/cedar/policies`);
+    if (!engineRes.ok) throw new Error(`Engine returned ${engineRes.status}`);
+    const engineData = await engineRes.json();
+    const policies = engineData.data || [];
+    const p = policies.find((x: any) => x.name === req.params.name || x.id === req.params.name);
+
+    if (!p) {
+      res.status(404).json({ error: 'Policy not found' });
+      return;
+    }
+
+    res.json({
       kind: 'Policy',
       metadata: {
-        name: p.id,
-        version: p.version,
+        name: p.name,
+        version: p.version || '1.0.0',
         description: p.description,
-        tags: p.tags,
-        complianceFrameworks: p.complianceFrameworks,
-        classification: p.classification,
-        authors: p.authors,
-        approvers: p.approvers,
-        dependsOn: p.dependsOn,
+        tags: p.tags || [],
+        complianceFrameworks: p.complianceFrameworks || [],
+        classification: p.category || 'standard',
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
       },
       spec: {
         format: 'cedar',
-        statementCount: p.statementCount,
-        url: `${CEDAR_POLICIES_BASE_URL}/${p.cedarFile}`,
+        cedarSource: p.policyText,
+        statementCount: (p.policyText && typeof p.policyText === 'string')
+          ? (p.policyText.match(/^(permit|forbid)\s*\(/gm) || []).length
+          : 0
       },
-    })),
-    pagination: { total, page, per_page: perPage, pages },
-  });
-});
-
-app.get('/api/v1/policies/:name', (req: Request, res: Response) => {
-  const policy = cedarCatalog.policies.find((p) => p.id === req.params.name);
-  if (!policy) {
-    res.status(404).json({ error: 'Policy not found' });
-    return;
+    });
+  } catch (err) {
+    console.error('Failed to fetch policy:', err);
+    res.status(502).json({ error: 'Failed to proxy policy from compliance engine' });
   }
-  res.json({
-    kind: 'Policy',
-    metadata: {
-      name: policy.id,
-      version: policy.version,
-      description: policy.description,
-      tags: policy.tags,
-      complianceFrameworks: policy.complianceFrameworks,
-      classification: policy.classification,
-      authors: policy.authors,
-      approvers: policy.approvers,
-      dependsOn: policy.dependsOn,
-      createdAt: policy.createdAt,
-      updatedAt: policy.updatedAt,
-    },
-    spec: {
-      format: 'cedar',
-      statementCount: policy.statementCount,
-      url: `${CEDAR_POLICIES_BASE_URL}/${policy.cedarFile}`,
-    },
-  });
 });
 
 // Cedar Policy Evaluation
