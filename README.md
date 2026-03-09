@@ -353,8 +353,8 @@ cd sdk/typescript && npm test
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.2.0** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
-| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.2.0** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
+| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.1.3** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.1.3** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
 | Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |
 | Static JSON template | Planned | GitHub Pages starter |
 
