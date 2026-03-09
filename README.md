@@ -12,11 +12,11 @@
 
 > **GitLab**: [gitlab.com/blueflyio/duadp/duadp](https://gitlab.com/blueflyio/duadp/duadp) | **GitHub mirror**: [github.com/blueflyio/duadp](https://github.com/blueflyio/duadp)
 
-## The Three-Layer Agent Security Architecture
+## Why DUADP + OSSA
 
-> *"AI agents require the same foundational infrastructure the internet required: identity, discovery, and governance."*
 
-DUADP is Layer 2 of a three-layer open architecture for secure, interoperable AI agents:
+
+AI agents need the same foundational infrastructure the internet has: **identity**, **discovery**, and **governance**. DUADP and OSSA together provide a complete open stack:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -55,14 +55,12 @@ DUADP is Layer 2 of a three-layer open architecture for secure, interoperable AI
 └─────────────────────────────────────────────────────────────┘
 ```
 
-This architecture answers the [NIST CAISI RFI (NIST-2025-0035)](https://www.regulations.gov/docket/NIST-2025-0035) directly:
-
-| NIST Concern | This Architecture |
+| Security requirement | How it's addressed |
 |---|---|
 | Agent identity & authentication | OSSA manifests + W3C DID (GAID) |
-| Authorization & least-privilege | Cedar policies in OSSA |
-| Governance & human oversight | Signed manifests + audit endpoints |
-| Interoperability | DUADP federated discovery |
+| Authorization & least-privilege | Cedar policies embedded in the manifest |
+| Governance & human oversight | Signed manifests + audit log endpoints |
+| Cross-system interoperability | DUADP federated discovery |
 | Monitoring & incident response | DUADP audit log + attestation API |
 | Supply chain security | `x-signature` + SBOM pointers |
 
@@ -76,7 +74,7 @@ const agents = await client.search({
 });
 ```
 
-> See [DUADP NIST alignment →](https://duadp.org/nist) | [OSSA NIST whitepaper →](https://openstandardagents.org/nist/whitepaper)
+> [duadp.org/federation →](https://duadp.org/federation) | [OSSA specification →](https://openstandardagents.org/specification)
 
 
 DUADP is an open protocol that lets any system discover, publish, and exchange AI capabilities across organizational boundaries. Like DNS for websites or ActivityPub for social networks, DUADP provides a standard way for AI registries, marketplaces, and tools to find each other.
