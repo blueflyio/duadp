@@ -112,7 +112,7 @@ export function createDuadpRouter(config: DuadpNodeConfig, provider: DuadpDataPr
   // /.well-known/duadp.json
   router.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
     const manifest: DuadpManifest = {
-      protocol_version: '0.2.0',
+      protocol_version: '0.1.3',
       node_id: config.nodeId,
       node_name: config.nodeName,
       node_description: config.nodeDescription,
@@ -324,7 +324,7 @@ export function createDuadpRouter(config: DuadpNodeConfig, provider: DuadpDataPr
       try {
         const peers = await provider.listPeers!();
         const response: FederationResponse = {
-          protocol_version: '0.2.0',
+          protocol_version: '0.1.3',
           node_id: config.nodeId,
           node_name: config.nodeName,
           gossip: config.federation?.gossip,

@@ -43,7 +43,7 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 	// GET /.well-known/duadp.json
 	mux.HandleFunc("GET /.well-known/duadp.json", func(w http.ResponseWriter, r *http.Request) {
 		manifest := DuadpManifest{
-			ProtocolVersion: "0.1.0",
+			ProtocolVersion: "0.1.3",
 			NodeName:        config.NodeName,
 			NodeDescription: config.NodeDescription,
 			Contact:         config.Contact,

@@ -13,7 +13,7 @@
  *   duadp health            — Check node health
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const DEFAULT_NODE = process.env.DUADP_NODE || 'http://localhost:4200';
@@ -78,7 +78,7 @@ async function cmdInit() {
     kind: 'Agent',
     metadata: {
       name: 'my-agent',
-      version: '0.1.0',
+      version: '0.1.3',
       description: 'A DUADP-registered agent',
       tags: ['ai', 'automation'],
       trust_tier: 'community',
@@ -347,7 +347,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 
 function printHelp() {
   console.log(`
-DUADP CLI v0.1.0 — Decentralized Universal AI Discovery Protocol
+DUADP CLI v0.1.3 — Decentralized Universal AI Discovery Protocol
 
 Usage: duadp <command> [options]
 

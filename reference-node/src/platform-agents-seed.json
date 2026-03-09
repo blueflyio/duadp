@@ -4,7 +4,7 @@
     "kind": "Agent",
     "metadata": {
       "name": "a2a-bridge-worker",
-      "version": "0.2.0",
+      "version": "0.1.3",
       "description": "A2A Bridge agent — bridges MCP tools to A2A protocol for inter-agent communication, swarm coordination, and OSSA capability-based delegation. Connects Claude Code Agent Teams to the A2A collector/stream infrastructure.",
       "category": "infrastructure",
       "trust_tier": "official",
@@ -705,7 +705,7 @@
     "kind": "Agent",
     "metadata": {
       "name": "dragonfly-deployment-agent",
-      "version": "0.1.0",
+      "version": "0.1.3",
       "description": "Meta-agent that deploys other OSSA agents. Orchestration layer for agent lifecycle:",
       "category": "orchestration",
       "trust_tier": "official",
@@ -932,7 +932,7 @@
     "kind": "Agent",
     "metadata": {
       "name": "gitlab-ossa-agent",
-      "version": "0.1.0",
+      "version": "0.1.3",
       "description": "GitLab Duo external agent coordinator. Runs on Oracle; receives webhooks from",
       "category": "platform",
       "trust_tier": "official",
@@ -1452,7 +1452,7 @@
     "kind": "Agent",
     "metadata": {
       "name": "mr-auto-fix",
-      "version": "0.1.0",
+      "version": "0.1.3",
       "description": "Autonomous MR auto-fix agent — resolves conflicts, fixes pipelines, responds to Duo comments, and merges when ready.",
       "category": "gitlab",
       "trust_tier": "official",

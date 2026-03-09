@@ -1,16 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { createDuadpRouter } from '../server.js';
-import type { DuadpDataProvider } from '../server.js';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { DuadpClient, DuadpError } from '../client.js';
+import type { DuadpDataProvider } from '../server.js';
+import { createDuadpRouter } from '../server.js';
 import type {
-  OssaSkill,
-  OssaAgent,
-  OssaTool,
-  Peer,
-  PaginatedResponse,
+    OssaAgent,
+    OssaSkill,
+    OssaTool,
+    Peer
 } from '../types.js';
 
 // ── Helpers ──────────────────────────────────────────────────────
@@ -277,7 +276,7 @@ describe('DUADP SDK integration (client + server)', () => {
     it('GET /.well-known/duadp.json returns valid manifest', async () => {
       const manifest = await client.discover();
       expect(manifest).toBeDefined();
-      expect(manifest.protocol_version).toBe('0.2.0');
+      expect(manifest.protocol_version).toBe('0.1.3');
       expect(manifest.node_name).toBe(NODE_NAME);
       expect(manifest.node_id).toBe(NODE_ID);
     });
@@ -493,7 +492,7 @@ describe('DUADP SDK integration (client + server)', () => {
     it('getFederation() returns federation response', async () => {
       const fed = await client.getFederation();
       expect(fed).toBeDefined();
-      expect(fed.protocol_version).toBe('0.2.0');
+      expect(fed.protocol_version).toBe('0.1.3');
       expect(fed.node_name).toBe(NODE_NAME);
       expect(fed.node_id).toBe(NODE_ID);
       expect(Array.isArray(fed.peers)).toBe(true);

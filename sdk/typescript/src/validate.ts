@@ -14,7 +14,7 @@ export function validateManifest(manifest: unknown): ValidationResult {
   if (!m.protocol_version || typeof m.protocol_version !== 'string') {
     errors.push('protocol_version is required and must be a string');
   } else if (!/^\d+\.\d+\.\d+$/.test(m.protocol_version)) {
-    errors.push('protocol_version must be semver (e.g., "0.1.0")');
+    errors.push('protocol_version must be semver (e.g., "0.1.3")');
   }
 
   if (!m.node_name || typeof m.node_name !== 'string') {

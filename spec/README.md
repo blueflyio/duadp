@@ -1,8 +1,8 @@
 # Universal AI Discovery Protocol (DUADP)
 
-**Version:** 0.2.0
+**Version:** 0.1.3
 **Status:** Draft
-**Spec URI:** `https://openstandardagents.org/spec/duadp/v0.2`
+**Spec URI:** `https://openstandardagents.org/spec/duadp/v0.1`
 
 ## 1. Overview
 
@@ -40,7 +40,7 @@ GET /.well-known/duadp.json
 
 ```json
 {
-  "protocol_version": "0.2.0",
+  "protocol_version": "0.1.3",
   "node_id": "did:web:acme.com",
   "node_name": "Acme Corp AI Hub",
   "node_description": "Enterprise AI skills, tools, and agents",
@@ -68,7 +68,7 @@ GET /.well-known/duadp.json
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `protocol_version` | string | MUST | Semver. Current: `"0.2.0"` |
+| `protocol_version` | string | MUST | Semver. Current: `"0.1.3"` |
 | `node_id` | string | SHOULD | DID or URI uniquely identifying this node |
 | `node_name` | string | MUST | Human-readable node name |
 | `node_description` | string | SHOULD | Short description of the node |
@@ -446,7 +446,7 @@ Returns this node's peer list and federation metadata:
 
 ```json
 {
-  "protocol_version": "0.2.0",
+  "protocol_version": "0.1.3",
   "node_id": "did:web:acme.com",
   "node_name": "Acme Corp AI Hub",
   "gossip": true,
@@ -1146,7 +1146,7 @@ See `openapi.yaml` for the complete OpenAPI 3.1 definition of all DUADP endpoint
 
 ## Appendix C: Changelog
 
-### 0.2.0 (2026-03-06)
+### 0.1.0/0.1.2 (2026-03-06)
 - Tools endpoint (`/api/v1/tools`) — MCP tools, A2A tools as first-class resources
 - Publishing API (`POST /api/v1/publish`) — write operations for resource creation
 - WebFinger resolution for individual resource lookup by GAID

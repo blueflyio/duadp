@@ -49,7 +49,7 @@ from .types import (
 from .client import DuadpClient, DuadpError, resolve_gaid
 from .validate import validate_manifest, validate_response
 
-__version__ = "0.2.0"
+__version__ = "0.1.3"
 __all__ = [
     # Client
     "DuadpClient", "DuadpError", "resolve_gaid",

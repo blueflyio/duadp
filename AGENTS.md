@@ -6,7 +6,7 @@
 
 ## Architecture
 
-- **Spec**: `spec/` — normative protocol specification (v0.2.0), OpenAPI 3.1, JSON Schemas
+- **Spec**: `spec/` — normative protocol specification (v0.1.3), OpenAPI 3.1, JSON Schemas
 - **TypeScript SDK**: `sdk/typescript/` — `@bluefly/duadp` npm package (client, server, crypto, DID, validation, conformance)
 - **Python SDK**: `sdk/python/` — `duadp` PyPI package (client, models)
 - **Reference Node**: `reference-node/` — Express 5.0 + SQLite, all protocol endpoints, Docker-ready
@@ -29,7 +29,7 @@ cd sdk/python && pip install -e ".[dev]" && pytest
 
 ```
 spec/
-  README.md              # DUADP v0.2.0 specification
+  README.md              # DUADP v0.1.3 specification
   openapi.yaml           # OpenAPI 3.1 definition
   schemas/               # JSON Schema validation files
 sdk/

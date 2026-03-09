@@ -1,5 +1,5 @@
-import { Router } from 'express';
 import type Database from 'better-sqlite3';
+import { Router } from 'express';
 
 const startTime = Date.now();
 
@@ -14,7 +14,7 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
 
     res.json({
       status: 'healthy',
-      version: '0.2.0',
+      version: '0.1.3',
       uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
       resources: { skills, agents, tools },
       node_name: nodeName,

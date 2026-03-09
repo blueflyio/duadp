@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { validateManifest, validateResponse, isDuadpManifest } from '../validate.js';
+import { describe, expect, it } from 'vitest';
+import { isDuadpManifest, validateManifest, validateResponse } from '../validate.js';
 
 function validManifest() {
   return {
-    protocol_version: '0.1.0',
+    protocol_version: '0.1.3',
     node_name: 'test-node',
     node_description: 'A test node',
     endpoints: {
@@ -199,6 +199,6 @@ describe('isDuadpManifest', () => {
     expect(isDuadpManifest({})).toBe(false);
     expect(isDuadpManifest(null)).toBe(false);
     expect(isDuadpManifest('string')).toBe(false);
-    expect(isDuadpManifest({ protocol_version: '0.1.0' })).toBe(false);
+    expect(isDuadpManifest({ protocol_version: '0.1.3' })).toBe(false);
   });
 });

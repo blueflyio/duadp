@@ -147,7 +147,7 @@ describe('Policy 5-6: Federation Peering', () => {
   test('allows peering with v0.x protocol', () => {
     const result = evaluateCedar(makeRequest({
       actionId: 'peer',
-      context: { protocol_version: '0.2.0' },
+      context: { protocol_version: '0.1.3' },
     }));
     assert.equal(result.decision, 'Allow');
   });

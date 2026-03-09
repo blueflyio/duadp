@@ -3,7 +3,7 @@
 **Decentralized, federated discovery and publishing for AI Agents, Skills, Tools, and Marketplaces.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
+[![Spec Version](https://img.shields.io/badge/spec-v0.1.3-green.svg)](spec/README.md)
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
@@ -108,7 +108,7 @@ app.use(createDuadpRouter({
 
 ```
 spec/                    # The normative specification
-  README.md              # DUADP v0.2.0 spec document
+  README.md              # DUADP v0.1.3 spec document
   openapi.yaml           # OpenAPI 3.1 definition
   schemas/               # JSON Schema validation files
 sdk/
@@ -252,7 +252,7 @@ curl -X POST https://discover.duadp.org/api/v1/publish \
   -d '{"apiVersion":"ossa/v0.5","kind":"Skill","metadata":{"name":"my-skill","description":"My custom skill"}}'
 ```
 
-Node ID: `did:web:discover.duadp.org` | Protocol: DUADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
+Node ID: `did:web:discover.duadp.org` | Protocol: DUADP v0.1.3 | 5 skills, 3 agents, 3 tools seeded
 
 ## Run the Reference Node Locally
 
@@ -296,7 +296,7 @@ docker compose up --build
 
 ## Verified Endpoint Status
 
-All endpoints tested and passing (reference node v0.2.0):
+All endpoints tested and passing (reference node v0.1.3):
 
 | Endpoint | Method | Status | Description |
 |----------|--------|--------|-------------|
