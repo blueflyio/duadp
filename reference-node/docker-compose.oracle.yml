@@ -1,0 +1,10 @@
+# Oracle production: direct tailnet access on port 4201 (discover.duadp.org).
+# Overrides base compose to publish host port 4201 -> container 4200.
+version: '3.8'
+services:
+  duadp-node:
+    ports:
+      - "4201:4200"
+    environment:
+      - DUADP_BASE_URL=https://discover.duadp.org
+      - DUADP_NODE_NAME=DUADP Global Discovery
