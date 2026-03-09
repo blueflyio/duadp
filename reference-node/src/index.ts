@@ -26,8 +26,8 @@ const BASE_URL = process.env.BASE_URL || process.env.DUADP_BASE_URL || `http://l
 const NODE_NAME = process.env.NODE_NAME || process.env.DUADP_NODE_NAME || 'OSSA Reference Node';
 const NODE_ID = process.env.NODE_ID || process.env.DUADP_NODE_ID || 'did:web:localhost';
 
-const COMPLIANCE_ENGINE_URL = process.env.COMPLIANCE_ENGINE_URL || 'https://compliance.blueflyagents.com';
-const CEDAR_POLICIES_BASE_URL = 'https://gitlab.com/blueflyio/cedar-policies/-/raw/main/policies';
+const COMPLIANCE_ENGINE_URL = process.env.COMPLIANCE_ENGINE_URL || process.env.COMPLIANCE_API_URL || 'https://compliance.blueflyagents.com';
+// Note: COMPLIANCE_ENGINE_URL is passed to cedar-evaluator.ts via process.env — no local Cedar runs here.
 
 const db = initDb(DB_PATH);
 const provider = createSqliteProvider(db);
@@ -325,14 +325,14 @@ app.get('/api/v1/policies/:name', async (req: Request, res: Response) => {
   }
 });
 
-// Cedar Policy Evaluation
-app.post('/api/v1/policies/evaluate', (req: Request, res: Response) => {
+// Cedar Policy Evaluation — proxies to compliance.blueflyagents.com/evaluate
+app.post('/api/v1/policies/evaluate', async (req: Request, res: Response) => {
   const body = req.body as CedarEvaluationRequest;
-  if (!body.principal || !body.action || !body.resource || !body.policies) {
-    res.status(400).json({ error: 'Missing required fields: principal, action, resource, policies' });
+  if (!body.principal || !body.action || !body.resource) {
+    res.status(400).json({ error: 'Missing required fields: principal, action, resource' });
     return;
   }
-  const result = evaluateCedar(body);
+  const result = await evaluateCedar(body);
   res.json(result);
 });
 
@@ -424,9 +424,9 @@ app.post('/api/v1/publish', async (req: Request, res: Response) => {
     return;
   }
 
-  // Cedar pre-authorization check (with entity data so Policy 8 evaluates correctly)
+  // Cedar pre-authorization via Compliance service (compliance.blueflyagents.com/evaluate)
   const principalId = token || 'anonymous';
-  const cedarResult = evaluateManifestCedar(
+  const cedarResult = await evaluateManifestCedar(
     resource,
     { type: 'DUADP::Principal', id: principalId },
     { type: 'DUADP::Action', id: 'publish' },

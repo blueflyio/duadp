@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@bluefly/duadp": "^0.1.2",
-    "@cedar-policy/cedar-wasm": "^4.9.1",
     "@modelcontextprotocol/sdk": "^1.27.1",
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",

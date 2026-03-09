@@ -1,27 +1,35 @@
 /**
- * Cedar Policy Evaluator — Runtime authorization enforcement
+ * Cedar Policy Evaluator — HTTP client to the Compliance service
  *
- * DUADP owns runtime Cedar evaluation. OSSA owns schema + offline validation.
- * This module wraps @cedar-policy/cedar-wasm for request-time authorization.
+ * MANDATORY: All Cedar evaluation routes through the Compliance service API.
+ * https://compliance.blueflyagents.com/evaluate
+ *
+ * NO local Cedar WASM. NO policy files loaded at runtime. NO @cedar-policy/cedar-wasm.
+ * The Compliance service owns Cedar entirely.
+ *
+ * If the Compliance service is unreachable → FAIL CLOSED (return Deny).
  */
 
-import {
-  checkParsePolicySet,
-  isAuthorized,
-  type AuthorizationCall,
-  type CedarValueJson,
-  type EntityJson,
-  type TypeAndId,
-} from '@cedar-policy/cedar-wasm';
+const COMPLIANCE_API =
+  process.env['COMPLIANCE_API_URL'] ??
+  process.env['COMPLIANCE_ENGINE_URL'] ??
+  'https://compliance.blueflyagents.com';
+
+// ---------------------------------------------------------------------------
+// Types (compatible with previous local evaluator interface)
+// ---------------------------------------------------------------------------
 
 export interface CedarEvaluationRequest {
-  principal: TypeAndId;
-  action: TypeAndId;
-  resource: TypeAndId;
-  context?: Record<string, CedarValueJson>;
-  policies: string;
+  principal: { type: string; id: string };
+  action: { type: string; id: string };
+  resource: { type: string; id: string };
+  context?: Record<string, unknown>;
+  /** Kept for backwards compat but ignored — Compliance service owns all policies */
+  policies?: string;
   schema?: string;
-  entities?: EntityJson[];
+  entities?: unknown[];
+  /** Optional: target a named policy set in the Compliance service */
+  policy_set?: string;
 }
 
 export interface CedarEvaluationResult {
@@ -33,109 +41,110 @@ export interface CedarEvaluationResult {
   evaluation_ms: number;
 }
 
+// ---------------------------------------------------------------------------
+// Main evaluator — calls the Compliance service API
+// ---------------------------------------------------------------------------
+
 /**
- * Evaluate a Cedar authorization request.
+ * Evaluate a Cedar authorization request via the Compliance service.
+ * Returns a resolved promise — callers must now await this.
  */
-export function evaluateCedar(
+export async function evaluateCedar(
   request: CedarEvaluationRequest,
-): CedarEvaluationResult {
+): Promise<CedarEvaluationResult> {
   const start = performance.now();
 
-  // Validate policies parse first
-  const parseCheck = checkParsePolicySet({
-    staticPolicies: request.policies,
-  });
-  if (parseCheck.type === 'failure') {
-    return {
-      decision: 'Deny',
-      diagnostics: {
-        reason: [],
-        errors: parseCheck.errors.map(
-          (e) => e.message ?? JSON.stringify(e),
-        ),
-      },
-      evaluation_ms: performance.now() - start,
+  try {
+    const res = await fetch(`${COMPLIANCE_API}/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        principal: request.principal,
+        action: request.action,
+        resource: request.resource,
+        context: request.context ?? {},
+        policy_set: request.policy_set,
+      }),
+    });
+
+    const evaluation_ms = performance.now() - start;
+
+    if (!res.ok) {
+      console.error(
+        `[cedar-evaluator] Compliance API HTTP ${res.status}: ${res.statusText}`,
+      );
+      return failClosed(evaluation_ms, `Compliance API error: ${res.status}`);
+    }
+
+    const body = (await res.json()) as {
+      decision: 'Allow' | 'Deny';
+      reasons?: string[];
+      errors?: string[];
+      diagnostics?: { reason?: string[]; errors?: string[] };
     };
-  }
 
-  const call: AuthorizationCall = {
-    principal: request.principal,
-    action: request.action,
-    resource: request.resource,
-    context: request.context ?? {},
-    policies: {
-      staticPolicies: request.policies,
-    },
-    entities: request.entities ?? [],
-  };
-
-  if (request.schema) {
-    call.schema = request.schema;
-  }
-
-  const answer = isAuthorized(call);
-
-  if (answer.type === 'failure') {
     return {
-      decision: 'Deny',
+      decision: body.decision,
       diagnostics: {
-        reason: [],
-        errors: answer.errors.map((e) => e.message ?? JSON.stringify(e)),
+        reason: body.reasons ?? body.diagnostics?.reason ?? [],
+        errors: body.errors ?? body.diagnostics?.errors ?? [],
       },
-      evaluation_ms: performance.now() - start,
+      evaluation_ms,
     };
+  } catch (err) {
+    const evaluation_ms = performance.now() - start;
+    console.error('[cedar-evaluator] Compliance API unreachable:', err);
+    return failClosed(evaluation_ms, String(err));
   }
-
-  return {
-    decision: answer.response.decision === 'allow' ? 'Allow' : 'Deny',
-    diagnostics: {
-      reason: answer.response.diagnostics.reason,
-      errors: answer.response.diagnostics.errors.map(
-        (e) => e.error.message ?? JSON.stringify(e.error),
-      ),
-    },
-    evaluation_ms: performance.now() - start,
-  };
 }
 
 /**
- * Build Cedar evaluation from an OSSA manifest's extensions.security.cedar
- * and an incoming request context.
+ * Evaluate Cedar for a request derived from an OSSA manifest's
+ * extensions.security.cedar block.
+ *
+ * Note: The policy_text fields in the manifest are sent to the Compliance
+ * service as context — the Compliance service evaluates them server-side.
+ * Inline manifest policies are always submitted as context, never run locally.
  */
-export function evaluateManifestCedar(
+export async function evaluateManifestCedar(
   manifest: Record<string, unknown>,
-  principal: TypeAndId,
-  action: TypeAndId,
-  resource: TypeAndId,
-  context?: Record<string, CedarValueJson>,
-): CedarEvaluationResult | null {
-  const extensions = manifest.extensions as
-    | Record<string, unknown>
-    | undefined;
+  principal: { type: string; id: string },
+  action: { type: string; id: string },
+  resource: { type: string; id: string },
+  context?: Record<string, unknown>,
+): Promise<CedarEvaluationResult | null> {
+  const extensions = manifest.extensions as Record<string, unknown> | undefined;
   const security = extensions?.security as Record<string, unknown> | undefined;
   const cedarExt = security?.cedar as
-    | {
-        policies: Array<{ policy_text: string }>;
-        schema_text?: string;
-        default_decision?: string;
-      }
+    | { policies?: Array<{ policy_text: string }>; default_decision?: string }
     | undefined;
 
-  if (!cedarExt || !cedarExt.policies || cedarExt.policies.length === 0) {
-    return null; // No Cedar policies — skip evaluation
+  if (!cedarExt?.policies?.length) {
+    return null; // No Cedar policies in manifest — skip evaluation
   }
 
-  // Concatenate all policy texts
-  const combinedPolicies = cedarExt.policies
-    .map((p) => p.policy_text)
-    .join('\n');
-
+  // Pass inline policy texts as context to the Compliance service
+  // The Compliance service evaluates against its own blueflyio policy set
+  // plus any inline overrides passed in context.
   return evaluateCedar({
     principal,
     action,
     resource,
-    context,
-    policies: combinedPolicies,
-    schema: cedarExt.schema_text,
+    context: {
+      ...context,
+      _manifest_inline_policies: cedarExt.policies.map((p) => p.policy_text),
+    },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Fail-closed helper
+// ---------------------------------------------------------------------------
+
+function failClosed(evaluation_ms: number, error: string): CedarEvaluationResult {
+  return {
+    decision: 'Deny',
+    diagnostics: { reason: [], errors: [`[fail-closed] ${error}`] },
+    evaluation_ms,
+  };
 }
