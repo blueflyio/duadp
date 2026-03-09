@@ -1,0 +1,60 @@
+// Cedar entities file for test scenarios.
+// Provides entity data so Policy 8 (anonymous write blocking) and entity-attribute
+// policies evaluate correctly.
+
+[
+  {
+    "uid": { "type": "DUADP::Principal", "id": "did:web:test.example.com" },
+    "attrs": {
+      "id": "did:web:test.example.com",
+      "tier": "community",
+      "has_did": true,
+      "has_signature": true
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Principal", "id": "anonymous" },
+    "attrs": {
+      "id": "anonymous",
+      "tier": "community",
+      "has_did": false,
+      "has_signature": false
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Principal", "id": "pipeline-12345" },
+    "attrs": {
+      "id": "pipeline-12345",
+      "tier": "official",
+      "has_did": true,
+      "has_signature": true
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Resource", "id": "test-agent" },
+    "attrs": {
+      "name": "test-agent",
+      "kind": "Agent",
+      "trust_tier": "community"
+    },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Environment", "id": "production" },
+    "attrs": { "name": "production" },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Environment", "id": "staging" },
+    "attrs": { "name": "staging" },
+    "parents": []
+  },
+  {
+    "uid": { "type": "DUADP::Environment", "id": "development" },
+    "attrs": { "name": "development" },
+    "parents": []
+  }
+]

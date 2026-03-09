@@ -14,6 +14,7 @@ stages:
   - test
   - build
   - security
+  - cedar-gate
   - publish
   - deploy
 
@@ -46,6 +47,26 @@ validate:openapi:
   image: node:22-alpine
   script:
     - npx @redocly/cli lint spec/openapi.yaml
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH
+
+validate:cedar-policies:
+  stage: validate
+  image: rust:1.76-slim
+  cache:
+    key: cedar-cli-$CI_COMMIT_REF_SLUG
+    paths:
+      - /usr/local/cargo/registry
+  before_script:
+    - cargo install cedar-policy-cli --quiet
+  script:
+    - echo "Validating Cedar schema + policies..."
+    - cedar validate
+        --schema reference-node/policies/duadp.cedarschema
+        --policies reference-node/policies/duadp-authorization.cedar
+    - cedar format --check reference-node/policies/duadp-authorization.cedar
+    - echo "Cedar validation PASSED — 13 policies, 1 schema"
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
@@ -174,6 +195,7 @@ deploy:k8s:
     - oracle-deploy
   needs:
     - container_build
+    - cedar:quality-gate
   before_script:
     - mkdir -p ~/.kube
     - echo "$K8S_KUBECONFIG" > ~/.kube/config
@@ -198,3 +220,66 @@ deploy:k8s:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH =~ /^release\/.*/
+
+# ---------------------------------------------------------------------------
+# Cedar Quality Gate — CI metric evaluation before deploy
+# Reads coverage-report.json, security-scan.json, model-eval.json (from prior
+# test/security stages) and lets Cedar authorize or deny the deploy action.
+# ---------------------------------------------------------------------------
+
+cedar:quality-gate:
+  stage: cedar-gate
+  image: rust:1.76-slim
+  needs:
+    - validate:cedar-policies
+    - build:reference-node
+  before_script:
+    - cargo install cedar-policy-cli --quiet
+    - apt-get update -qq && apt-get install -y -qq jq
+  script:
+    - |
+      COVERAGE=$(cat coverage-report.json 2>/dev/null | jq -r '.total // 0' || echo 0)
+      SEC_SCORE=$(cat security-scan.json 2>/dev/null | jq -r '.score // 0' || echo 0)
+      CONF_SCORE=$(cat model-eval.json 2>/dev/null | jq -r '.confidence // 0' || echo 0)
+      VULN_COUNT=$(cat security-scan.json 2>/dev/null | jq -r '.critical_count // 0' || echo 0)
+      DAY_OF_WEEK=$(date +%A)
+      ENVIRONMENT="${CI_ENVIRONMENT_NAME:-staging}"
+
+      echo "=== DUADP Cedar Quality Gate ==="
+      echo "  confidence_score  : $CONF_SCORE"
+      echo "  test_coverage     : $COVERAGE"
+      echo "  security_score    : $SEC_SCORE"
+      echo "  vulnerability_count: $VULN_COUNT"
+      echo "  day_of_week       : $DAY_OF_WEEK"
+      echo "  environment       : $ENVIRONMENT"
+
+      CONTEXT=$(jq -n \
+        --argjson c "$CONF_SCORE" \
+        --argjson t "$COVERAGE" \
+        --argjson s "$SEC_SCORE" \
+        --argjson v "$VULN_COUNT" \
+        --arg d "$DAY_OF_WEEK" \
+        '{confidence_score:$c,test_coverage:$t,security_score:$s,vulnerability_count:$v,day_of_week:$d,human_approved:false}')
+
+      DECISION=$(cedar authorize \
+        --policies reference-node/policies/duadp-authorization.cedar \
+        --schema reference-node/policies/duadp.cedarschema \
+        --entities reference-node/policies/tests/entities.json \
+        --principal "DUADP::Principal::\"pipeline-${CI_PIPELINE_ID}\"" \
+        --action 'DUADP::Action::"deploy"' \
+        --resource "DUADP::Environment::\"${ENVIRONMENT}\"" \
+        --context "$CONTEXT" 2>&1)
+
+      echo ""
+      echo "Cedar decision: $DECISION"
+
+      if echo "$DECISION" | grep -q "DENY"; then
+        echo ""
+        echo "❌ Cedar quality gate BLOCKED deploy to $ENVIRONMENT"
+        echo "Required: confidence≥90, coverage≥80, security≥85, vulns=0 (production)"
+        exit 1
+      fi
+      echo "✅ Cedar quality gate PASSED — authorized to deploy to $ENVIRONMENT"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "release/v0.1.x"
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/

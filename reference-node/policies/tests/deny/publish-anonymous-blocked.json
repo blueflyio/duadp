@@ -1,0 +1,13 @@
+{
+  "principal": { "type": "DUADP::Principal", "id": "anonymous" },
+  "action": { "type": "DUADP::Action", "id": "publish" },
+  "resource": { "type": "DUADP::Resource", "id": "test-agent" },
+  "context": {
+    "trust_tier": "community",
+    "has_signature": false,
+    "has_did": false,
+    "confidence_score": 90,
+    "validation_passed": true,
+    "request_count": 0
+  }
+}

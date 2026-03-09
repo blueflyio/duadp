@@ -1,0 +1,13 @@
+{
+  "principal": { "type": "DUADP::Principal", "id": "pipeline-12345" },
+  "action": { "type": "DUADP::Action", "id": "deploy" },
+  "resource": { "type": "DUADP::Environment", "id": "production" },
+  "context": {
+    "confidence_score": 80,
+    "test_coverage": 75,
+    "security_score": 85,
+    "vulnerability_count": 2,
+    "day_of_week": "Wednesday",
+    "human_approved": false
+  }
+}

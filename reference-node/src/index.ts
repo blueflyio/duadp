@@ -3,6 +3,7 @@ import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
 import { evaluateCedar, evaluateManifestCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
+import { confidenceGate, extractConfidenceScore } from './confidence-gate.js';
 import { initDb } from './db.js';
 import {
     deduplicateByGaid,
@@ -423,10 +424,11 @@ app.post('/api/v1/publish', async (req: Request, res: Response) => {
     return;
   }
 
-  // Cedar pre-authorization check (if resource has Cedar policies in extensions)
+  // Cedar pre-authorization check (with entity data so Policy 8 evaluates correctly)
+  const principalId = token || 'anonymous';
   const cedarResult = evaluateManifestCedar(
     resource,
-    { type: 'DUADP::Principal', id: token || 'anonymous' },
+    { type: 'DUADP::Principal', id: principalId },
     { type: 'DUADP::Action', id: 'publish' },
     { type: 'DUADP::Resource', id: resourceName || 'unknown' },
   );
@@ -434,6 +436,36 @@ app.post('/api/v1/publish', async (req: Request, res: Response) => {
     res.status(403).json({
       error: 'Cedar policy denied publication',
       cedar_decision: cedarResult,
+    });
+    return;
+  }
+
+  // Confidence gate — three-tier routing (≥90 auto, 50-89 review, <50 reject)
+  const confidenceScore = extractConfidenceScore(resource);
+  const trustTier = resource?.metadata?.trust_tier || 'community';
+  const validationPassed = !!(resource?.metadata?.validation_passed);
+  const verdict = confidenceGate(confidenceScore, trustTier, validationPassed);
+
+  if (verdict.action === 'reject') {
+    res.status(403).json({
+      error: 'Confidence gate rejected publication',
+      confidence_verdict: verdict,
+      hint: 'Improve model confidence score (≥50) or ensure schema validation passes before publishing.',
+    });
+    return;
+  }
+
+  if (verdict.action === 'human_review') {
+    // Downgrade trust tier while queuing for review
+    if (verdict.degraded_tier && resource.metadata) {
+      resource.metadata.trust_tier = verdict.degraded_tier;
+    }
+    // Return a 202 Accepted — resource published at degraded tier, pending review
+    const reviewResult = await provider.publishResource!(resource, token);
+    res.status(202).json({
+      ...reviewResult,
+      confidence_verdict: verdict,
+      message: 'Resource published at degraded trust tier, pending human review.',
     });
     return;
   }
