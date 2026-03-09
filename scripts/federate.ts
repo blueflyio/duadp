@@ -6,7 +6,7 @@
 const NODES = [
   { url: 'http://localhost:4200', name: 'DUADP Discovery Node', nodeId: 'did:web:discover.duadp.org' },
   { url: 'http://localhost:4201', name: 'OSSA Registry Node', nodeId: 'did:web:registry.openstandardagents.org' },
-  { url: 'http://localhost:4202', name: 'Drupal AI Discovery Node', nodeId: 'did:web:discover.drupl.ai' },
+  { url: 'http://localhost:4202', name: 'Drupal AI Discovery Node', nodeId: 'did:web:marketplace.drupl.ai' },
 ];
 
 async function waitForHealth(url: string, name: string, maxRetries = 30): Promise<boolean> {
