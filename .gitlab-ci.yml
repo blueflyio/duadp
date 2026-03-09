@@ -53,13 +53,13 @@ validate:openapi:
 
 validate:cedar-policies:
   stage: validate
-  image: rust:1.76-slim
+  image: rust:1.83-slim
   cache:
-    key: cedar-cli-$CI_COMMIT_REF_SLUG
+    key: cedar-cli-1.83-$CI_COMMIT_REF_SLUG
     paths:
       - /usr/local/cargo/registry
   before_script:
-    - cargo install cedar-policy-cli --quiet
+    - cargo install cedar-policy-cli --version '>=3.4,<5' --quiet
   script:
     - echo "Validating Cedar schema + policies..."
     - cedar validate
@@ -89,12 +89,14 @@ build:sdk:
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
 
 build:reference-node:
   stage: test
   image: node:22-alpine
   needs:
-    - build:sdk
+    - job: build:sdk
+      optional: true
   script:
     - cd reference-node
     - npm ci --prefer-offline
@@ -102,6 +104,7 @@ build:reference-node:
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
 
 # ---------------------------------------------------------------------------
 # Build Stage - Container Image
@@ -192,8 +195,10 @@ deploy:k8s:
   tags:
     - oracle-deploy
   needs:
-    - container_build
-    - cedar:quality-gate
+    - job: container_build
+      optional: true
+    - job: cedar:quality-gate
+      optional: true
   before_script:
     - mkdir -p ~/.kube
     - echo "$K8S_KUBECONFIG" > ~/.kube/config
@@ -227,12 +232,14 @@ deploy:k8s:
 
 cedar:quality-gate:
   stage: cedar-gate
-  image: rust:1.76-slim
+  image: rust:1.83-slim
   needs:
-    - validate:cedar-policies
-    - build:reference-node
+    - job: validate:cedar-policies
+      optional: true
+    - job: build:reference-node
+      optional: true
   before_script:
-    - cargo install cedar-policy-cli --quiet
+    - cargo install cedar-policy-cli --version '>=3.4,<5' --quiet
     - apt-get update -qq && apt-get install -y -qq jq
   script:
     - |
