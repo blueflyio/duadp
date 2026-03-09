@@ -49,7 +49,7 @@ reference-node/
 
 - `openstandardagents` — OSSA specification and npm package
 - `duadp.org` — Protocol website (Next.js)
-- `ossa-studio` — Visual Composer, Agent Catalog
+- `ossa-ui-api` — Visual Composer, Agent Catalog
 - `ossa-deploy` — CI/CD deployment pipeline
 
 ## Guardrails
