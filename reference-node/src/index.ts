@@ -611,9 +611,9 @@ app.post('/api/v1/federation/revocations', (req: Request, res: Response) => {
   res.status(201).json({ accepted: true, resource_deleted: !!row });
 });
 
-// GAID Resolution (cross-node)
-app.get('/api/v1/resolve/:gaid(.*)', async (req: Request, res: Response) => {
-  const gaid = req.params.gaid as string;
+// GAID Resolution (cross-node) — RegExp route avoids path-to-regexp v8 wildcard breaking change
+app.get(/^\/api\/v1\/resolve\/(.+)$/, async (req: Request, res: Response) => {
+  const gaid = (req.params as any)[0] as string;
 
   // Try local first
   const local = resolveGaidLocally(db, gaid);
