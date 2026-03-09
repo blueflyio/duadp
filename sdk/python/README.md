@@ -67,7 +67,7 @@ async with DuadpClient("https://discover.duadp.org") as client:
     # Discovery
     manifest = await client.discover()
     print(f"{manifest.node_name} — {manifest.protocol_version}")
-    # => "DUADP Discovery Node — 0.2.0"
+    # => "DUADP Discovery Node — 0.1.3"
 
     # Browse resources
     agents = await client.list_agents()              # 57 agents
