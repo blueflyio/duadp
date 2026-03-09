@@ -5,9 +5,12 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
+[![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
 > **[duadp.org](https://duadp.org)** | **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** for protocol details | **[OSSA ecosystem](https://openstandardagents.org)**
+
+> **GitLab**: [gitlab.com/blueflyio/duadp/duadp](https://gitlab.com/blueflyio/duadp/duadp) | **GitHub mirror**: [github.com/blueflyio/duadp](https://github.com/blueflyio/duadp)
 
 ## What is DUADP?
 
@@ -167,11 +170,14 @@ sdk/
 
 - **Tools as first-class resources** — MCP servers, A2A tools, function-calling tools alongside skills and agents
 - **Publishing API** — Authenticated write operations for community contributions
+- **Confidence scoring** — Three-tier routing (≥90 auto-publish, 50–89 human review at degraded tier, <50 reject)
+- **Quality gates** — Cedar policy CI gate enforces coverage, security, and confidence before deploy
 - **DNS TXT discovery** — `_duadp.<domain>` for zero-configuration node finding
 - **WebFinger resolution** — Resolve any GAID URI (like `duadp://`) to its DUADP endpoint
 - **Gossip federation** — Automatic peer propagation with hop limits
 - **DID-based identity** — `did:web:` and `did:key:` with DIF standard resolvers
 - **Resource signatures** — Ed25519 cryptographic signatures with RFC 8785 canonicalization
+- **Revocation endpoints** — `/api/v1/revocations` with federation gossip propagation
 - **Federated search** — `?federated=true` queries peers and merges results
 - **Extensible kinds** — `Skill`, `Agent` (via `.ajson`), `Tool`, or any custom resource type
 - **Context negotiation** — Layered context delivery with priority tiers and knowledge graph sources
@@ -347,8 +353,8 @@ cd sdk/typescript && npm test
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| [`duadp`](https://pypi.org/project/duadp/) Python SDK | Available | Client + FastAPI server |
+| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.2.0** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.2.0** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
 | Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |
 | Static JSON template | Planned | GitHub Pages starter |
 

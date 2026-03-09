@@ -153,7 +153,6 @@ publish:npm:
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
     - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
     - if: $CI_COMMIT_BRANCH =~ /^release\/.*/
       when: manual
 
@@ -180,7 +179,6 @@ publish:pypi:
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
     - if: $CI_COMMIT_BRANCH == "main"
-      when: manual
     - if: $CI_COMMIT_BRANCH =~ /^release\/.*/
       when: manual
 

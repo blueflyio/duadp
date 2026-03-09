@@ -18,8 +18,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://duadp.org"
-Repository = "https://gitlab.com/blueflyio/ossa/lab/duadp"
-Issues = "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
+Repository = "https://gitlab.com/blueflyio/duadp/duadp"
+Issues = "https://gitlab.com/blueflyio/duadp/duadp/-/issues"
 
 [project.optional-dependencies]
 crypto = ["cryptography>=43.0"]
