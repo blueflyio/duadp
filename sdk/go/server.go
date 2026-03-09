@@ -1,4 +1,4 @@
-package uadp
+package duadp
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-// DataProvider is the interface for providing data to UADP endpoints.
+// DataProvider is the interface for providing data to DUADP endpoints.
 type DataProvider interface {
 	ListSkills(search, category string, page, limit int) (*SkillsResponse, error)
 	ListAgents(search string, page, limit int) (*AgentsResponse, error)
@@ -15,7 +15,7 @@ type DataProvider interface {
 	ValidateManifest(manifest string) (*ValidationResult, error)
 }
 
-// NodeConfig configures a UADP server node.
+// NodeConfig configures a DUADP server node.
 type NodeConfig struct {
 	NodeName        string
 	NodeDescription string
@@ -25,12 +25,12 @@ type NodeConfig struct {
 	OssaVersions    []string
 }
 
-// NewHandler creates an http.Handler that serves all UADP endpoints.
+// NewHandler creates an http.Handler that serves all DUADP endpoints.
 //
 // Usage:
 //
 //	mux := http.NewServeMux()
-//	handler := uadp.NewHandler(config, provider)
+//	handler := duadp.NewHandler(config, provider)
 //	mux.Handle("/", handler)
 func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 	mux := http.NewServeMux()
@@ -40,18 +40,18 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		ossaVersions = []string{"v0.4"}
 	}
 
-	// GET /.well-known/uadp.json
-	mux.HandleFunc("GET /.well-known/uadp.json", func(w http.ResponseWriter, r *http.Request) {
-		manifest := UadpManifest{
+	// GET /.well-known/duadp.json
+	mux.HandleFunc("GET /.well-known/duadp.json", func(w http.ResponseWriter, r *http.Request) {
+		manifest := DuadpManifest{
 			ProtocolVersion: "0.1.0",
 			NodeName:        config.NodeName,
 			NodeDescription: config.NodeDescription,
 			Contact:         config.Contact,
-			Endpoints: UadpEndpoints{
-				Skills:     config.BaseURL + "/uadp/v1/skills",
-				Agents:     config.BaseURL + "/uadp/v1/agents",
-				Federation: config.BaseURL + "/uadp/v1/federation",
-				Validate:   config.BaseURL + "/uadp/v1/skills/validate",
+			Endpoints: DuadpEndpoints{
+				Skills:     config.BaseURL + "/api/v1/skills",
+				Agents:     config.BaseURL + "/api/v1/agents",
+				Federation: config.BaseURL + "/api/v1/federation",
+				Validate:   config.BaseURL + "/api/v1/skills/validate",
 			},
 			Capabilities: []string{"skills", "agents", "federation", "validation"},
 			PublicKey:     config.PublicKey,
@@ -60,8 +60,8 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		writeJSON(w, http.StatusOK, manifest)
 	})
 
-	// GET /uadp/v1/skills
-	mux.HandleFunc("GET /uadp/v1/skills", func(w http.ResponseWriter, r *http.Request) {
+	// GET /api/v1/skills
+	mux.HandleFunc("GET /api/v1/skills", func(w http.ResponseWriter, r *http.Request) {
 		search := r.URL.Query().Get("search")
 		category := r.URL.Query().Get("category")
 		page := intParam(r, "page", 1)
@@ -79,8 +79,8 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		writeJSON(w, http.StatusOK, resp)
 	})
 
-	// GET /uadp/v1/agents
-	mux.HandleFunc("GET /uadp/v1/agents", func(w http.ResponseWriter, r *http.Request) {
+	// GET /api/v1/agents
+	mux.HandleFunc("GET /api/v1/agents", func(w http.ResponseWriter, r *http.Request) {
 		search := r.URL.Query().Get("search")
 		page := intParam(r, "page", 1)
 		limit := intParam(r, "limit", 20)
@@ -97,8 +97,8 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		writeJSON(w, http.StatusOK, resp)
 	})
 
-	// GET /uadp/v1/federation
-	mux.HandleFunc("GET /uadp/v1/federation", func(w http.ResponseWriter, r *http.Request) {
+	// GET /api/v1/federation
+	mux.HandleFunc("GET /api/v1/federation", func(w http.ResponseWriter, r *http.Request) {
 		peers, err := provider.ListPeers()
 		if err != nil {
 			writeJSON(w, http.StatusInternalServerError, ErrorResponse{Error: err.Error()})
@@ -112,8 +112,8 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		writeJSON(w, http.StatusOK, resp)
 	})
 
-	// POST /uadp/v1/federation
-	mux.HandleFunc("POST /uadp/v1/federation", func(w http.ResponseWriter, r *http.Request) {
+	// POST /api/v1/federation
+	mux.HandleFunc("POST /api/v1/federation", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			URL  string `json:"url"`
 			Name string `json:"name"`
@@ -130,8 +130,8 @@ func NewHandler(config NodeConfig, provider DataProvider) http.Handler {
 		writeJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "peer": peer})
 	})
 
-	// POST /uadp/v1/skills/validate
-	mux.HandleFunc("POST /uadp/v1/skills/validate", func(w http.ResponseWriter, r *http.Request) {
+	// POST /api/v1/skills/validate
+	mux.HandleFunc("POST /api/v1/skills/validate", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Manifest string `json:"manifest"`
 		}

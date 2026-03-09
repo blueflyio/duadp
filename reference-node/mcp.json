@@ -1,0 +1,82 @@
+{
+  "mcpServers": {
+    "duadp-node": {
+      "command": "node",
+      "args": ["dist/mcp-server.js"],
+      "env": {
+        "PORT": "4200",
+        "DUADP_NODE_NAME": "duadp-reference-node"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "duadp_discover",
+      "description": "Get node discovery manifest (protocol version, capabilities, endpoints)"
+    },
+    {
+      "name": "duadp_search_agents",
+      "description": "Browse registered agents with pagination"
+    },
+    {
+      "name": "duadp_search_skills",
+      "description": "Find available skills by search query"
+    },
+    {
+      "name": "duadp_search_tools",
+      "description": "List published tools (MCP, HTTP, etc.)"
+    },
+    {
+      "name": "duadp_search",
+      "description": "Full-text search across all DUADP resources with optional federation"
+    },
+    {
+      "name": "duadp_resolve_gaid",
+      "description": "Resolve a GAID URI via WebFinger (duadp://namespace/path)"
+    },
+    {
+      "name": "duadp_publish",
+      "description": "Publish agent, skill, or tool manifest into the DUADP registry"
+    },
+    {
+      "name": "duadp_validate",
+      "description": "Validate an OSSA manifest against the schema"
+    },
+    {
+      "name": "duadp_federation_peers",
+      "description": "List federated peers in the gossip network"
+    },
+    {
+      "name": "duadp_governance",
+      "description": "Get node governance policies (NIST AI RMF compliance, risk tolerance)"
+    },
+    {
+      "name": "duadp_audit_log",
+      "description": "Query immutable audit log for agent actions and governance events"
+    },
+    {
+      "name": "duadp_agent_reputation",
+      "description": "Get computed multi-dimensional trust/reputation score for an agent"
+    },
+    {
+      "name": "duadp_submit_attestation",
+      "description": "Submit DID-signed attestation for agent task outcomes"
+    },
+    {
+      "name": "duadp_get_attestations",
+      "description": "Get verifiable attestation history for an agent"
+    },
+    {
+      "name": "duadp_submit_feedback",
+      "description": "Submit multi-dimensional feedback (safety, quality, reliability)"
+    },
+    {
+      "name": "duadp_token_analytics",
+      "description": "Get token usage analytics (cost, model breakdown, success rates)"
+    },
+    {
+      "name": "duadp_health",
+      "description": "Check node health, uptime, and resource counts"
+    }
+  ]
+}

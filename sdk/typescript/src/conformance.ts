@@ -1,4 +1,4 @@
-import { UadpClient, UadpError } from './client.js';
+import { DuadpClient, DuadpError } from './client.js';
 import { validateManifest, validateResponse } from './validate.js';
 
 export interface ConformanceResult {
@@ -29,7 +29,7 @@ interface TestDef {
   name: string;
   category: ConformanceTestResult['category'];
   level: 'MUST' | 'SHOULD' | 'MAY';
-  run: (client: UadpClient, manifest: import('./types.js').UadpManifest) => Promise<{ passed: boolean; detail?: string }>;
+  run: (client: DuadpClient, manifest: import('./types.js').DuadpManifest) => Promise<{ passed: boolean; detail?: string }>;
 }
 
 const tests: TestDef[] = [
@@ -312,7 +312,7 @@ const tests: TestDef[] = [
     level: 'MUST',
     async run(client, manifest) {
       if (!manifest.endpoints.publish) return { passed: true, detail: 'Skipped — not advertised' };
-      const unauthClient = new UadpClient(client.baseUrl, { timeout: 10000 });
+      const unauthClient = new DuadpClient(client.baseUrl, { timeout: 10000 });
       // Copy manifest to the unauthenticated client
       await unauthClient.discover();
       try {
@@ -323,7 +323,7 @@ const tests: TestDef[] = [
         });
         return { passed: false, detail: 'Publish succeeded without auth — should have been rejected' };
       } catch (err) {
-        if (err instanceof UadpError && (err.statusCode === 401 || err.statusCode === 403)) {
+        if (err instanceof DuadpError && (err.statusCode === 401 || err.statusCode === 403)) {
           return { passed: true, detail: `Correctly rejected with ${err.statusCode}` };
         }
         return { passed: false, detail: `Unexpected error: ${err}` };
@@ -373,9 +373,9 @@ const tests: TestDef[] = [
 ];
 
 /**
- * Run the full UADP conformance test suite against a live node.
+ * Run the full DUADP conformance test suite against a live node.
  *
- * @param baseUrl - Base URL of the UADP node
+ * @param baseUrl - Base URL of the DUADP node
  * @param options - Optional configuration
  * @returns Detailed conformance results
  *
@@ -393,12 +393,12 @@ export async function runConformanceTests(
   baseUrl: string,
   options?: { timeout?: number; token?: string },
 ): Promise<ConformanceResult> {
-  const client = new UadpClient(baseUrl, {
+  const client = new DuadpClient(baseUrl, {
     timeout: options?.timeout ?? 15000,
     token: options?.token,
   });
 
-  let manifest: import('./types.js').UadpManifest;
+  let manifest: import('./types.js').DuadpManifest;
   try {
     manifest = await client.discover();
   } catch (err) {
@@ -485,7 +485,7 @@ export async function runConformanceTests(
  */
 export function formatConformanceResults(result: ConformanceResult): string {
   const lines: string[] = [
-    `UADP Conformance Test Report`,
+    `DUADP Conformance Test Report`,
     `============================`,
     `Node:      ${result.url}`,
     `Version:   ${result.version}`,

@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "duadp-registry": {
+      "command": "node",
+      "args": [
+        "dist/mcp-server/index.js"
+      ],
+      "env": {
+        "DUADP_REGISTRY_URL": "https://discover.duadp.org"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "duadp_resolve_gaid",
+      "description": "Resolve a Global Agent Identifier (GAID) URI into a concrete endpoint and identity over DUADP.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "gaid": {
+            "type": "string",
+            "description": "The agent:// or duadp:// string to resolve."
+          }
+        },
+        "required": [
+          "gaid"
+        ]
+      }
+    },
+    {
+      "name": "duadp_publish_agent",
+      "description": "Publish a new agent configuration to the local DUADP network.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "manifest": {
+            "type": "object",
+            "description": "The OSSA-compliant agent JSON manifest."
+          }
+        },
+        "required": [
+          "manifest"
+        ]
+      }
+    }
+  ]
+}

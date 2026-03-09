@@ -6,8 +6,8 @@ const startTime = Date.now();
 export function createGovernanceRouter(db: Database.Database, nodeName: string): Router {
   const router = Router();
 
-  // GET /uadp/v1/health
-  router.get('/uadp/v1/health', (_req, res) => {
+  // GET /api/v1/health
+  router.get('/api/v1/health', (_req, res) => {
     const skills = (db.prepare("SELECT COUNT(*) as cnt FROM resources WHERE kind = 'Skill'").get() as { cnt: number }).cnt;
     const agents = (db.prepare("SELECT COUNT(*) as cnt FROM resources WHERE kind = 'Agent'").get() as { cnt: number }).cnt;
     const tools = (db.prepare("SELECT COUNT(*) as cnt FROM resources WHERE kind = 'Tool'").get() as { cnt: number }).cnt;
@@ -21,8 +21,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // GET /uadp/v1/governance
-  router.get('/uadp/v1/governance', (_req, res) => {
+  // GET /api/v1/governance
+  router.get('/api/v1/governance', (_req, res) => {
     const row = db.prepare('SELECT data FROM governance WHERE id = 1').get() as { data: string } | undefined;
     if (!row) {
       res.json({
@@ -35,8 +35,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     res.json(JSON.parse(row.data));
   });
 
-  // GET /uadp/v1/audit
-  router.get('/uadp/v1/audit', (req, res) => {
+  // GET /api/v1/audit
+  router.get('/api/v1/audit', (req, res) => {
     const conditions: string[] = [];
     const binds: unknown[] = [];
 
@@ -92,8 +92,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // POST /uadp/v1/feedback
-  router.post('/uadp/v1/feedback', (req, res) => {
+  // POST /api/v1/feedback
+  router.post('/api/v1/feedback', (req, res) => {
     const { target_gaid, source, source_id, dimensions, comment } = req.body ?? {};
 
     if (!target_gaid || !source || !dimensions) {
@@ -114,8 +114,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     res.status(201).json({ success: true, id: result.lastInsertRowid });
   });
 
-  // GET /uadp/v1/feedback/:agentId
-  router.get('/uadp/v1/feedback/:agentId', (req, res) => {
+  // GET /api/v1/feedback/:agentId
+  router.get('/api/v1/feedback/:agentId', (req, res) => {
     const agentId = req.params.agentId;
     const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -156,8 +156,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // GET /uadp/v1/reputation/:agentId
-  router.get('/uadp/v1/reputation/:agentId', (req, res) => {
+  // GET /api/v1/reputation/:agentId
+  router.get('/api/v1/reputation/:agentId', (req, res) => {
     const agentId = req.params.agentId;
 
     const rows = db
@@ -210,8 +210,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // POST /uadp/v1/analytics/tokens
-  router.post('/uadp/v1/analytics/tokens', (req, res) => {
+  // POST /api/v1/analytics/tokens
+  router.post('/api/v1/analytics/tokens', (req, res) => {
     const { agent_gaid, input_tokens, output_tokens, total_tokens, model, task_type, success, cost_usd } =
       req.body ?? {};
 
@@ -244,8 +244,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     res.status(201).json({ success: true, id: result.lastInsertRowid });
   });
 
-  // GET /uadp/v1/analytics/tokens/:agentId
-  router.get('/uadp/v1/analytics/tokens/:agentId', (req, res) => {
+  // GET /api/v1/analytics/tokens/:agentId
+  router.get('/api/v1/analytics/tokens/:agentId', (req, res) => {
     const agentId = req.params.agentId;
     const period = (req.query.period as string) || 'all';
 
@@ -319,8 +319,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // POST /uadp/v1/attestations
-  router.post('/uadp/v1/attestations', (req, res) => {
+  // POST /api/v1/attestations
+  router.post('/api/v1/attestations', (req, res) => {
     const { agent_gaid, task_id, outcome, attestor, attestor_did, signature, metrics } =
       req.body ?? {};
 
@@ -352,8 +352,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     res.status(201).json({ success: true, id: result.lastInsertRowid });
   });
 
-  // GET /uadp/v1/attestations/:agentId
-  router.get('/uadp/v1/attestations/:agentId', (req, res) => {
+  // GET /api/v1/attestations/:agentId
+  router.get('/api/v1/attestations/:agentId', (req, res) => {
     const agentId = req.params.agentId;
     const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -398,8 +398,8 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string):
     });
   });
 
-  // GET /uadp/v1/search
-  router.get('/uadp/v1/search', (req, res) => {
+  // GET /api/v1/search
+  router.get('/api/v1/search', (req, res) => {
     const q = req.query.q as string;
     const kind = req.query.kind as string | undefined;
     const limit = Math.min(100, parseInt(req.query.limit as string) || 50);

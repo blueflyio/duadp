@@ -1,107 +1,150 @@
-# bluefly-duadp — Python SDK
+# DUADP — Python SDK
 
-**The official Python SDK for [DUADP](https://openstandardagents.org/uadp/) (Decentralized Universal AI Discovery Protocol).**
+**Decentralized Universal AI Discovery Protocol.** The missing DNS layer for AI agents.
 
-[![PyPI](https://img.shields.io/pypi/v/bluefly-duadp)](https://pypi.org/project/bluefly-duadp/)
+MCP connects tools. A2A connects agents. But how do agents *find* each other across organizational boundaries? There is no standard way to discover, publish, or verify AI capabilities on the open web. DUADP fills that gap.
+
+[![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
+[![Live Node](https://img.shields.io/badge/live-discover.duadp.org-brightgreen)](https://discover.duadp.org/.well-known/duadp.json)
 
-> **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[duadp.org](https://duadp.org)** | **[Live Discovery Node](https://discover.duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)** | **[OSSA](https://openstandardagents.org)**
+
+---
 
 ## Install
 
 ```bash
-pip install bluefly-duadp
+pip install duadp
 # or
-uv add bluefly-duadp
+uv add duadp
 ```
 
-## Quick Start — Client
+## Architecture
+
+```
+                    /.well-known/duadp.json
+                           |
+    +-------------+   +----v--------+   +-------------+
+    |  Your App   |-->| DUADP Node  |<->| DUADP Node  |
+    |  (client)   |   | (skills.sh) |   | (Acme Corp) |
+    +-------------+   +------+------+   +-------------+
+                             | gossip federation
+                      +------v------+
+                      | DUADP Node  |
+                      | (your org)  |
+                      +-------------+
+
+Any domain that serves /.well-known/duadp.json becomes a discovery node.
+Nodes find each other via DNS TXT records and gossip protocol.
+Publish once, discover everywhere.
+```
+
+The protocol surface is small and complete:
+
+```
+GET  /.well-known/duadp.json          Node discovery manifest
+GET  /api/v1/agents                   Paginated agent registry
+GET  /api/v1/skills                   Paginated skill registry
+GET  /api/v1/tools                    Paginated tool registry
+GET  /api/v1/search?q=...&facets=true Unified cross-type search
+POST /api/v1/publish                  Publish any OSSA resource
+POST /api/v1/validate                 Validate manifest against spec
+GET  /api/v1/federation               Peer node directory
+POST /api/v1/federation               Register as federation peer
+GET  /api/v1/governance               NIST AI RMF governance policies
+GET  /api/v1/health                   Node health and resource count
+```
+
+## Quick Start
+
+### Client -- discover any node
 
 ```python
-from bluefly_uadp import UadpClient, resolve_gaid
+from duadp import DuadpClient, resolve_gaid
 
-async with UadpClient("https://skills.sh", token="my-api-key") as client:
+async with DuadpClient("https://discover.duadp.org") as client:
     # Discovery
     manifest = await client.discover()
-    skills = await client.list_skills(search="code review")
-    tools = await client.list_tools(protocol="mcp")
-    agents = await client.list_agents()
+    print(f"{manifest.node_name} — {manifest.protocol_version}")
+    # => "DUADP Discovery Node — 0.2.0"
 
-    # Unified search across all resource types
-    results = await client.search(q="code review", facets=True)
+    # Browse resources
+    agents = await client.list_agents()              # 57 agents
+    skills = await client.list_skills()              # 5 skills
+    tools = await client.list_tools(protocol="mcp")  # MCP-compatible tools
 
-    # Health check
-    health = await client.get_health()
+    # Unified search across all types
+    results = await client.search(q="security", facets=True)
 
     # Publish (requires auth token)
-    await client.publish_skill(my_skill)
+    await client.publish_skill(my_skill_manifest)
 
-# Resolve a GAID URI from any node
+# Resolve a GAID URI from any node on the web
 client, kind, name = resolve_gaid("agent://skills.sh/skills/web-search")
 skill = await client.get_skill(name)
 ```
 
-## Features
-
-### Core Discovery
-- **Client** — Async `UadpClient` with automatic manifest discovery and caching
-- **Server** — FastAPI router for building UADP nodes
-- **GAID resolution** — `resolve_gaid()` supports both `agent://` and `uadp://` schemes
-- **WebFinger** — `resolve_gaid()` for standard resource resolution
-- **Unified search** — `search()` with faceted results across all types
-- **Health** — `get_health()` for node status monitoring
-- **Agent index** — `get_agent_index()` for `.ajson` index cards
-
-### Identity & Security
-- **DID resolution** — `did:web:` and `did:key:` support
-- **Cryptographic signatures** — Ed25519 signing/verification
-- **Resource identity verification** — Full chain: DID resolve -> extract key -> verify signature -> check lifecycle
-
-### NIST AI RMF Governance
-- **Governance** — `get_governance()` for node compliance frameworks, risk tolerance, data classification
-- **Risk assessment** — `get_resource_risk()` for NIST MAP 5.1 risk impact
-- **Audit trail** — `get_audit_log()` with event type, GAID, and time filters (NIST AU-2, AU-3)
-- **Provenance** — `get_provenance()` for SLSA-style build info, SBOM, attestations (NIST SP 800-218A)
-- **Revocations** — `get_revocations()` for revoked resources (NIST SI-7, CM-3)
-- **Agent identity** — `get_agent_identity()` with DID, DNS records, service accounts, cryptographic keys
-
-### Context & Analytics
-- **Context negotiation** — `negotiate_context()` for layered context delivery with priority tiers
-- **Context summary** — `get_context_summary()` for cached domain context
-- **Token analytics** — `report_token_usage()` / `get_token_analytics()` with per-execution tracking
-- **Capability fingerprints** — `get_capability_fingerprint()` for empirical performance data
-
-### Feedback & Rewards
-- **360 feedback** — `submit_feedback()` with multi-source dimensions (accuracy, efficiency, quality, helpfulness)
-- **Agent reputation** — `get_agent_reputation()` with composite scoring and trend
-- **Reward events** — `record_reward()` for reputation boosts, capability unlocks, badges
-- **Outcome attestations** — `submit_attestation()` / `get_attestations()` for signed task outcome records
-
-### Multi-Agent Orchestration
-- **Delegation** — `delegate()` with compressed context transfer, budget constraints, depth limits
-- **Orchestration plans** — `create_orchestration_plan()` / `get_orchestration_plan()` for DAG/parallel/sequential/adaptive
-- **OSSA agent types** — orchestrator, worker, specialist, critic, monitor, gateway
-
-### Federation
-- **Peer discovery** — `get_federation()` for peer node listing
-- **Peer registration** — `register_as_peer()` with gossip propagation
-- **Incremental sync** — `federation_sync()` with sync tokens and cursors
-- **Webhooks** — `subscribe_webhook()` for real-time event notifications
-
-## Client API
+### Server -- turn your FastAPI app into a DUADP node
 
 ```python
-async with UadpClient("https://skills.sh", token="...") as client:
+from fastapi import FastAPI
+from duadp.server import create_duadp_router
 
-    # Core
+app = FastAPI()
+router = create_duadp_router(
+    node_name="My Registry",
+    node_id="did:web:registry.example.com",
+    base_url="https://registry.example.com",
+    federation={"gossip": True, "max_hops": 3},
+    provider=my_data_provider,  # implement DuadpDataProvider
+)
+app.include_router(router)
+# Now serves /.well-known/duadp.json and all /api/v1/* routes
+```
+
+### Validate OSSA manifests
+
+```python
+from duadp.validate import validate_manifest
+
+result = validate_manifest(skill_json)
+if not result.valid:
+    print(result.errors)
+```
+
+### Cryptographic signing
+
+```python
+from duadp.crypto import generate_key_pair, sign_resource, verify_signature
+
+keys = generate_key_pair()                               # Ed25519
+signed = sign_resource(resource, keys.private_key)
+verified = verify_signature(signed, keys.public_key)     # True/False
+```
+
+### DID resolution
+
+```python
+from duadp.did import resolve_did, build_did_web
+
+doc = await resolve_did("did:web:example.com")       # W3C DID Document
+doc = await resolve_did("did:key:z6Mkf5rG...")       # did:key support
+```
+
+## Full Client API
+
+```python
+async with DuadpClient("https://discover.duadp.org", token="...") as client:
+
+    # Core Discovery
     await client.discover()                          # Fetch manifest
-    await client.get_manifest()                      # Get cached manifest
+    await client.get_health()                        # Node health + resource count
+    await client.search(q="...", facets=True)        # Cross-type search
     await client.resolve_gaid(gaid)                  # WebFinger lookup
-    await client.get_health()                        # Node health
-    await client.search(q="...", facets=True)         # Cross-type search
     await client.get_agent_index(gaid)               # .ajson index card
 
-    # Resources
+    # Resources — full CRUD
     await client.list_skills(search="...", category="...", tag="...")
     await client.get_skill(name)
     await client.publish_skill(skill)
@@ -116,85 +159,102 @@ async with UadpClient("https://skills.sh", token="...") as client:
     await client.publish(resource)                   # Generic publish
     await client.validate(manifest_str)              # Validate manifest
 
-    # Governance (NIST AI RMF)
-    await client.get_governance()                    # Node governance
-    await client.get_resource_risk(gaid)             # Risk assessment
+    # NIST AI RMF Governance
+    await client.get_governance()                    # Compliance frameworks
+    await client.get_resource_risk(gaid)             # NIST MAP 5.1 risk
     await client.get_audit_log(event_type=..., gaid=..., since=...)
-    await client.get_provenance(gaid)                # Supply chain provenance
+    await client.get_provenance(gaid)                # SLSA provenance + SBOM
     await client.get_revocations(severity=..., since=...)
-    await client.get_agent_identity(gaid)            # Agent identity
+    await client.get_agent_identity(gaid)            # DID + DNS + keys
 
-    # Context & Analytics
-    await client.negotiate_context(gaid, task)       # Context negotiation
+    # Context and Analytics
+    await client.negotiate_context(gaid, task)       # Layered context delivery
     await client.get_context_summary(domain, task_type)
-    await client.report_token_usage(analytics)       # Report usage
-    await client.get_token_analytics(gaid, period)   # Get analytics
-    await client.get_capability_fingerprint(gaid)    # Performance data
+    await client.report_token_usage(analytics)       # Per-execution tracking
+    await client.get_token_analytics(gaid, period)
+    await client.get_capability_fingerprint(gaid)    # Empirical performance
 
-    # Feedback & Rewards
-    await client.submit_feedback(feedback)           # Submit feedback
-    await client.get_agent_feedback(gaid, type=..., since=...)
-    await client.get_agent_reputation(gaid)          # Get reputation
-    await client.record_reward(reward)               # Record reward
-    await client.submit_attestation(attestation)     # Submit attestation
+    # Feedback and Reputation
+    await client.submit_feedback(feedback)           # Multi-dimension feedback
+    await client.get_agent_reputation(gaid)          # Composite score + trend
+    await client.record_reward(reward)               # Reputation boosts, badges
+    await client.submit_attestation(attestation)     # Signed outcome records
     await client.get_attestations(gaid, outcome=..., since=...)
 
-    # Delegation & Orchestration
-    await client.delegate(request)                   # Delegate task
-    await client.create_orchestration_plan(plan)     # Create plan
-    await client.get_orchestration_plan(plan_id)     # Get plan
+    # Multi-Agent Orchestration
+    await client.delegate(request)                   # Context transfer + budget
+    await client.create_orchestration_plan(plan)     # DAG/parallel/sequential
+    await client.get_orchestration_plan(plan_id)
 
-    # Batch Operations (CI/CD)
+    # Batch Operations
     await client.batch_publish(resources, atomic=True, dry_run=False)
 
     # Protocol Interop
-    await client.get_a2a_card(agent_name)            # A2A Agent Card
+    await client.get_a2a_card(agent_name)            # Google A2A Agent Card
     await client.get_mcp_manifest()                  # MCP Server Manifest
-
-    # Structured Query
-    await client.query({"filters": [...], "sort": [...], "limit": 50})
 
     # Federation
     await client.get_federation()                    # List peers
-    await client.register_as_peer(registration)      # Register as peer
+    await client.register_as_peer(registration)      # Join the mesh
     await client.federation_sync(since=..., sync_token=...)
-    await client.subscribe_webhook(subscription)     # Subscribe webhook
+    await client.subscribe_webhook(subscription)     # Real-time events
 ```
+
+## Key Concepts
+
+| Concept | What it is |
+|---------|------------|
+| **DUADP Node** | Any HTTP server implementing `/.well-known/duadp.json` and `/api/v1/*` endpoints |
+| **GAID** | Global Agent Identifier -- `agent://domain/kind/name` URI for cross-registry resolution |
+| **DID** | W3C Decentralized Identifier -- `did:web:example.com` for cryptographic node identity |
+| **Trust Tier** | `official` > `verified-signature` > `signed` > `community` > `experimental` |
+| **Federation** | Gossip-based peer discovery with circuit breakers and configurable hop limits |
+| **OSSA** | Open Standard for Agent Systems -- the payload format for skills, agents, and tools |
 
 ## Types
 
-The SDK exports 103 Pydantic models covering:
+103 Pydantic models covering:
 
-- **Core**: `UadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `ResourceIdentity`
+- **Core**: `DuadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `ResourceIdentity`
 - **Discovery**: `WebFingerResponse`, `NodeHealth`, `AgentIndexRecord`, `ProtocolEndpoints`
 - **NIST RMF**: `NodeGovernance`, `ResourceRisk`, `ResourceProvenance`, `Attestation`, `Revocation`, `AuditEvent`
 - **Context**: `ContextNegotiation`, `ContextLayer`, `KnowledgeSource`, `ContextCacheRef`
 - **Analytics**: `TokenAnalytics`, `TokenAnalyticsAggregate`, `CapabilityFingerprint`
 - **Feedback**: `AgentFeedback`, `FeedbackDimensions`, `AgentReputation`, `RewardEvent`
-- **Attestations**: `OutcomeAttestation`, `OutcomeAttestationMetrics`
 - **Orchestration**: `DelegationRequest`, `DelegationResult`, `OrchestrationPlan`, `OrchestrationStep`
 - **Federation**: `Peer`, `FederationResponse`, `SyncResponse`, `WebhookSubscription`
-- **Pricing**: `PricingInfo`, `SLAInfo`
-- **Batch**: `BatchPublishResult`, `BatchPublishResponse`
-- **A2A Interop**: `A2AAgentCard`, `A2ASkill`, `A2ACapabilities`, `A2AProvider`
-- **MCP Interop**: `McpServerManifest`
+- **Interop**: `A2AAgentCard`, `McpServerManifest`
 - **Query**: `StructuredQuery`, `QueryFilter`, `QuerySort`
 
 ## Modules
 
 ```python
-from bluefly_uadp.client import UadpClient, UadpError, resolve_gaid
-from bluefly_uadp.server import create_uadp_router
-from bluefly_uadp.crypto import sign_resource, verify_signature, generate_key_pair
-from bluefly_uadp.did import resolve_did, build_did_web, verify_resource_identity
-from bluefly_uadp.validate import validate_manifest, validate_response
-from bluefly_uadp.conformance import run_conformance_tests
-from bluefly_uadp.types import (
-    OssaResource, UadpManifest, ContextNegotiation, TokenAnalytics,
-    AgentFeedback, RewardEvent, DelegationRequest, OrchestrationPlan,
-    CapabilityFingerprint, OutcomeAttestation, AgentReputation,
-    NodeHealth, AgentIndexRecord, ProtocolEndpoints, PricingInfo, SLAInfo,
+from duadp import DuadpClient, DuadpError, resolve_gaid
+from duadp.server import create_duadp_router
+from duadp.crypto import sign_resource, verify_signature, generate_key_pair
+from duadp.did import resolve_did, build_did_web, verify_resource_identity
+from duadp.validate import validate_manifest, validate_response
+from duadp.conformance import run_conformance_tests
+from duadp.types import (
+    DuadpManifest, OssaResource, OssaSkill, OssaAgent, OssaTool,
+    NodeHealth, ContextNegotiation, TokenAnalytics, AgentFeedback,
+    DelegationRequest, OrchestrationPlan, AgentReputation,
 )
+```
+
+## Try It Now
+
+The reference node is live at [discover.duadp.org](https://discover.duadp.org) with 65 resources (57 agents, 5 skills, 3 tools).
+
+```bash
+# Discover the node
+curl https://discover.duadp.org/.well-known/duadp.json
+
+# List agents
+curl https://discover.duadp.org/api/v1/agents
+
+# Search
+curl "https://discover.duadp.org/api/v1/search?q=security&facets=true"
 ```
 
 ## Also Available
@@ -206,4 +266,4 @@ from bluefly_uadp.types import (
 
 ## License
 
-Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
+Apache-2.0

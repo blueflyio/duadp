@@ -1,5 +1,5 @@
 /**
- * DID resolution for UADP identity verification.
+ * DID resolution for DUADP identity verification.
  *
  * Uses DIF (Decentralized Identity Foundation) standard libraries:
  * - did-resolver — core resolution framework
@@ -50,7 +50,7 @@ export interface DIDResolutionResult {
     publicKeyMultibase?: string;
     purpose: string[];
   }>;
-  uadpEndpoint?: string;
+  duadpEndpoint?: string;
 }
 
 // Singleton resolver instance — supports did:web and did:key out of the box
@@ -111,7 +111,7 @@ export function didWebToUrl(did: string): string {
 }
 
 /**
- * Full identity verification chain for a UADP resource.
+ * Full identity verification chain for a DUADP resource.
  *
  * 1. Extract DID from resource identity
  * 2. Resolve DID document (via DIF resolver)
@@ -291,16 +291,16 @@ function extractKeys(document: DIDDocument): DIDResolutionResult {
     }
   }
 
-  // Find UADP service endpoint
-  let uadpEndpoint: string | undefined;
+  // Find DUADP service endpoint
+  let duadpEndpoint: string | undefined;
   for (const svc of document.service ?? []) {
-    if (svc.type === 'UadpNode' || svc.type === 'UadpResource') {
-      uadpEndpoint = typeof svc.serviceEndpoint === 'string'
+    if (svc.type === 'DuadpNode' || svc.type === 'DuadpResource') {
+      duadpEndpoint = typeof svc.serviceEndpoint === 'string'
         ? svc.serviceEndpoint
         : undefined;
       break;
     }
   }
 
-  return { document, publicKeys, uadpEndpoint };
+  return { document, publicKeys, duadpEndpoint };
 }

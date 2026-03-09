@@ -1,6 +1,6 @@
 openapi: "3.1.0"
 info:
-  title: Universal AI Discovery Protocol (UADP)
+  title: Universal AI Discovery Protocol (DUADP)
   version: "0.2.0"
   description: |
     Decentralized, hybrid-federated protocol for the discovery, validation,
@@ -15,31 +15,31 @@ info:
 
 servers:
   - url: https://{domain}
-    description: Any UADP node
+    description: Any DUADP node
     variables:
       domain:
         default: example.com
 
 paths:
-  /.well-known/uadp.json:
+  /.well-known/duadp.json:
     get:
-      operationId: getUadpManifest
-      summary: UADP Node Discovery Manifest
+      operationId: getDuadpManifest
+      summary: DUADP Node Discovery Manifest
       description: Returns the node's discovery manifest with endpoint URLs and capabilities.
       tags: [Discovery]
       responses:
         "200":
-          description: UADP node manifest
+          description: DUADP node manifest
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UadpManifest"
+                $ref: "#/components/schemas/DuadpManifest"
 
   /.well-known/webfinger:
     get:
       operationId: resolveWebFinger
       summary: WebFinger Resource Resolution
-      description: Resolves a GAID URI to UADP endpoint links.
+      description: Resolves a GAID URI to DUADP endpoint links.
       tags: [Discovery]
       parameters:
         - name: resource
@@ -62,7 +62,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /uadp/v1/skills:
+  /api/v1/skills:
     get:
       operationId: listSkills
       summary: List Skills
@@ -116,7 +116,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /uadp/v1/skills/{name}:
+  /api/v1/skills/{name}:
     get:
       operationId: getSkill
       summary: Get Skill by Name
@@ -182,7 +182,7 @@ paths:
         "204":
           description: Skill deleted
 
-  /uadp/v1/agents:
+  /api/v1/agents:
     get:
       operationId: listAgents
       summary: List Agents
@@ -223,7 +223,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/PublishResponse"
 
-  /uadp/v1/agents/{name}:
+  /api/v1/agents/{name}:
     get:
       operationId: getAgent
       summary: Get Agent by Name
@@ -244,7 +244,41 @@ paths:
         "404":
           description: Agent not found
 
-  /uadp/v1/tools:
+  /api/v1/agents/{gaid}/card:
+    get:
+      operationId: getAgentCard
+      summary: Get Universally Compatible Agent Card
+      description: |
+        Returns the Agent Card representation of the OSSA manifest.
+        The Agent Card is a universally understood format (similar to Google A2A format)
+        containing capabilities, endpoints, UUID constraints, and trust tiers.
+        Suitable for fast out-of-band vetting and cross-registry handshakes.
+      tags: [Agents, Identity]
+      parameters:
+        - name: gaid
+          in: path
+          required: true
+          description: The Global Agent Identifier (DID) or UUID of the agent.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Signed Agent Card
+          content:
+            application/agent-card+json:
+              schema:
+                $ref: "#/components/schemas/AgentCard"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentCard"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/tools:
     get:
       operationId: listTools
       summary: List Tools
@@ -291,7 +325,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/PublishResponse"
 
-  /uadp/v1/tools/{name}:
+  /api/v1/tools/{name}:
     get:
       operationId: getTool
       summary: Get Tool by Name
@@ -312,7 +346,7 @@ paths:
         "404":
           description: Tool not found
 
-  /uadp/v1/publish:
+  /api/v1/publish:
     post:
       operationId: publishResource
       summary: Publish Any Resource
@@ -342,7 +376,95 @@ paths:
         "401":
           description: Authentication required
 
-  /uadp/v1/validate:
+  /api/v1/policies:
+    get:
+      operationId: listPolicies
+      summary: List Cedar Policies
+      description: Returns the Cedar policy catalog with filtering and pagination.
+      tags: [Policies]
+      parameters:
+        - name: tag
+          in: query
+          schema:
+            type: string
+        - name: framework
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Search"
+        - $ref: "#/components/parameters/Page"
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated Cedar policy list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CedarPolicyResource"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+  /api/v1/policies/{name}:
+    get:
+      operationId: getPolicy
+      summary: Get Cedar Policy by ID
+      tags: [Policies]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cedar policy resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CedarPolicyResource"
+        "404":
+          description: Policy not found
+
+  /api/v1/policies/evaluate:
+    post:
+      operationId: evaluateCedarPolicy
+      summary: Evaluate Cedar Authorization Request
+      description: |
+        Evaluates a Cedar authorization request against provided policies.
+        Returns Allow or Deny with diagnostics. Used for testing policies
+        before deployment or for runtime authorization checks.
+      tags: [Policies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CedarEvaluationRequest"
+      responses:
+        "200":
+          description: Cedar evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CedarEvaluationResult"
+        "400":
+          description: Invalid request (missing fields or unparseable policies)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/validate:
     post:
       operationId: validateManifest
       summary: Validate Manifest
@@ -373,7 +495,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /uadp/v1/federation:
+  /api/v1/federation:
     get:
       operationId: listPeers
       summary: List Federation Peers
@@ -389,7 +511,7 @@ paths:
     post:
       operationId: registerPeer
       summary: Register as Federation Peer
-      description: Another UADP node requests to register as a peer.
+      description: Another DUADP node requests to register as a peer.
       tags: [Federation]
       requestBody:
         required: true
@@ -402,7 +524,7 @@ paths:
                 url:
                   type: string
                   format: uri
-                  description: Base URL of the registering UADP node.
+                  description: Base URL of the registering DUADP node.
                 name:
                   type: string
                   description: Human-readable name of the registering node.
@@ -438,7 +560,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 
   # ─── Health ─────────────────────────────────────────────────
-  /uadp/v1/health:
+  /api/v1/health:
     get:
       operationId: getHealth
       summary: Node Health Check
@@ -455,7 +577,7 @@ paths:
                 $ref: "#/components/schemas/NodeHealth"
 
   # ─── Unified Search ────────────────────────────────────────
-  /uadp/v1/search:
+  /api/v1/search:
     get:
       operationId: unifiedSearch
       summary: Unified Search
@@ -529,7 +651,7 @@ paths:
                     $ref: "#/components/schemas/SearchFacets"
 
   # ─── Agent JSON Index (.ajson) ─────────────────────────────
-  /uadp/v1/index/{gaid}:
+  /api/v1/index/{gaid}:
     get:
       operationId: getAgentIndex
       summary: Get Agent JSON Index Record
@@ -559,7 +681,7 @@ paths:
           description: Resource not found
 
   # ─── Governance (NIST AI RMF) ────────────────────────────────
-  /uadp/v1/governance:
+  /api/v1/governance:
     get:
       operationId: getGovernance
       summary: Node Governance Declaration
@@ -575,7 +697,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/NodeGovernance"
 
-  /uadp/v1/governance/risk/{gaid}:
+  /api/v1/governance/risk/{gaid}:
     get:
       operationId: getRiskAssessment
       summary: Get Risk Assessment for Resource
@@ -603,7 +725,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /uadp/v1/governance/audit:
+  /api/v1/governance/audit:
     get:
       operationId: getAuditLog
       summary: Audit Log
@@ -639,7 +761,7 @@ paths:
                     $ref: "#/components/schemas/PaginationMeta"
 
   # ─── Provenance ─────────────────────────────────────────────
-  /uadp/v1/provenance/{gaid}:
+  /api/v1/provenance/{gaid}:
     get:
       operationId: getProvenance
       summary: Get Provenance Chain
@@ -668,7 +790,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 
   # ─── Revocations ────────────────────────────────────────────
-  /uadp/v1/revocations:
+  /api/v1/revocations:
     get:
       operationId: listRevocations
       summary: List Revoked Resources
@@ -700,7 +822,7 @@ paths:
                     $ref: "#/components/schemas/PaginationMeta"
 
   # ─── Incremental Sync ──────────────────────────────────────
-  /uadp/v1/federation/sync:
+  /api/v1/federation/sync:
     get:
       operationId: incrementalSync
       summary: Incremental Sync
@@ -732,7 +854,7 @@ paths:
                 $ref: "#/components/schemas/SyncResponse"
 
   # ─── Event Subscriptions ────────────────────────────────────
-  /uadp/v1/events/subscribe:
+  /api/v1/events/subscribe:
     post:
       operationId: subscribe
       summary: Subscribe to Events
@@ -763,7 +885,7 @@ paths:
                     const: active
 
   # ─── Agent Identity ─────────────────────────────────────────
-  /uadp/v1/identity/{gaid}:
+  /api/v1/identity/{gaid}:
     get:
       operationId: getAgentIdentity
       summary: Get Agent Identity
@@ -794,7 +916,7 @@ paths:
 
   # ─── Context Awareness & Token Efficiency ─────────────────────
 
-  /uadp/v1/context/negotiate:
+  /api/v1/context/negotiate:
     post:
       operationId: negotiateContext
       summary: Negotiate Context Delivery
@@ -835,7 +957,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ContextNegotiation"
 
-  /uadp/v1/context/summary:
+  /api/v1/context/summary:
     get:
       operationId: getContextSummary
       summary: Get Cached Context Summary
@@ -859,7 +981,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ContextNegotiation"
 
-  /uadp/v1/analytics/tokens:
+  /api/v1/analytics/tokens:
     post:
       operationId: reportTokenUsage
       summary: Report Token Usage
@@ -877,7 +999,7 @@ paths:
         "204":
           description: Token usage recorded
 
-  /uadp/v1/analytics/tokens/{gaid}:
+  /api/v1/analytics/tokens/{gaid}:
     get:
       operationId: getTokenAnalytics
       summary: Get Token Analytics
@@ -902,7 +1024,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/TokenAnalyticsAggregate"
 
-  /uadp/v1/analytics/fingerprint/{gaid}:
+  /api/v1/analytics/fingerprint/{gaid}:
     get:
       operationId: getCapabilityFingerprint
       summary: Get Capability Fingerprint
@@ -922,7 +1044,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CapabilityFingerprint"
 
-  /uadp/v1/feedback:
+  /api/v1/feedback:
     post:
       operationId: submitFeedback
       summary: Submit Agent Feedback
@@ -944,7 +1066,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AgentFeedback"
 
-  /uadp/v1/feedback/{gaid}:
+  /api/v1/feedback/{gaid}:
     get:
       operationId: getAgentFeedback
       summary: Get Agent Feedback
@@ -976,7 +1098,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/AgentFeedback"
 
-  /uadp/v1/feedback/{gaid}/reputation:
+  /api/v1/feedback/{gaid}/reputation:
     get:
       operationId: getAgentReputation
       summary: Get Agent Reputation Score
@@ -996,7 +1118,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/AgentReputation"
 
-  /uadp/v1/feedback/rewards:
+  /api/v1/feedback/rewards:
     post:
       operationId: recordReward
       summary: Record Agent Reward
@@ -1017,7 +1139,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RewardEvent"
 
-  /uadp/v1/attestations:
+  /api/v1/attestations:
     post:
       operationId: submitAttestation
       summary: Submit Outcome Attestation
@@ -1039,7 +1161,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OutcomeAttestation"
 
-  /uadp/v1/attestations/{gaid}:
+  /api/v1/attestations/{gaid}:
     get:
       operationId: getAttestations
       summary: Get Agent Attestations
@@ -1071,7 +1193,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/OutcomeAttestation"
 
-  /uadp/v1/delegate:
+  /api/v1/delegate:
     post:
       operationId: delegateTask
       summary: Delegate Task to Agent
@@ -1095,7 +1217,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/DelegationResult"
 
-  /uadp/v1/delegate/plans:
+  /api/v1/delegate/plans:
     post:
       operationId: createOrchestrationPlan
       summary: Create Orchestration Plan
@@ -1119,7 +1241,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrchestrationPlan"
 
-  /uadp/v1/delegate/plans/{planId}:
+  /api/v1/delegate/plans/{planId}:
     get:
       operationId: getOrchestrationPlan
       summary: Get Orchestration Plan
@@ -1140,7 +1262,7 @@ paths:
 
   # ─── Batch Operations ────────────────────────────────────────
 
-  /uadp/v1/publish/batch:
+  /api/v1/publish/batch:
     post:
       operationId: batchPublish
       summary: Batch Publish Resources
@@ -1187,7 +1309,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /uadp/v1/validate/batch:
+  /api/v1/validate/batch:
     post:
       operationId: batchValidate
       summary: Batch Validate Manifests
@@ -1221,13 +1343,13 @@ paths:
 
   # ─── Protocol Compatibility Endpoints ───────────────────────
 
-  /uadp/v1/agents/{name}/card:
+  /api/v1/agents/{name}/a2a-card:
     get:
       operationId: getA2AAgentCard
       summary: A2A Agent Card
       description: |
         Returns a Google A2A-compatible Agent Card for the named agent.
-        Maps UADP agent data to the A2A Agent Card schema, enabling
+        Maps DUADP agent data to the A2A Agent Card schema, enabling
         interoperability with A2A-native clients and infrastructure.
       tags: [Interop]
       parameters:
@@ -1246,14 +1368,14 @@ paths:
         "404":
           description: Agent not found
 
-  /uadp/v1/tools/mcp-manifest:
+  /api/v1/tools/mcp-manifest:
     get:
       operationId: getMcpManifest
       summary: MCP Server Manifest
       description: |
         Returns an MCP-compatible server manifest listing all tools
-        with protocol=mcp. Enables MCP clients to discover UADP-registered
-        tools natively without UADP-specific client code.
+        with protocol=mcp. Enables MCP clients to discover DUADP-registered
+        tools natively without DUADP-specific client code.
       tags: [Interop]
       responses:
         "200":
@@ -1267,7 +1389,7 @@ paths:
     get:
       operationId: getMcpWellKnown
       summary: MCP Well-Known Manifest
-      description: Alias for /uadp/v1/tools/mcp-manifest for MCP client auto-discovery.
+      description: Alias for /api/v1/tools/mcp-manifest for MCP client auto-discovery.
       tags: [Interop]
       responses:
         "200":
@@ -1279,7 +1401,7 @@ paths:
 
   # ─── Structured Query ──────────────────────────────────────
 
-  /uadp/v1/query:
+  /api/v1/query:
     post:
       operationId: structuredQuery
       summary: Structured Query
@@ -1389,7 +1511,7 @@ components:
       description: Items per page.
 
   schemas:
-    UadpManifest:
+    DuadpManifest:
       type: object
       required: [protocol_version, node_name, endpoints]
       properties:
@@ -1609,24 +1731,19 @@ components:
               type: string
               format: date-time
             expires:
-              type: string
+              type: [string, "null"]
               format: date-time
-              nullable: true
             suspended:
-              type: string
+              type: [string, "null"]
               format: date-time
-              nullable: true
             revoked:
-              type: string
+              type: [string, "null"]
               format: date-time
-              nullable: true
             deprecation:
-              type: string
+              type: [string, "null"]
               format: date-time
-              nullable: true
             successor:
-              type: string
-              nullable: true
+              type: [string, "null"]
         operational:
           type: object
           properties:
@@ -1753,6 +1870,60 @@ components:
               type: number
             incidents:
               type: integer
+
+    # ─── New: Agent Card Schema ──────────────────────────────────────
+    AgentCard:
+      type: object
+      description: |
+        A universally understood, compact representation of an AI Agent.
+        Suitable for fast vetting, cross-registry handshakes, and third-party integrations
+        like Google A2A or MCP discovery.
+      required: [uuid, gaid, name, trust_tier]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Version 5 UUID derived from the agent namespace and name.
+        gaid:
+          type: string
+          format: uri
+          description: Global Agent Identifier (DID) for verifiable identity tracing.
+        name:
+          type: string
+          description: Human-readable agent name.
+        description:
+          type: string
+          description: Summary of the agent's purpose.
+        trust_tier:
+          type: string
+          enum: [ tier_1_read, tier_2_write_limited, tier_3_write_elevated, tier_4_system_admin ]
+          description: Evaluated security trust tier.
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: High-level capabilities (e.g., 'filesystem-read', 'network-outbound').
+        publisher:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+        signature:
+          type: string
+          description: Base64-encoded signature of this specific card payload validating its provenance.
+        endpoints:
+          type: object
+          properties:
+            a2a:
+              type: string
+              format: uri
+            mcp:
+              type: string
+              format: uri
+          description: Direct connection URIs for standard interoperability protocols.
+      additionalProperties: true
 
     OssaResource:
       type: object
@@ -1928,9 +2099,8 @@ components:
           type: string
           enum: [healthy, degraded, unreachable]
         last_synced:
-          type: string
+          type: [string, "null"]
           format: date-time
-          nullable: true
         capabilities:
           type: array
           items:
@@ -1965,7 +2135,7 @@ components:
           type: array
           items:
             type: string
-          description: "Alternative URIs (e.g., agent://, did:web:, uadp://)"
+          description: "Alternative URIs (e.g., agent://, did:web:, duadp://)"
         links:
           type: array
           items:
@@ -1975,62 +2145,62 @@ components:
           additionalProperties:
             type: string
       example:
-        subject: "uadp://acme.com/agents/code-reviewer"
+        subject: "duadp://acme.com/agents/code-reviewer"
         aliases:
           - "agent://acme.com/agents/code-reviewer"
           - "did:web:acme.com:agents:code-reviewer"
         links:
-          - rel: "https://uadp.dev/rel/self"
+          - rel: "https://duadp.dev/rel/self"
             type: "application/json"
-            href: "https://acme.com/uadp/v1/agents/code-reviewer"
-          - rel: "https://uadp.dev/rel/a2a"
+            href: "https://acme.com/api/v1/agents/code-reviewer"
+          - rel: "https://duadp.dev/rel/a2a"
             type: "application/json"
             href: "https://acme.com/.well-known/agent.json"
             titles:
               default: "A2A Agent Card"
-          - rel: "https://uadp.dev/rel/mcp"
+          - rel: "https://duadp.dev/rel/mcp"
             type: "application/json"
             href: "mcp://acme.com/tools/code-reviewer"
             titles:
               default: "MCP Server"
-          - rel: "https://uadp.dev/rel/ossa"
+          - rel: "https://duadp.dev/rel/ossa"
             type: "application/yaml"
             href: "https://acme.com/manifests/code-reviewer.ossa.yaml"
             titles:
               default: "OSSA Manifest"
-          - rel: "https://uadp.dev/rel/openapi"
+          - rel: "https://duadp.dev/rel/openapi"
             type: "application/openapi+yaml"
             href: "https://acme.com/api/code-reviewer/openapi.yaml"
-          - rel: "https://uadp.dev/rel/identity"
+          - rel: "https://duadp.dev/rel/identity"
             type: "application/json"
-            href: "https://acme.com/uadp/v1/identity/uadp://acme.com/agents/code-reviewer"
-          - rel: "https://uadp.dev/rel/provenance"
+            href: "https://acme.com/api/v1/identity/duadp://acme.com/agents/code-reviewer"
+          - rel: "https://duadp.dev/rel/provenance"
             type: "application/json"
-            href: "https://acme.com/uadp/v1/provenance/uadp://acme.com/agents/code-reviewer"
+            href: "https://acme.com/api/v1/provenance/duadp://acme.com/agents/code-reviewer"
         properties:
-          "https://uadp.dev/ns/trust_tier": "verified-signature"
-          "https://uadp.dev/ns/version": "1.2.0"
-          "https://uadp.dev/ns/status": "active"
+          "https://duadp.dev/ns/trust_tier": "verified-signature"
+          "https://duadp.dev/ns/version": "1.2.0"
+          "https://duadp.dev/ns/status": "active"
 
     WebFingerLink:
       type: object
       required: [rel, href]
       description: |
-        WebFinger link with UADP-defined link relations.
+        WebFinger link with DUADP-defined link relations.
         Standard link relations:
-          - `https://uadp.dev/rel/self` — UADP resource endpoint
-          - `https://uadp.dev/rel/a2a` — A2A Agent Card (Google A2A protocol)
-          - `https://uadp.dev/rel/mcp` — MCP server manifest (Anthropic MCP)
-          - `https://uadp.dev/rel/ossa` — OSSA governance manifest
-          - `https://uadp.dev/rel/openapi` — OpenAPI specification
-          - `https://uadp.dev/rel/identity` — Agent identity record
-          - `https://uadp.dev/rel/provenance` — Supply chain provenance
-          - `https://uadp.dev/rel/health` — Health check endpoint
-          - `https://uadp.dev/rel/ajson` — Agent JSON index record
+          - `https://duadp.dev/rel/self` — DUADP resource endpoint
+          - `https://duadp.dev/rel/a2a` — A2A Agent Card (Google A2A protocol)
+          - `https://duadp.dev/rel/mcp` — MCP server manifest (Anthropic MCP)
+          - `https://duadp.dev/rel/ossa` — OSSA governance manifest
+          - `https://duadp.dev/rel/openapi` — OpenAPI specification
+          - `https://duadp.dev/rel/identity` — Agent identity record
+          - `https://duadp.dev/rel/provenance` — Supply chain provenance
+          - `https://duadp.dev/rel/health` — Health check endpoint
+          - `https://duadp.dev/rel/ajson` — Agent JSON index record
       properties:
         rel:
           type: string
-          description: "Link relation type (IANA or UADP namespace)"
+          description: "Link relation type (IANA or DUADP namespace)"
         type:
           type: string
           description: "MIME type of the linked resource"
@@ -2078,7 +2248,7 @@ components:
     NodeGovernance:
       type: object
       description: |
-        Governance declarations for a UADP node.
+        Governance declarations for a DUADP node.
         Maps to NIST AI RMF GOVERN function.
       properties:
         compliance_frameworks:
@@ -2368,10 +2538,10 @@ components:
               type: string
             record_name:
               type: string
-              description: "TXT record name (e.g., _uadp.agent-name.example.com)."
+              description: "TXT record name (e.g., _duadp.agent-name.example.com)."
             record_value:
               type: string
-              description: "TXT record value (uadp=v1;gaid=agent://...;key=...)."
+              description: "TXT record value (duadp=v1;gaid=agent://...;key=...)."
         service_account:
           type: object
           description: "Bot/service account for authenticated operations."
@@ -2503,7 +2673,7 @@ components:
       properties:
         gaid:
           type: string
-          description: "Global Agent Identifier (uadp://namespace/kind/name)"
+          description: "Global Agent Identifier (duadp://namespace/kind/name)"
         kind:
           type: string
           enum: [Skill, Agent, Tool, Workflow]
@@ -2524,7 +2694,7 @@ components:
           type: array
           items:
             type: string
-          description: "Standardized capability tags from UADP taxonomy"
+          description: "Standardized capability tags from DUADP taxonomy"
         tags:
           type: array
           items:
@@ -2555,7 +2725,7 @@ components:
           format: date-time
           description: "NIST MG-4.1 — planned decommissioning date"
       example:
-        gaid: "uadp://acme.com/agents/code-reviewer"
+        gaid: "duadp://acme.com/agents/code-reviewer"
         kind: Agent
         name: code-reviewer
         version: "1.2.0"
@@ -2565,7 +2735,7 @@ components:
         capabilities: [code-review, security-analysis, style-check]
         tags: [security, quality, devops]
         endpoints:
-          uadp: "https://acme.com/uadp/v1/agents/code-reviewer"
+          duadp: "https://acme.com/api/v1/agents/code-reviewer"
           a2a: "https://acme.com/.well-known/agent.json"
           mcp: "mcp://acme.com/tools/code-reviewer"
           ossa: "https://acme.com/manifests/code-reviewer.ossa.yaml"
@@ -2587,13 +2757,13 @@ components:
       description: |
         Multi-protocol endpoint map. Each key is a protocol identifier,
         the value is the endpoint URL or URI for that protocol.
-        This is what makes UADP a universal discovery layer — a single
+        This is what makes DUADP a universal discovery layer — a single
         record links to every protocol endpoint for a resource.
       properties:
-        uadp:
+        duadp:
           type: string
           format: uri
-          description: "UADP resource endpoint"
+          description: "DUADP resource endpoint"
         a2a:
           type: string
           format: uri
@@ -2682,8 +2852,67 @@ components:
 
     AgentType:
       type: string
-      enum: [orchestrator, worker, specialist, critic, monitor, gateway]
-      description: OSSA agent type classification
+      enum: [orchestrator, worker, specialist, critic, monitor, gateway, agentscope]
+      description: OSSA agent type classification (agentscope = AgentScope framework agent)
+
+    AgentScopeExtension:
+      type: object
+      description: AgentScope framework-specific runtime configuration for multi-agent systems with ReAct agents, RL training, realtime voice, and MCP/A2A support.
+      properties:
+        version:
+          type: string
+          description: AgentScope framework version (e.g., 1.0.16)
+          pattern: "^\\d+\\.\\d+\\.\\d+"
+        agent_class:
+          type: string
+          enum: [ReActAgent, UserAgent, A2AAgent, RealtimeAgent, custom]
+          default: ReActAgent
+          description: Python agent class to instantiate
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: [rl_training, realtime_voice, evaluation, planning, rag, parallel_tool_calls, meta_tools, tts]
+          description: AgentScope-specific capabilities enabled for this agent
+        memory_backend:
+          type: string
+          enum: [in_memory, redis, sqlalchemy, mem0, reme_personal, reme_task, reme_tool]
+          default: in_memory
+          description: Memory backend for working/long-term memory
+        orchestration:
+          type: string
+          enum: [msghub, sequential_pipeline, fanout_pipeline, chatroom]
+          description: Multi-agent orchestration pattern when used in composition
+        max_iters:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum reasoning-acting loop iterations for ReActAgent
+        formatter:
+          type: string
+          enum: [openai, anthropic, gemini, dashscope, ollama, deepseek, a2a]
+          description: Message formatter for the model provider
+        compression:
+          type: object
+          properties:
+            enable:
+              type: boolean
+              default: false
+            trigger_threshold:
+              type: integer
+              description: Token count to trigger compression
+            keep_recent:
+              type: integer
+              default: 3
+              description: Recent messages to preserve
+          description: Memory compression configuration
+        skill_dirs:
+          type: array
+          items:
+            type: string
+          description: Paths to SKILL.md directories to register as agent skills
+      additionalProperties: false
 
     AgentStatus:
       type: string
@@ -3256,7 +3485,7 @@ components:
     A2AAgentCard:
       type: object
       description: |
-        Google A2A-compatible Agent Card generated from UADP agent data.
+        Google A2A-compatible Agent Card generated from DUADP agent data.
         Enables interoperability with A2A clients and infrastructure.
       required: [name, url]
       properties:
@@ -3322,9 +3551,9 @@ components:
           items:
             type: string
             enum: [text, file, data]
-        _uadp:
+        _duadp:
           type: object
-          description: UADP-specific extensions (prefixed per A2A convention).
+          description: DUADP-specific extensions (prefixed per A2A convention).
           properties:
             gaid:
               type: string
@@ -3339,7 +3568,7 @@ components:
       type: object
       description: |
         MCP-compatible server manifest listing tools with protocol=mcp.
-        Served at both /uadp/v1/tools/mcp-manifest and /.well-known/mcp.
+        Served at both /api/v1/tools/mcp-manifest and /.well-known/mcp.
       required: [name, version, tools]
       properties:
         name:
@@ -3361,7 +3590,7 @@ components:
               inputSchema:
                 type: object
                 additionalProperties: true
-              _uadp:
+              _duadp:
                 type: object
                 properties:
                   gaid:
@@ -3430,3 +3659,129 @@ components:
         cursor:
           type: string
           description: "Cursor-based pagination token (alternative to page/limit)."
+
+    CedarPolicyResource:
+      type: object
+      description: A Cedar policy resource from the catalog
+      properties:
+        kind:
+          type: string
+          enum: [Policy]
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            version:
+              type: string
+            description:
+              type: string
+            tags:
+              type: array
+              items:
+                type: string
+            complianceFrameworks:
+              type: array
+              items:
+                type: string
+            classification:
+              type: string
+            authors:
+              type: array
+              items:
+                type: string
+        spec:
+          type: object
+          properties:
+            format:
+              type: string
+              enum: [cedar]
+            statementCount:
+              type: integer
+            url:
+              type: string
+              format: uri
+
+    CedarEvaluationRequest:
+      type: object
+      required: [principal, action, resource, policies]
+      properties:
+        principal:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        action:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        resource:
+          type: object
+          required: [type, id]
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+        context:
+          type: object
+          additionalProperties: true
+        policies:
+          type: string
+          description: Cedar policy source text
+        schema:
+          type: string
+          description: Cedar schema text (optional)
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              uid:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  id:
+                    type: string
+              attrs:
+                type: object
+                additionalProperties: true
+              parents:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    id:
+                      type: string
+
+    CedarEvaluationResult:
+      type: object
+      required: [decision, diagnostics, evaluation_ms]
+      properties:
+        decision:
+          type: string
+          enum: [Allow, Deny]
+        diagnostics:
+          type: object
+          properties:
+            reason:
+              type: array
+              items:
+                type: string
+            errors:
+              type: array
+              items:
+                type: string
+        evaluation_ms:
+          type: number
+          description: Policy evaluation time in milliseconds

@@ -1,0 +1,8 @@
+# Project Summary
+This project is part of the Bluefly.io/OSSA decentralized agent ecosystem.
+
+# Discovery & Agentic Coordination (DUADP)
+- **Protocol**: DUADP (Decentralized Universal AI Discovery Protocol)
+- **Metadata**: See `ai.json` for agent permissions, licensing, capability tags, and trust endpoints.
+- **Directives**: See `AGENTS.md` for build/test guides and architectural rules.
+- **Connectivity**: See `mcp.json` or `.mcp.json` for tool definitions.

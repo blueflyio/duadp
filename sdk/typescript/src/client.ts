@@ -9,7 +9,7 @@ import type {
     PeerRegistration, PeerRegistrationResponse,
     PublishResponse,
     ToolListParams,
-    UadpManifest,
+    DuadpManifest,
     ValidationResult,
     WebFingerResponse,
     NodeGovernance,
@@ -40,6 +40,9 @@ import type {
     A2AAgentCard,
     McpServerManifest,
     StructuredQuery,
+    CedarPolicy,
+    PolicyListParams,
+    PoliciesResponse,
 } from './types.js';
 
 // --- Circuit Breaker ---
@@ -112,7 +115,7 @@ export function deduplicateResources<T extends OssaResource>(resources: T[]): T[
   return [...seen.values()];
 }
 
-export interface UadpClientOptions {
+export interface DuadpClientOptions {
   /** Custom fetch implementation (defaults to global fetch) */
   fetch?: typeof fetch;
   /** Request timeout in ms (default: 10000) */
@@ -121,19 +124,26 @@ export interface UadpClientOptions {
   headers?: Record<string, string>;
   /** Bearer token for authenticated operations (publish, update, delete) */
   token?: string;
+  /** Skip DNS TXT verification of _duadp.<domain> (default: false) */
+  skipDnsVerification?: boolean;
+  /**
+   * Optional minimum trust tier required for resolution.
+   * When set to `verified` or higher, DNS verification is enforced.
+   */
+  requiredTrustTier?: 'community' | 'signed' | 'verified-signature' | 'verified' | 'official';
 }
 
-export class UadpClient {
-  private manifest: UadpManifest | null = null;
+export class DuadpClient {
+  private manifest: DuadpManifest | null = null;
   private fetchFn: typeof fetch;
   private timeout: number;
   private headers: Record<string, string>;
   private token?: string;
 
   constructor(
-    /** Base URL of the UADP node (e.g., "https://marketplace.example.com") */
+    /** Base URL of the DUADP node (e.g., "https://marketplace.example.com") */
     public readonly baseUrl: string,
-    options: UadpClientOptions = {},
+    options: DuadpClientOptions = {},
   ) {
     this.fetchFn = options.fetch ?? globalThis.fetch.bind(globalThis);
     this.timeout = options.timeout ?? 10000;
@@ -143,16 +153,16 @@ export class UadpClient {
 
   // --- Discovery ---
 
-  /** Discover the node by fetching /.well-known/uadp.json */
-  async discover(): Promise<UadpManifest> {
-    const url = new URL('/.well-known/uadp.json', this.baseUrl);
+  /** Discover the node by fetching /.well-known/duadp.json */
+  async discover(): Promise<DuadpManifest> {
+    const url = new URL('/.well-known/duadp.json', this.baseUrl);
     const res = await this.request(url.toString());
-    this.manifest = res as UadpManifest;
+    this.manifest = res as DuadpManifest;
     return this.manifest;
   }
 
   /** Get the cached manifest, or discover if not yet fetched */
-  async getManifest(): Promise<UadpManifest> {
+  async getManifest(): Promise<DuadpManifest> {
     if (!this.manifest) await this.discover();
     return this.manifest!;
   }
@@ -254,6 +264,26 @@ export class UadpClient {
       method: 'POST',
       body: JSON.stringify(tool),
     }) as Promise<PublishResponse>;
+  }
+
+  // --- Policies (Cedar) ---
+
+  /** List Cedar authorization policies */
+  async listPolicies(params?: PolicyListParams): Promise<PoliciesResponse> {
+    const endpoint = await this.resolveEndpoint('policies');
+    const url = new URL(endpoint);
+    if (params?.tag) url.searchParams.set('tag', params.tag);
+    if (params?.framework) url.searchParams.set('framework', params.framework);
+    if (params?.search) url.searchParams.set('search', params.search);
+    if (params?.page) url.searchParams.set('page', String(params.page));
+    if (params?.limit) url.searchParams.set('limit', String(params.limit));
+    return this.request(url.toString()) as Promise<PoliciesResponse>;
+  }
+
+  /** Get a single Cedar policy by name */
+  async getPolicy(name: string): Promise<CedarPolicy> {
+    const endpoint = await this.resolveEndpoint('policies');
+    return this.request(`${endpoint}/${encodeURIComponent(name)}`) as Promise<CedarPolicy>;
   }
 
   // --- Generic Publishing ---
@@ -401,7 +431,7 @@ export class UadpClient {
     try {
       endpoint = await this.resolveEndpoint('health');
     } catch {
-      endpoint = new URL('/uadp/v1/health', this.baseUrl).toString();
+      endpoint = new URL('/api/v1/health', this.baseUrl).toString();
     }
     return this.request(endpoint) as Promise<NodeHealth>;
   }
@@ -471,7 +501,7 @@ export class UadpClient {
 
   /** Advanced structured query with filters, sorting, and field selection */
   async query(q: StructuredQuery): Promise<PaginatedResponse<OssaResource>> {
-    const url = new URL('/uadp/v1/query', this.baseUrl);
+    const url = new URL('/api/v1/query', this.baseUrl);
     return this.request(url.toString(), {
       method: 'POST',
       body: JSON.stringify(q),
@@ -625,7 +655,7 @@ export class UadpClient {
   private async resolveEndpoint(name: string): Promise<string> {
     const manifest = await this.getManifest();
     const endpoint = manifest.endpoints[name];
-    if (!endpoint) throw new UadpError(`Node does not expose a ${name} endpoint`);
+    if (!endpoint) throw new DuadpError(`Node does not expose a ${name} endpoint`);
     // Handle relative URLs
     if (endpoint.startsWith('/')) {
       return new URL(endpoint, this.baseUrl).toString();
@@ -668,7 +698,7 @@ export class UadpClient {
       if (res.status === 204) return undefined;
       if (!res.ok) {
         const body = await res.text().catch(() => '');
-        throw new UadpError(`HTTP ${res.status}: ${body}`, res.status);
+        throw new DuadpError(`HTTP ${res.status}: ${body}`, res.status);
       }
       return res.json();
     } finally {
@@ -677,30 +707,123 @@ export class UadpClient {
   }
 }
 
-export class UadpError extends Error {
+export class DuadpError extends Error {
   constructor(message: string, public readonly statusCode?: number) {
     super(message);
-    this.name = 'UadpError';
+    this.name = 'DuadpError';
   }
 }
 
 /**
- * Resolve a GAID URI to a UADP client and resource path.
+ * Verify that a domain has opted in to DUADP federation via DNS TXT record.
+ *
+ * Queries `_duadp.<domain>` for a TXT record containing `v=duadp1`.
+ * This confirms the domain explicitly authorizes DUADP discovery.
+ *
+ * @returns Object with verified status and the raw TXT records found
+ */
+export async function verifyDuadpDns(domain: string): Promise<{
+  verified: boolean;
+  records: string[];
+  error?: string;
+}> {
+  try {
+    // Dynamic import for Node.js dns module (not available in browsers)
+    const dns = await import('node:dns/promises');
+    const records = await dns.resolveTxt(`_duadp.${domain}`);
+    const flat = records.map((r) => r.join(''));
+    const verified = flat.some((r) => r.includes('v=duadp1'));
+    return { verified, records: flat };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    // ENOTFOUND/ENODATA means no TXT record — domain hasn't opted in
+    if (msg.includes('ENOTFOUND') || msg.includes('ENODATA') || msg.includes('NXDOMAIN')) {
+      return { verified: false, records: [], error: `No _duadp TXT record for ${domain}` };
+    }
+    return { verified: false, records: [], error: msg };
+  }
+}
+
+/**
+ * Verify that a specific agent is authorized by its domain via DNS TXT record.
+ *
+ * Queries `_agent.<uuid>.<domain>` for a TXT record confirming the agent.
+ * Used for high-trust agent verification outside the centralized registry.
+ */
+export async function verifyAgentDns(
+  domain: string,
+  agentId: string,
+): Promise<{ verified: boolean; records: string[]; error?: string }> {
+  try {
+    const dns = await import('node:dns/promises');
+    const records = await dns.resolveTxt(`_agent.${agentId}.${domain}`);
+    const flat = records.map((r) => r.join(''));
+    const verified = flat.some(
+      (r) => r.includes('v=duadp1') || r.includes(`agent=${agentId}`),
+    );
+    return { verified, records: flat };
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg.includes('ENOTFOUND') || msg.includes('ENODATA') || msg.includes('NXDOMAIN')) {
+      return { verified: false, records: [], error: `No _agent TXT record for ${agentId}.${domain}` };
+    }
+    return { verified: false, records: [], error: msg };
+  }
+}
+
+/**
+ * Resolve a GAID URI to a DUADP client and resource path.
+ *
+ * If `skipDnsVerification` is not set, verifies the domain has a `_duadp.<domain>`
+ * TXT record before connecting. This ensures the domain explicitly authorizes
+ * DUADP federation.
  *
  * Example:
  * ```ts
- * const { client, kind, name } = resolveGaid('agent://skills.sh/skills/web-search');
+ * const { client, kind, name } = await resolveGaid('agent://skills.sh/skills/web-search');
  * const skill = await client.getSkill(name);
  * ```
  */
-export function resolveGaid(gaid: string, options?: UadpClientOptions): {
-  client: UadpClient;
+export async function resolveGaid(gaid: string, options?: DuadpClientOptions): Promise<{
+  client: DuadpClient;
   kind: string;
   name: string;
-} {
-  const match = gaid.match(/^(?:agent|uadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
-  if (!match) throw new UadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or uadp://domain/kind/name`);
+  dnsVerified: boolean;
+}> {
+  const match = gaid.match(/^(?:agent|duadp):\/\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (!match) throw new DuadpError(`Invalid GAID: ${gaid}. Expected format: agent://domain/kind/name or duadp://domain/kind/name`);
   const [, domain, kind, name] = match;
-  const client = new UadpClient(`https://${domain}`, options);
-  return { client, kind, name };
+
+  // DNS TXT verification
+  let dnsVerified = false;
+  if (!options?.skipDnsVerification) {
+    const dnsResult = await verifyDuadpDns(domain);
+    dnsVerified = dnsResult.verified;
+  }
+
+  const requiredTier = options?.requiredTrustTier ?? 'community';
+  const requiredRank = trustTierToRank(requiredTier);
+  if (requiredRank >= 4 && !dnsVerified) {
+    throw new DuadpError(
+      `High-trust resolution requires DNS verification for ${domain} (_duadp TXT missing or invalid)`,
+    );
+  }
+
+  const client = new DuadpClient(`https://${domain}`, options);
+  return { client, kind, name, dnsVerified };
+}
+
+function trustTierToRank(tier: 'community' | 'signed' | 'verified-signature' | 'verified' | 'official'): number {
+  switch (tier) {
+    case 'official':
+      return 5;
+    case 'verified':
+      return 4;
+    case 'verified-signature':
+      return 3;
+    case 'signed':
+      return 2;
+    default:
+      return 1;
+  }
 }

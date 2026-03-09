@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openstandardagents.org/spec/duadp/schemas/duadp-tools-response.schema.json",
+  "title": "DUADP Tools Response",
+  "description": "Response from GET /api/v1/tools",
+  "type": "object",
+  "required": ["data", "meta"],
+  "properties": {
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["apiVersion", "kind", "metadata"],
+        "properties": {
+          "apiVersion": { "type": "string", "pattern": "^ossa/v\\d+\\.\\d+$" },
+          "kind": { "type": "string", "const": "Tool" },
+          "metadata": { "$ref": "duadp-manifest.schema.json#/$defs/OssaMetadata" },
+          "spec": { "type": "object" },
+          "signature": { "$ref": "#/$defs/ResourceSignature" }
+        }
+      }
+    },
+    "meta": { "$ref": "duadp-manifest.schema.json#/$defs/PaginationMeta" }
+  },
+  "$defs": {
+    "ResourceSignature": {
+      "type": "object",
+      "properties": {
+        "algorithm": { "type": "string", "enum": ["Ed25519", "ES256"] },
+        "value": { "type": "string" },
+        "signer": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}

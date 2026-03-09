@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateManifest, validateResponse, isUadpManifest } from '../validate.js';
+import { validateManifest, validateResponse, isDuadpManifest } from '../validate.js';
 
 function validManifest() {
   return {
@@ -7,8 +7,8 @@ function validManifest() {
     node_name: 'test-node',
     node_description: 'A test node',
     endpoints: {
-      skills: '/uadp/v1/skills',
-      agents: '/uadp/v1/agents',
+      skills: '/api/v1/skills',
+      agents: '/api/v1/agents',
     },
     ossa_versions: ['0.3.0'],
   };
@@ -190,15 +190,15 @@ describe('validateResponse', () => {
   });
 });
 
-describe('isUadpManifest', () => {
+describe('isDuadpManifest', () => {
   it('returns true for valid manifest', () => {
-    expect(isUadpManifest(validManifest())).toBe(true);
+    expect(isDuadpManifest(validManifest())).toBe(true);
   });
 
   it('returns false for invalid input', () => {
-    expect(isUadpManifest({})).toBe(false);
-    expect(isUadpManifest(null)).toBe(false);
-    expect(isUadpManifest('string')).toBe(false);
-    expect(isUadpManifest({ protocol_version: '0.1.0' })).toBe(false);
+    expect(isDuadpManifest({})).toBe(false);
+    expect(isDuadpManifest(null)).toBe(false);
+    expect(isDuadpManifest('string')).toBe(false);
+    expect(isDuadpManifest({ protocol_version: '0.1.0' })).toBe(false);
   });
 });

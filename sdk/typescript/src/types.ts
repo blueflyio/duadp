@@ -1,5 +1,5 @@
-/** UADP Node Discovery Manifest (/.well-known/uadp.json) */
-export interface UadpManifest {
+/** DUADP Node Discovery Manifest (/.well-known/duadp.json) */
+export interface DuadpManifest {
   protocol_version: string;
   node_id?: string;
   node_name: string;
@@ -493,7 +493,7 @@ export interface AgentKey {
 
 // ─── Node Health & Search ────────────────────────────────────────
 
-/** Node health status from GET /uadp/v1/health */
+/** Node health status from GET /api/v1/health */
 export interface NodeHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
   version?: string;
@@ -523,7 +523,7 @@ export interface SearchResponse {
 
 /** Multi-protocol endpoint map for an agent */
 export interface ProtocolEndpoints {
-  uadp?: string;
+  duadp?: string;
   a2a?: string;
   mcp?: string;
   openai?: string;
@@ -572,14 +572,36 @@ export interface AgentIndexRecord {
 // ─── OSSA Agent Types (aligned with openstandardagents spec) ─────
 
 /** OSSA agent type classification */
-export type AgentType = 'orchestrator' | 'worker' | 'specialist' | 'critic' | 'monitor' | 'gateway';
+export type AgentType = 'orchestrator' | 'worker' | 'specialist' | 'critic' | 'monitor' | 'gateway' | 'agentscope';
 
 /** Agent operational status */
 export type AgentStatus = 'registered' | 'active' | 'inactive' | 'suspended' | 'deprecated';
 
+/** AgentScope framework-specific runtime configuration */
+export interface AgentScopeExtension {
+  version?: string;
+  agent_class?: 'ReActAgent' | 'UserAgent' | 'A2AAgent' | 'RealtimeAgent' | 'custom';
+  capabilities?: ('rl_training' | 'realtime_voice' | 'evaluation' | 'planning' | 'rag' | 'parallel_tool_calls' | 'meta_tools' | 'tts')[];
+  memory_backend?: 'in_memory' | 'redis' | 'sqlalchemy' | 'mem0' | 'reme_personal' | 'reme_task' | 'reme_tool';
+  orchestration?: 'msghub' | 'sequential_pipeline' | 'fanout_pipeline' | 'chatroom';
+  max_iters?: number;
+  formatter?: 'openai' | 'anthropic' | 'gemini' | 'dashscope' | 'ollama' | 'deepseek' | 'a2a';
+  compression?: {
+    enable?: boolean;
+    trigger_threshold?: number;
+    keep_recent?: number;
+  };
+  skill_dirs?: string[];
+}
+
+/** Framework extensions for agent records */
+export interface AgentExtensions {
+  agentscope?: AgentScopeExtension;
+}
+
 // ─── Context Awareness & Token Efficiency ────────────────────────
 
-/** Context negotiation — how an agent receives work context from a UADP node */
+/** Context negotiation — how an agent receives work context from a DUADP node */
 export interface ContextNegotiation {
   /** Maximum tokens this agent should receive as context */
   max_context_tokens?: number;
@@ -1037,6 +1059,26 @@ export interface BatchPublishResponse {
 
 // ─── Protocol Compatibility ──────────────────────────────────────
 
+/** Universally understood Agent Card format for fast out-of-band vetting */
+export interface AgentCard {
+  uuid: string;
+  gaid: string;
+  name: string;
+  description?: string;
+  trust_tier: TrustTier;
+  capabilities?: string[];
+  publisher?: {
+    name?: string;
+    url?: string;
+  };
+  signature?: string;
+  endpoints?: {
+    a2a?: string;
+    mcp?: string;
+  };
+  [key: string]: unknown;
+}
+
 /** Google A2A-compatible Agent Card */
 export interface A2AAgentCard {
   name: string;
@@ -1059,7 +1101,7 @@ export interface A2AAgentCard {
   }>;
   defaultInputModes?: ('text' | 'file' | 'data')[];
   defaultOutputModes?: ('text' | 'file' | 'data')[];
-  _uadp?: {
+  _duadp?: {
     gaid?: string;
     trust_tier?: string;
     content_hash?: string;
@@ -1076,12 +1118,64 @@ export interface McpServerManifest {
     name: string;
     description?: string;
     inputSchema?: Record<string, unknown>;
-    _uadp?: {
+    _duadp?: {
       gaid?: string;
       trust_tier?: string;
       content_hash?: string;
     };
   }>;
+}
+
+// ─── Cedar Policies ─────────────────────────────────────────────
+
+/** Cedar policy specification */
+export interface PolicySpec {
+  format: 'cedar';
+  statementCount: number;
+  url?: string;
+  cedarSource?: string;
+}
+
+/** Cedar policy metadata */
+export interface PolicyMetadata {
+  name: string;
+  version: string;
+  description: string;
+  tags?: string[];
+  complianceFrameworks?: string[];
+  classification?: 'OFFICIAL' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
+  authors?: string[];
+  approvers?: string[];
+  dependsOn?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Cedar authorization policy resource */
+export interface CedarPolicy {
+  kind: 'Policy';
+  metadata: PolicyMetadata;
+  spec: PolicySpec;
+}
+
+/** Parameters for listing policies */
+export interface PolicyListParams {
+  tag?: string;
+  framework?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+/** Response from the policies endpoint */
+export interface PoliciesResponse {
+  data: CedarPolicy[];
+  pagination: {
+    total: number;
+    page: number;
+    per_page: number;
+    pages: number;
+  };
 }
 
 // ─── Structured Query ────────────────────────────────────────────

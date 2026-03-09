@@ -1,21 +1,21 @@
 {
   "name": "@bluefly/duadp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DUADP — Decentralized Universal AI Discovery Protocol SDK for TypeScript",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "uadp": "dist/cli.js"
+    "duadp": "dist/cli.js"
   },
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/blueflyio/ossa/lab/duadp.git",
+    "url": "https://gitlab.com/blueflyio/duadp/duadp.git",
     "directory": "sdk/typescript"
   },
-  "homepage": "https://openstandardagents.org/uadp/",
+  "homepage": "https://duadp.org",
   "bugs": {
-    "url": "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
+    "url": "https://gitlab.com/blueflyio/duadp/duadp/-/issues"
   },
   "author": "Bluefly <hello@bluefly.io>",
   "publishConfig": {
@@ -65,7 +65,7 @@
     "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
-    "uadp",
+    "duadp",
     "ossa",
     "agent",
     "discovery",
@@ -75,7 +75,9 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
+    "@types/ajv": "^0.0.5",
     "@types/express": "^5.0.6",
+    "@types/js-yaml": "^4.0.9",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
@@ -88,8 +90,11 @@
     }
   },
   "dependencies": {
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
     "canonicalize": "^2.1.0",
     "did-resolver": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "key-did-resolver": "^4.0.0",
     "web-did-resolver": "^2.0.32"
   }

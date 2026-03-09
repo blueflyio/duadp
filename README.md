@@ -5,9 +5,12 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.2.0-green.svg)](spec/README.md)
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
+[![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
-> **[duadp.org](https://duadp.org)** — Website coming soon. See **[openstandardagents.org/uadp](https://openstandardagents.org/uadp/)** for protocol details and the **[OSSA ecosystem](https://openstandardagents.org)**.
+> **[duadp.org](https://duadp.org)** | **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** for protocol details | **[OSSA ecosystem](https://openstandardagents.org)**
+
+> **GitLab**: [gitlab.com/blueflyio/duadp/duadp](https://gitlab.com/blueflyio/duadp/duadp) | **GitHub mirror**: [github.com/blueflyio/duadp](https://github.com/blueflyio/duadp)
 
 ## What is DUADP?
 
@@ -18,21 +21,21 @@ DUADP is an open protocol that lets any system discover, publish, and exchange A
 **Any system that implements a few HTTP endpoints is a DUADP node.** There is no required language, framework, or database. Agents are distributed using the `.ajson` / `.jsona` (Agent JSON) payload format.
 
 ```
-              DNS TXT: _uadp.skills.sh → "v=uadp1 url=..."
+              DNS TXT: _duadp.skills.sh → "v=duadp1 url=..."
 
-Your App                              skills.sh (UADP node)
+Your App                              skills.sh (DUADP node)
   |                                          |
-  |  GET /.well-known/uadp.json              |
+  |  GET /.well-known/duadp.json              |
   |----------------------------------------->|
   |  { endpoints: { skills, tools, ... } }   |
   |<-----------------------------------------|
   |                                          |
-  |  GET /uadp/v1/tools?protocol=mcp         |
+  |  GET /api/v1/tools?protocol=mcp         |
   |----------------------------------------->|
   |  { data: [...], meta: {...} }            |
   |<-----------------------------------------|
   |                                          |
-  |  POST /uadp/v1/publish (auth required)   |
+  |  POST /api/v1/publish (auth required)   |
   |  { kind: "Skill", metadata: {...} }      |
   |----------------------------------------->|
   |  201 { success: true, resource: {...} }  |
@@ -41,13 +44,13 @@ Your App                              skills.sh (UADP node)
 
 ## Quick Start
 
-### Consume a UADP node
+### Consume a DUADP node
 
 **TypeScript:**
 ```typescript
-import { UadpClient, resolveGaid } from '@bluefly/duadp';
+import { DuadpClient, resolveGaid } from '@bluefly/duadp';
 
-const client = new UadpClient('https://skills.sh');
+const client = new DuadpClient('https://skills.sh');
 const skills = await client.listSkills({ search: 'code review' });
 const tools = await client.listTools({ protocol: 'mcp' });
 
@@ -58,9 +61,9 @@ const skill = await c.getSkill(name);
 
 **Python:**
 ```python
-from bluefly_uadp import UadpClient, resolve_gaid
+from duadp import DuadpClient, resolve_gaid
 
-async with UadpClient("https://skills.sh") as client:
+async with DuadpClient("https://skills.sh") as client:
     skills = await client.list_skills(search="code review")
     tools = await client.list_tools(protocol="mcp")
 
@@ -68,39 +71,28 @@ async with UadpClient("https://skills.sh") as client:
     await client.publish_skill(my_skill)
 ```
 
-**Go:**
-```go
-client := uadp.NewClient("https://skills.sh")
-skills, _ := client.ListSkills(ctx, &uadp.ListParams{Search: "code review"})
-tools, _ := client.ListTools(ctx, &uadp.ToolListParams{Protocol: "mcp"})
-
-// Resolve a GAID
-c, kind, name, _ := uadp.ResolveGaid("agent://skills.sh/tools/web-search")
-tool, _ := c.GetTool(ctx, name)
-```
-
-### Build a UADP node
+### Build a DUADP node
 
 The simplest node is two static JSON files:
 
 ```
 your-site.com/
-  .well-known/uadp.json     <- discovery manifest
-  uadp/v1/skills             <- skills list (static JSON)
+  .well-known/duadp.json     <- discovery manifest
+  duadp/v1/skills             <- skills list (static JSON)
 ```
 
 Optional DNS TXT record for zero-configuration discovery:
 ```
-_uadp.your-site.com. IN TXT "v=uadp1 url=https://your-site.com/.well-known/uadp.json"
+_duadp.your-site.com. IN TXT "v=duadp1 url=https://your-site.com/.well-known/duadp.json"
 ```
 
 Or use an SDK to build a dynamic node with publishing, federation, and tools:
 
 **TypeScript (Express):**
 ```typescript
-import { createUadpRouter } from '@bluefly/duadp/server';
+import { createDuadpRouter } from '@bluefly/duadp/server';
 
-app.use(createUadpRouter({
+app.use(createDuadpRouter({
   nodeName: 'My AI Hub',
   nodeId: 'did:web:my-hub.com',
   baseUrl: 'https://my-hub.com',
@@ -116,49 +108,61 @@ app.use(createUadpRouter({
 
 ```
 spec/                    # The normative specification
-  README.md              # UADP v0.2.0 spec document
+  README.md              # DUADP v0.2.0 spec document
   openapi.yaml           # OpenAPI 3.1 definition
   schemas/               # JSON Schema validation files
 sdk/
   typescript/            # @bluefly/duadp npm package
-  python/                # bluefly-duadp (PyPI)
-  go/                    # uadp-go module
+  python/                # duadp (PyPI)
 ```
+
+### DUADP Core File Suite
+
+| File | Role in DUADP | What goes inside? | Why it's best |
+| --- | --- | --- | --- |
+| **`ai.json`** | **the manifest** | protocol version, capabilities, ipfs/cid pointers. | machine-readable identity for automated "handshakes" between agents. |
+| **`llms.txt`** | **the digest** | h1 title, project summary, and links to secondary docs. | the standard entry point for crawlers to "map" the project's purpose. |
+| **`agents.md`** | **the manual** | build/test commands, file map, and architectural "no-go" zones. | provides context injection so agents don't hallucinate your project structure. |
+| **`mcp.json`** | **the toolkit** | tool definitions, resource uris, and prompt templates. | defines the "hands" of the agent via the model context protocol. |
+| **`data.md`** | **the ledger** | dataset provenance, training licenses, and hash verification. | ensures decentralized data integrity and legal/ethical compliance. |
+| **`contract.md`** | **the protocol** | on-chain addresses, tokenomics, and api pricing/access. | defines how an autonomous agent "pays" or authenticates for services. |
+| **`.cursorrules`** | **the guardrail** | project-specific coding logic and "always/never" instructions. | hardcodes your technical standards directly into the agent's reasoning loop. |
+| **`prompts/`** | **the brain** | a directory of specific system instructions for sub-modules. | standardizes how agents behave when interacting with your demo's components. |
 
 ## Protocol Endpoints
 
 | Endpoint | Method | Required | Description |
 |----------|--------|----------|-------------|
-| `/.well-known/uadp.json` | GET | MUST | Node discovery manifest |
+| `/.well-known/duadp.json` | GET | MUST | Node discovery manifest |
 | `/.well-known/webfinger` | GET | SHOULD | Resolve GAID to resource links |
-| `/uadp/v1/skills` | GET | MUST* | List OSSA-formatted skills |
-| `/uadp/v1/skills/{name}` | GET | MAY | Get single skill by name |
-| `/uadp/v1/agents` | GET | MUST* | List OSSA-formatted agents |
-| `/uadp/v1/tools` | GET | MUST* | List tools (MCP, A2A, etc.) |
-| `/uadp/v1/publish` | POST | MAY | Publish any resource (auth) |
-| `/uadp/v1/skills` | POST | MAY | Publish a skill (auth) |
-| `/uadp/v1/federation` | GET | SHOULD | Peer node list |
-| `/uadp/v1/federation` | POST | SHOULD | Register as peer (gossip) |
-| `/uadp/v1/validate` | POST | MAY | Validate a manifest |
-| `/uadp/v1/health` | GET | SHOULD | Node health status |
-| `/uadp/v1/search` | GET | MAY | Unified cross-resource search |
-| `/uadp/v1/index/{gaid}` | GET | MAY | Agent JSON index card |
-| `/uadp/v1/context/negotiate` | POST | MAY | Context negotiation |
-| `/uadp/v1/analytics/tokens` | POST | MAY | Report token usage |
-| `/uadp/v1/analytics/tokens/{agentId}` | GET | MAY | Token analytics for agent |
-| `/uadp/v1/feedback` | POST | MAY | Submit 360 feedback |
-| `/uadp/v1/feedback/{agentId}` | GET | MAY | Get agent feedback |
-| `/uadp/v1/reputation/{agentId}` | GET | MAY | Agent reputation score |
-| `/uadp/v1/rewards` | POST | MAY | Record reward event |
-| `/uadp/v1/attestations` | POST | MAY | Submit outcome attestation |
-| `/uadp/v1/delegate` | POST | MAY | Multi-agent delegation |
-| `/uadp/v1/orchestration` | POST | MAY | Create orchestration plan |
-| `/uadp/v1/publish/batch` | POST | MAY | Atomic batch publish (CI/CD) |
-| `/uadp/v1/validate/batch` | POST | MAY | Batch validation |
-| `/uadp/v1/agents/{name}/card` | GET | MAY | A2A Agent Card (Google A2A interop) |
-| `/uadp/v1/tools/mcp-manifest` | GET | MAY | MCP Server Manifest |
+| `/api/v1/skills` | GET | MUST* | List OSSA-formatted skills |
+| `/api/v1/skills/{name}` | GET | MAY | Get single skill by name |
+| `/api/v1/agents` | GET | MUST* | List OSSA-formatted agents |
+| `/api/v1/tools` | GET | MUST* | List tools (MCP, A2A, etc.) |
+| `/api/v1/publish` | POST | MAY | Publish any resource (auth) |
+| `/api/v1/skills` | POST | MAY | Publish a skill (auth) |
+| `/api/v1/federation` | GET | SHOULD | Peer node list |
+| `/api/v1/federation` | POST | SHOULD | Register as peer (gossip) |
+| `/api/v1/validate` | POST | MAY | Validate a manifest |
+| `/api/v1/health` | GET | SHOULD | Node health status |
+| `/api/v1/search` | GET | MAY | Unified cross-resource search |
+| `/api/v1/index/{gaid}` | GET | MAY | Agent JSON index card |
+| `/api/v1/context/negotiate` | POST | MAY | Context negotiation |
+| `/api/v1/analytics/tokens` | POST | MAY | Report token usage |
+| `/api/v1/analytics/tokens/{agentId}` | GET | MAY | Token analytics for agent |
+| `/api/v1/feedback` | POST | MAY | Submit 360 feedback |
+| `/api/v1/feedback/{agentId}` | GET | MAY | Get agent feedback |
+| `/api/v1/reputation/{agentId}` | GET | MAY | Agent reputation score |
+| `/api/v1/rewards` | POST | MAY | Record reward event |
+| `/api/v1/attestations` | POST | MAY | Submit outcome attestation |
+| `/api/v1/delegate` | POST | MAY | Multi-agent delegation |
+| `/api/v1/orchestration` | POST | MAY | Create orchestration plan |
+| `/api/v1/publish/batch` | POST | MAY | Atomic batch publish (CI/CD) |
+| `/api/v1/validate/batch` | POST | MAY | Batch validation |
+| `/api/v1/agents/{name}/card` | GET | MAY | A2A Agent Card (Google A2A interop) |
+| `/api/v1/tools/mcp-manifest` | GET | MAY | MCP Server Manifest |
 | `/.well-known/mcp` | GET | MAY | MCP well-known discovery |
-| `/uadp/v1/query` | POST | MAY | Structured query with compound filters |
+| `/api/v1/query` | POST | MAY | Structured query with compound filters |
 
 *At least one of skills, agents, or tools MUST be implemented.
 
@@ -166,11 +170,14 @@ sdk/
 
 - **Tools as first-class resources** — MCP servers, A2A tools, function-calling tools alongside skills and agents
 - **Publishing API** — Authenticated write operations for community contributions
-- **DNS TXT discovery** — `_uadp.<domain>` for zero-configuration node finding
-- **WebFinger resolution** — Resolve any GAID URI (like `uadp://`) to its DUADP endpoint
+- **Confidence scoring** — Three-tier routing (≥90 auto-publish, 50–89 human review at degraded tier, <50 reject)
+- **Quality gates** — Cedar policy CI gate enforces coverage, security, and confidence before deploy
+- **DNS TXT discovery** — `_duadp.<domain>` for zero-configuration node finding
+- **WebFinger resolution** — Resolve any GAID URI (like `duadp://`) to its DUADP endpoint
 - **Gossip federation** — Automatic peer propagation with hop limits
 - **DID-based identity** — `did:web:` and `did:key:` with DIF standard resolvers
 - **Resource signatures** — Ed25519 cryptographic signatures with RFC 8785 canonicalization
+- **Revocation endpoints** — `/api/v1/revocations` with federation gossip propagation
 - **Federated search** — `?federated=true` queries peers and merges results
 - **Extensible kinds** — `Skill`, `Agent` (via `.ajson`), `Tool`, or any custom resource type
 - **Context negotiation** — Layered context delivery with priority tiers and knowledge graph sources
@@ -196,6 +203,14 @@ sdk/
 6. **Interoperable** — Built on the `.ajson` payload format, works with any AI framework.
 7. **Secure** — Trust tiers, DID-based identity, cryptographic signatures, circuit breakers.
 
+## 🇺🇸 NIST CAISI RFI Alignment (NIST-2025-0035)
+
+DUADP implements the discovery and governance infrastructure required by the [NIST CAISI Request for Information on Collaborative AI Systems Integration](https://www.regulations.gov/docket/NIST-2025-0035).
+
+- **Federated Open-Source Discovery**: DNS TXT records and `.well-known` endpoints solve the RFI's requirement for decentralized agent discovery without proprietary lock-in.
+- **Verifiable Identity**: Native support for W3C DID-based Global Agent Identifiers (GAIDs) ensures cryptographically sound origin authentication.
+- **Provable Authorization**: DUADP exposes formally verified AWS Cedar authorization policies, evaluating agent access across trust boundaries in under 100ms.
+
 ## Relationship to OSSA
 
 DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://openstandardagents.org) provides the semantic **payload format** (via `.ajson`).
@@ -207,37 +222,37 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 
 ## Live Reference Node
 
-**Try it now** — Bluefly's hosted reference node is live at [`uadp.blueflyagents.com`](https://uadp.blueflyagents.com/.well-known/uadp.json):
+**Try it now** — the hosted reference node is live at [`discover.duadp.org`](https://discover.duadp.org/.well-known/duadp.json):
 
 ```bash
 # Discovery manifest
-curl https://uadp.blueflyagents.com/.well-known/uadp.json
+curl https://discover.duadp.org/.well-known/duadp.json
 
 # Browse skills, agents, tools
-curl https://uadp.blueflyagents.com/uadp/v1/skills
-curl https://uadp.blueflyagents.com/uadp/v1/agents
-curl https://uadp.blueflyagents.com/uadp/v1/tools
+curl https://discover.duadp.org/api/v1/skills
+curl https://discover.duadp.org/api/v1/agents
+curl https://discover.duadp.org/api/v1/tools
 
 # Health check
-curl https://uadp.blueflyagents.com/uadp/v1/health
+curl https://discover.duadp.org/api/v1/health
 
 # Governance (NIST AI RMF)
-curl https://uadp.blueflyagents.com/uadp/v1/governance
+curl https://discover.duadp.org/api/v1/governance
 
 # Search across all resources
-curl "https://uadp.blueflyagents.com/uadp/v1/search?q=code+review"
+curl "https://discover.duadp.org/api/v1/search?q=code+review"
 
 # Agent reputation
-curl "https://uadp.blueflyagents.com/uadp/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
+curl "https://discover.duadp.org/api/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
 
 # Publish a resource (POST)
-curl -X POST https://uadp.blueflyagents.com/uadp/v1/publish \
+curl -X POST https://discover.duadp.org/api/v1/publish \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-token" \
   -d '{"apiVersion":"ossa/v0.5","kind":"Skill","metadata":{"name":"my-skill","description":"My custom skill"}}'
 ```
 
-Node ID: `did:web:uadp.blueflyagents.com` | Protocol: UADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
+Node ID: `did:web:discover.duadp.org` | Protocol: DUADP v0.2.0 | 5 skills, 3 agents, 3 tools seeded
 
 ## Run the Reference Node Locally
 
@@ -250,15 +265,15 @@ npx tsx src/seed.ts
 
 # 3. Start the node
 npx tsx src/index.ts
-# → UADP Reference Node "OSSA Reference Node" running at http://localhost:4200
-# → Discovery: http://localhost:4200/.well-known/uadp.json
+# → DUADP Reference Node "OSSA Reference Node" running at http://localhost:4200
+# → Discovery: http://localhost:4200/.well-known/duadp.json
 
 # 4. Verify
-curl http://localhost:4200/.well-known/uadp.json
-curl http://localhost:4200/uadp/v1/health
-curl http://localhost:4200/uadp/v1/skills
-curl http://localhost:4200/uadp/v1/agents
-curl http://localhost:4200/uadp/v1/tools
+curl http://localhost:4200/.well-known/duadp.json
+curl http://localhost:4200/api/v1/health
+curl http://localhost:4200/api/v1/skills
+curl http://localhost:4200/api/v1/agents
+curl http://localhost:4200/api/v1/tools
 ```
 
 ### Docker
@@ -274,10 +289,10 @@ docker compose up --build
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `4200` | HTTP port |
-| `UADP_BASE_URL` | `http://localhost:4200` | Public base URL |
-| `UADP_NODE_NAME` | `OSSA Reference Node` | Human-readable node name |
-| `UADP_NODE_ID` | `did:web:localhost` | DID identifier for this node |
-| `DB_PATH` | `./data/uadp.db` | SQLite database path |
+| `DUADP_BASE_URL` | `http://localhost:4200` | Public base URL |
+| `DUADP_NODE_NAME` | `OSSA Reference Node` | Human-readable node name |
+| `DUADP_NODE_ID` | `did:web:localhost` | DID identifier for this node |
+| `DB_PATH` | `./data/duadp.db` | SQLite database path |
 
 ## Verified Endpoint Status
 
@@ -285,32 +300,32 @@ All endpoints tested and passing (reference node v0.2.0):
 
 | Endpoint | Method | Status | Description |
 |----------|--------|--------|-------------|
-| `/.well-known/uadp.json` | GET | **Verified** | Discovery manifest with all endpoints |
+| `/.well-known/duadp.json` | GET | **Verified** | Discovery manifest with all endpoints |
 | `/.well-known/webfinger` | GET | **Verified** | GAID resolution (agent:// URIs) |
-| `/uadp/v1/skills` | GET | **Verified** | List skills (5 seeded), paginated |
-| `/uadp/v1/skills/:name` | GET | **Verified** | Get single skill by name |
-| `/uadp/v1/agents` | GET | **Verified** | List agents (3 seeded), paginated |
-| `/uadp/v1/agents/:name` | GET | **Verified** | Get single agent by name |
-| `/uadp/v1/tools` | GET | **Verified** | List tools (3 seeded), with `?protocol=` filter |
-| `/uadp/v1/tools/:name` | GET | **Verified** | Get single tool by name |
-| `/uadp/v1/publish` | POST | **Verified** | Publish any resource (auth required) |
-| `/uadp/v1/skills` | POST | **Verified** | Publish a skill (auth required) |
-| `/uadp/v1/skills/:name` | PUT | **Verified** | Update a skill (auth required) |
-| `/uadp/v1/skills/:name` | DELETE | **Verified** | Delete a skill (auth required) |
-| `/uadp/v1/validate` | POST | **Verified** | Validate OSSA manifest JSON |
-| `/uadp/v1/federation` | GET | **Verified** | List federation peers |
-| `/uadp/v1/federation` | POST | **Verified** | Register as peer (gossip) |
-| `/uadp/v1/health` | GET | **Verified** | Node health + resource counts |
-| `/uadp/v1/search` | GET | **Verified** | Cross-resource search with facets |
-| `/uadp/v1/governance` | GET | **Verified** | NIST AI RMF governance config |
-| `/uadp/v1/feedback` | POST | **Verified** | Submit 360 feedback |
-| `/uadp/v1/feedback/:agentId` | GET | **Verified** | Get agent feedback history |
-| `/uadp/v1/reputation/:agentId` | GET | **Verified** | Computed reputation score |
-| `/uadp/v1/analytics/tokens` | POST | **Verified** | Report token usage |
-| `/uadp/v1/analytics/tokens/:agentId` | GET | **Verified** | Token analytics per agent |
-| `/uadp/v1/attestations` | POST | **Verified** | Submit outcome attestation |
-| `/uadp/v1/attestations/:agentId` | GET | **Verified** | Get agent attestations |
-| `/uadp/v1/audit` | GET | **Verified** | Audit log with filters |
+| `/api/v1/skills` | GET | **Verified** | List skills (5 seeded), paginated |
+| `/api/v1/skills/:name` | GET | **Verified** | Get single skill by name |
+| `/api/v1/agents` | GET | **Verified** | List agents (3 seeded), paginated |
+| `/api/v1/agents/:name` | GET | **Verified** | Get single agent by name |
+| `/api/v1/tools` | GET | **Verified** | List tools (3 seeded), with `?protocol=` filter |
+| `/api/v1/tools/:name` | GET | **Verified** | Get single tool by name |
+| `/api/v1/publish` | POST | **Verified** | Publish any resource (auth required) |
+| `/api/v1/skills` | POST | **Verified** | Publish a skill (auth required) |
+| `/api/v1/skills/:name` | PUT | **Verified** | Update a skill (auth required) |
+| `/api/v1/skills/:name` | DELETE | **Verified** | Delete a skill (auth required) |
+| `/api/v1/validate` | POST | **Verified** | Validate OSSA manifest JSON |
+| `/api/v1/federation` | GET | **Verified** | List federation peers |
+| `/api/v1/federation` | POST | **Verified** | Register as peer (gossip) |
+| `/api/v1/health` | GET | **Verified** | Node health + resource counts |
+| `/api/v1/search` | GET | **Verified** | Cross-resource search with facets |
+| `/api/v1/governance` | GET | **Verified** | NIST AI RMF governance config |
+| `/api/v1/feedback` | POST | **Verified** | Submit 360 feedback |
+| `/api/v1/feedback/:agentId` | GET | **Verified** | Get agent feedback history |
+| `/api/v1/reputation/:agentId` | GET | **Verified** | Computed reputation score |
+| `/api/v1/analytics/tokens` | POST | **Verified** | Report token usage |
+| `/api/v1/analytics/tokens/:agentId` | GET | **Verified** | Token analytics per agent |
+| `/api/v1/attestations` | POST | **Verified** | Submit outcome attestation |
+| `/api/v1/attestations/:agentId` | GET | **Verified** | Get agent attestations |
+| `/api/v1/audit` | GET | **Verified** | Audit log with filters |
 
 ## SDK Test Suite
 
@@ -337,12 +352,18 @@ cd sdk/typescript && npm test
 
 | Platform | Status | Description |
 |----------|--------|-------------|
-| [OSSA Reference Node](https://uadp.blueflyagents.com/.well-known/uadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| Drupal Agent Marketplace | Production | Full DUADP node with federation (Drupal module) |
-| `@bluefly/duadp` TypeScript SDK | **136 tests passing** | Client + Express server ([`sdk/typescript/`](sdk/typescript/)) |
-| `bluefly-duadp` Python SDK | Available | Client + FastAPI server |
-| `uadp-go` Go SDK | Available | Client + net/http handler |
+| [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
+| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.2.0** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.2.0** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
+| Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |
 | Static JSON template | Planned | GitHub Pages starter |
+
+## Also Available
+
+| Language | Package | Registry |
+|----------|---------|----------|
+| TypeScript | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) | npm |
+| Python | [`duadp`](https://pypi.org/project/duadp/) | PyPI |
 
 ## Seeded Data
 

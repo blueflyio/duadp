@@ -1,0 +1,99 @@
+{
+  "agents": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "manifest-validator", "version": "1.3.0", "description": "Validates OSSA agent manifests against v0.4/v0.5 specification", "category": "validation", "trust_tier": "official", "tags": ["ossa", "validation", "manifest", "schema"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/agents/manifest-validator", "did": "did:web:registry.openstandardagents.org:agents:manifest-validator" },
+      "spec": { "capabilities": ["manifest-validation", "schema-checking", "version-compatibility"], "supported_versions": ["ossa/v0.4", "ossa/v0.5"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "schema-linter", "version": "1.0.0", "description": "Lints OSSA schemas for best practices and completeness", "category": "validation", "trust_tier": "official", "tags": ["ossa", "linting", "schema", "quality"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/agents/schema-linter", "did": "did:web:registry.openstandardagents.org:agents:schema-linter" },
+      "spec": { "capabilities": ["schema-linting", "best-practice-checking", "completeness-analysis"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "trust-verifier", "version": "2.0.0", "description": "Verifies trust tier claims via cryptographic signature and DID resolution", "category": "security", "trust_tier": "official", "tags": ["trust", "verification", "cryptography", "did"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/agents/trust-verifier", "did": "did:web:registry.openstandardagents.org:agents:trust-verifier" },
+      "spec": { "capabilities": ["signature-verification", "did-resolution", "trust-scoring"], "algorithms": ["Ed25519", "ES256"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "did-resolver", "version": "1.1.0", "description": "Resolves Decentralized Identifiers (DIDs) for agent identity verification", "category": "identity", "trust_tier": "official", "tags": ["did", "identity", "resolution", "w3c"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/agents/did-resolver", "did": "did:web:registry.openstandardagents.org:agents:did-resolver" },
+      "spec": { "capabilities": ["did-resolution", "did-document-retrieval", "key-extraction"], "methods": ["did:web", "did:key", "did:pkh"] }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Agent",
+      "metadata": { "name": "policy-engine", "version": "1.5.0", "description": "Cedar policy evaluation engine for agent authorization decisions", "category": "governance", "trust_tier": "official", "tags": ["cedar", "policy", "authorization", "governance"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/agents/policy-engine", "did": "did:web:registry.openstandardagents.org:agents:policy-engine" },
+      "spec": { "capabilities": ["policy-evaluation", "authorization-decisions", "audit-logging"], "policy_format": "cedar" }
+    }
+  ],
+  "skills": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "manifest-validation", "version": "1.3.0", "description": "Validate OSSA manifests against specification", "category": "validation", "trust_tier": "official", "tags": ["ossa", "validation"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/skills/manifest-validation", "did": "did:web:registry.openstandardagents.org:skills:manifest-validation" },
+      "spec": { "input_schema": { "type": "object", "properties": { "manifest": { "type": "object" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "schema-linting", "version": "1.0.0", "description": "Lint schemas for completeness and best practices", "category": "validation", "trust_tier": "official", "tags": ["linting", "schema"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/skills/schema-linting", "did": "did:web:registry.openstandardagents.org:skills:schema-linting" },
+      "spec": { "input_schema": { "type": "object", "properties": { "schema": { "type": "object" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "trust-scoring", "version": "2.0.0", "description": "Calculate multi-dimensional trust scores for agents", "category": "security", "trust_tier": "official", "tags": ["trust", "scoring", "reputation"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/skills/trust-scoring", "did": "did:web:registry.openstandardagents.org:skills:trust-scoring" },
+      "spec": { "input_schema": { "type": "object", "properties": { "agent_gaid": { "type": "string" } } }, "execution_model": "stateless" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Skill",
+      "metadata": { "name": "did-resolution", "version": "1.1.0", "description": "Resolve DIDs to DID Documents", "category": "identity", "trust_tier": "official", "tags": ["did", "resolution", "identity"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/skills/did-resolution", "did": "did:web:registry.openstandardagents.org:skills:did-resolution" },
+      "spec": { "input_schema": { "type": "object", "properties": { "did": { "type": "string" } } }, "execution_model": "stateless" }
+    }
+  ],
+  "tools": [
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "cedar-evaluator", "version": "1.0.0", "description": "Evaluate Cedar authorization policies", "category": "governance", "trust_tier": "official", "tags": ["cedar", "policy", "authorization"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/tools/cedar-evaluator", "did": "did:web:registry.openstandardagents.org:tools:cedar-evaluator" },
+      "spec": { "protocol": "rest", "transport": "https" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "ossa-cli", "version": "0.5.0", "description": "OSSA command-line interface for manifest management", "category": "development", "trust_tier": "official", "tags": ["ossa", "cli", "tooling"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/tools/ossa-cli", "did": "did:web:registry.openstandardagents.org:tools:ossa-cli" },
+      "spec": { "protocol": "rest", "transport": "stdio" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "agent-tester", "version": "1.2.0", "description": "Automated testing harness for OSSA agents", "category": "testing", "trust_tier": "official", "tags": ["testing", "automation", "quality"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/tools/agent-tester", "did": "did:web:registry.openstandardagents.org:tools:agent-tester" },
+      "spec": { "protocol": "mcp", "transport": "stdio" }
+    },
+    {
+      "apiVersion": "ossa/v0.5",
+      "kind": "Tool",
+      "metadata": { "name": "compliance-checker", "version": "1.0.0", "description": "NIST AI RMF and ISO 42001 compliance verification", "category": "governance", "trust_tier": "official", "tags": ["compliance", "nist", "iso", "governance"] },
+      "identity": { "gaid": "agent://registry.openstandardagents.org/tools/compliance-checker", "did": "did:web:registry.openstandardagents.org:tools:compliance-checker" },
+      "spec": { "protocol": "rest", "transport": "https" }
+    }
+  ]
+}

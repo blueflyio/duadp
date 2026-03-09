@@ -87,6 +87,22 @@ CREATE TABLE IF NOT EXISTS attestations (
 
 CREATE INDEX IF NOT EXISTS idx_attestations_agent ON attestations(agent_gaid);
 
+-- Revocations (propagated via federation gossip)
+CREATE TABLE IF NOT EXISTS revocations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gaid TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  name TEXT NOT NULL,
+  reason TEXT NOT NULL DEFAULT 'unspecified',
+  revoked_by TEXT,
+  origin_node TEXT,
+  propagated INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_revocations_gaid ON revocations(gaid);
+CREATE INDEX IF NOT EXISTS idx_revocations_name ON revocations(name);
+
 -- Governance config (singleton)
 CREATE TABLE IF NOT EXISTS governance (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -95,7 +111,7 @@ CREATE TABLE IF NOT EXISTS governance (
 `;
 
 export function initDb(path?: string): Database.Database {
-  const dbPath = path ?? './data/uadp.db';
+  const dbPath = path ?? './data/duadp.db';
   mkdirSync(dirname(dbPath), { recursive: true });
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');

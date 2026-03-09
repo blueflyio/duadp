@@ -1,42 +1,42 @@
-# Universal AI Discovery Protocol (UADP)
+# Universal AI Discovery Protocol (DUADP)
 
 **Version:** 0.2.0
 **Status:** Draft
-**Spec URI:** `https://openstandardagents.org/spec/uadp/v0.2`
+**Spec URI:** `https://openstandardagents.org/spec/duadp/v0.2`
 
 ## 1. Overview
 
-The Universal AI Discovery Protocol (UADP) is a decentralized, hybrid-federated protocol for the discovery, validation, publishing, and exchange of AI Agents, Skills, Tools, and Marketplaces. Built on top of the [Open Standard for Agent Systems (OSSA)](https://openstandardagents.org), UADP allows any organization, department, or individual to host a "UADP Node" that acts as an API-first microservice registry for any AI capability.
+The Universal AI Discovery Protocol (DUADP) is a decentralized, hybrid-federated protocol for the discovery, validation, publishing, and exchange of AI Agents, Skills, Tools, and Marketplaces. Built on top of the [Open Standard for Agent Systems (OSSA)](https://openstandardagents.org), DUADP allows any organization, department, or individual to host a "DUADP Node" that acts as an API-first microservice registry for any AI capability.
 
-Drawing inspiration from ActivityPub, WebFinger, and DNS, UADP ensures that AI resources built on one platform can seamlessly discover and securely utilize capabilities hosted on an entirely different platform. Whether it's an agent marketplace, a skills registry, an MCP tool directory, or an enterprise AI hub — if it speaks UADP, it's discoverable.
+Drawing inspiration from ActivityPub, WebFinger, and DNS, DUADP ensures that AI resources built on one platform can seamlessly discover and securely utilize capabilities hosted on an entirely different platform. Whether it's an agent marketplace, a skills registry, an MCP tool directory, or an enterprise AI hub — if it speaks DUADP, it's discoverable.
 
-**UADP is THE API.** Any system that implements the endpoints below is a UADP node — and its consumers don't need to know what platform powers it. A Drupal marketplace, a Flask skills registry, a static JSON site, and a Kubernetes operator all expose the same UADP endpoints. Consumers talk UADP, not vendor APIs.
+**DUADP is THE API.** Any system that implements the endpoints below is a DUADP node — and its consumers don't need to know what platform powers it. A Drupal marketplace, a Flask skills registry, a static JSON site, and a Kubernetes operator all expose the same DUADP endpoints. Consumers talk DUADP, not vendor APIs.
 
-**Any system that implements the endpoints below is a UADP node.** There is no required language, framework, or database.
+**Any system that implements the endpoints below is a DUADP node.** There is no required language, framework, or database.
 
 ## 2. Conformance
 
 The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
-A conforming UADP node:
-- MUST serve `GET /.well-known/uadp.json` (Section 3)
-- MUST serve at least one of: `GET /uadp/v1/skills`, `GET /uadp/v1/agents`, or `GET /uadp/v1/tools` (Section 4)
-- SHOULD serve `GET /uadp/v1/federation` (Section 6)
+A conforming DUADP node:
+- MUST serve `GET /.well-known/duadp.json` (Section 3)
+- MUST serve at least one of: `GET /api/v1/skills`, `GET /api/v1/agents`, or `GET /api/v1/tools` (Section 4)
+- SHOULD serve `GET /api/v1/federation` (Section 6)
 - SHOULD respond to WebFinger queries for hosted resources (Section 7)
-- MUST return `Content-Type: application/json` for all UADP endpoints
+- MUST return `Content-Type: application/json` for all DUADP endpoints
 - MUST return OSSA-formatted payloads (`apiVersion: ossa/v0.4` or later)
 
 ## 3. Discovery Layer
 
 ### 3.1 Well-Known Endpoint
 
-Every UADP node MUST publish a JSON document at:
+Every DUADP node MUST publish a JSON document at:
 
 ```
-GET /.well-known/uadp.json
+GET /.well-known/duadp.json
 ```
 
-**Response** (`UadpManifest`):
+**Response** (`DuadpManifest`):
 
 ```json
 {
@@ -46,12 +46,12 @@ GET /.well-known/uadp.json
   "node_description": "Enterprise AI skills, tools, and agents",
   "contact": "admin@acme.com",
   "endpoints": {
-    "skills": "/uadp/v1/skills",
-    "agents": "/uadp/v1/agents",
-    "tools": "/uadp/v1/tools",
-    "federation": "/uadp/v1/federation",
-    "validate": "/uadp/v1/validate",
-    "publish": "/uadp/v1/publish"
+    "skills": "/api/v1/skills",
+    "agents": "/api/v1/agents",
+    "tools": "/api/v1/tools",
+    "federation": "/api/v1/federation",
+    "validate": "/api/v1/validate",
+    "publish": "/api/v1/publish"
   },
   "capabilities": ["skills", "agents", "tools", "federation", "validation", "publishing"],
   "identity": {
@@ -94,26 +94,26 @@ Endpoint values MAY be relative paths (resolved against the node's base URL) or 
 
 ### 3.2 DNS TXT Discovery
 
-UADP nodes MAY advertise themselves via DNS TXT records for zero-configuration discovery:
+DUADP nodes MAY advertise themselves via DNS TXT records for zero-configuration discovery:
 
 ```
-_uadp.example.com. IN TXT "v=uadp1 url=https://example.com/.well-known/uadp.json"
+_duadp.example.com. IN TXT "v=duadp1 url=https://example.com/.well-known/duadp.json"
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `v` | MUST | Version tag. Current: `uadp1` |
-| `url` | MUST | Absolute URL to the UADP manifest |
+| `v` | MUST | Version tag. Current: `duadp1` |
+| `url` | MUST | Absolute URL to the DUADP manifest |
 | `name` | MAY | Human-readable node name |
 | `cap` | MAY | Comma-separated capabilities (e.g., `skills,agents,tools`) |
 
-Clients resolving a domain SHOULD check for a `_uadp` TXT record before attempting the well-known URL. This enables discovery of UADP nodes hosted on subdomains or non-standard paths.
+Clients resolving a domain SHOULD check for a `_duadp` TXT record before attempting the well-known URL. This enables discovery of DUADP nodes hosted on subdomains or non-standard paths.
 
-Multiple TXT records on the same domain indicate multiple UADP nodes (e.g., one for skills, one for agents).
+Multiple TXT records on the same domain indicate multiple DUADP nodes (e.g., one for skills, one for agents).
 
 ### 3.3 WebFinger Resolution
 
-UADP nodes SHOULD respond to WebFinger queries for individual resources hosted on the node:
+DUADP nodes SHOULD respond to WebFinger queries for individual resources hosted on the node:
 
 ```
 GET /.well-known/webfinger?resource=agent://acme.com/skills/code-review
@@ -128,17 +128,17 @@ GET /.well-known/webfinger?resource=agent://acme.com/skills/code-review
     {
       "rel": "self",
       "type": "application/json",
-      "href": "https://acme.com/uadp/v1/skills/code-review"
+      "href": "https://acme.com/api/v1/skills/code-review"
     },
     {
       "rel": "describedby",
       "type": "application/json",
-      "href": "https://acme.com/.well-known/uadp.json"
+      "href": "https://acme.com/.well-known/duadp.json"
     }
   ],
   "properties": {
-    "https://uadp.openstandardagents.org/ns/kind": "Skill",
-    "https://uadp.openstandardagents.org/ns/trust_tier": "verified-signature"
+    "https://duadp.openstandardagents.org/ns/kind": "Skill",
+    "https://duadp.openstandardagents.org/ns/trust_tier": "verified-signature"
   }
 }
 ```
@@ -148,17 +148,17 @@ This enables cross-registry resolution: given `agent://skills.sh/skills/web-sear
 ### 3.4 Discovery Flow
 
 ```
-Client                          UADP Node
+Client                          DUADP Node
   |                                 |
-  |  DNS TXT _uadp.example.com     |
+  |  DNS TXT _duadp.example.com     |
   |  (optional, zero-config)        |
   |                                 |
-  |  GET /.well-known/uadp.json     |
+  |  GET /.well-known/duadp.json     |
   |-------------------------------->|
   |  200 OK { endpoints: {...} }    |
   |<--------------------------------|
   |                                 |
-  |  GET /uadp/v1/skills?search=... |
+  |  GET /api/v1/skills?search=... |
   |-------------------------------->|
   |  200 OK { data: [...], meta }   |
   |<--------------------------------|
@@ -176,7 +176,7 @@ Client                          UADP Node
 ### 4.1 Skills Endpoint
 
 ```
-GET /uadp/v1/skills
+GET /api/v1/skills
 ```
 
 **Query Parameters:**
@@ -191,7 +191,7 @@ GET /uadp/v1/skills
 | `page` | integer | `1` | Page number (1-indexed) |
 | `limit` | integer | `20` | Items per page (max 100) |
 
-**Response** (`UadpSkillsResponse`):
+**Response** (`DuadpSkillsResponse`):
 
 ```json
 {
@@ -235,7 +235,7 @@ GET /uadp/v1/skills
 #### 4.1.1 Single Skill by Name
 
 ```
-GET /uadp/v1/skills/{name}
+GET /api/v1/skills/{name}
 ```
 
 Returns a single skill by name. Response is the skill object directly (not wrapped in `data[]`).
@@ -243,8 +243,8 @@ Returns a single skill by name. Response is the skill object directly (not wrapp
 ### 4.2 Agents Endpoint
 
 ```
-GET /uadp/v1/agents
-GET /uadp/v1/agents/{name}
+GET /api/v1/agents
+GET /api/v1/agents/{name}
 ```
 
 Same query parameters and response shape as Skills, with `kind: "Agent"`.
@@ -252,8 +252,8 @@ Same query parameters and response shape as Skills, with `kind: "Agent"`.
 ### 4.3 Tools Endpoint
 
 ```
-GET /uadp/v1/tools
-GET /uadp/v1/tools/{name}
+GET /api/v1/tools
+GET /api/v1/tools/{name}
 ```
 
 Returns OSSA-formatted tool manifests. Tools include MCP servers, A2A tools, function-calling tools, and any other invocable capability.
@@ -303,7 +303,7 @@ Returns OSSA-formatted tool manifests. Tools include MCP servers, A2A tools, fun
 ### 4.4 Validation Endpoint
 
 ```
-POST /uadp/v1/validate
+POST /api/v1/validate
 Content-Type: application/json
 
 {
@@ -351,12 +351,12 @@ Error responses MUST use standard HTTP status codes with:
 
 ## 5. Publishing Endpoints (Write)
 
-Nodes that support publishing MUST expose `POST` endpoints for resource creation. Publishing enables any UADP node to be a registry that accepts contributions from authenticated users.
+Nodes that support publishing MUST expose `POST` endpoints for resource creation. Publishing enables any DUADP node to be a registry that accepts contributions from authenticated users.
 
 ### 5.1 Publish a Resource
 
 ```
-POST /uadp/v1/publish
+POST /api/v1/publish
 Content-Type: application/json
 Authorization: Bearer <token>
 
@@ -407,7 +407,7 @@ The publish endpoint:
 ### 5.2 Update a Resource
 
 ```
-PUT /uadp/v1/skills/{name}
+PUT /api/v1/skills/{name}
 Authorization: Bearer <token>
 ```
 
@@ -416,7 +416,7 @@ Same payload as publish. The node MUST verify the authenticated user is the orig
 ### 5.3 Delete a Resource
 
 ```
-DELETE /uadp/v1/skills/{name}
+DELETE /api/v1/skills/{name}
 Authorization: Bearer <token>
 ```
 
@@ -427,19 +427,19 @@ Returns `204 No Content` on success.
 Nodes MAY also accept direct POST to type-specific endpoints:
 
 ```
-POST /uadp/v1/skills      (publish a skill)
-POST /uadp/v1/agents      (publish an agent)
-POST /uadp/v1/tools       (publish a tool)
+POST /api/v1/skills      (publish a skill)
+POST /api/v1/agents      (publish an agent)
+POST /api/v1/tools       (publish a tool)
 ```
 
-These are equivalent to using `/uadp/v1/publish` with the corresponding `kind`.
+These are equivalent to using `/api/v1/publish` with the corresponding `kind`.
 
 ## 6. Federation
 
 ### 6.1 Federation Endpoint
 
 ```
-GET /uadp/v1/federation
+GET /api/v1/federation
 ```
 
 Returns this node's peer list and federation metadata:
@@ -469,18 +469,18 @@ Returns this node's peer list and federation metadata:
 ### 6.2 Peer Registration
 
 ```
-POST /uadp/v1/federation
+POST /api/v1/federation
 Content-Type: application/json
 
 {
   "url": "https://my-node.example.com",
-  "name": "My UADP Node",
+  "name": "My DUADP Node",
   "node_id": "did:web:my-node.example.com"
 }
 ```
 
 The receiving node SHOULD:
-1. Fetch `{url}/.well-known/uadp.json` to validate the peer
+1. Fetch `{url}/.well-known/duadp.json` to validate the peer
 2. If valid, add to its peer list
 3. Return `201 Created` with the peer record
 
@@ -538,7 +538,7 @@ Peer status values: `healthy`, `degraded`, `unreachable`
 Nodes that support federation SHOULD support federated search — forwarding queries to peers and merging results:
 
 ```
-GET /uadp/v1/skills?search=code+review&federated=true
+GET /api/v1/skills?search=code+review&federated=true
 ```
 
 When `federated=true`:
@@ -579,22 +579,22 @@ Nodes MAY also use:
 - `did:key` — self-sovereign, no DNS dependency
 - `did:pkh` — based on blockchain public key hashes
 
-The DID document SHOULD include the node's UADP manifest URL as a service endpoint:
+The DID document SHOULD include the node's DUADP manifest URL as a service endpoint:
 
 ```json
 {
   "id": "did:web:acme.com",
   "service": [{
-    "id": "did:web:acme.com#uadp",
-    "type": "UadpNode",
-    "serviceEndpoint": "https://acme.com/.well-known/uadp.json"
+    "id": "did:web:acme.com#duadp",
+    "type": "DuadpNode",
+    "serviceEndpoint": "https://acme.com/.well-known/duadp.json"
   }]
 }
 ```
 
 ### 7.2 Trust Tiers
 
-UADP defines five trust tiers for resources:
+DUADP defines five trust tiers for resources:
 
 | Tier | Badge | Description |
 |------|-------|-------------|
@@ -625,7 +625,7 @@ The signature is computed over the canonical JSON serialization of the resource 
 
 ### 7.4 Agent Identity (Comprehensive)
 
-Every agent, skill, or tool published to a UADP node MUST have a complete identity. Agent identity is not a single field — it is a structured object encompassing all attributes needed for discovery, authentication, authorization, cryptographic verification, provenance, lifecycle management, operational context, compliance, and reputation.
+Every agent, skill, or tool published to a DUADP node MUST have a complete identity. Agent identity is not a single field — it is a structured object encompassing all attributes needed for discovery, authentication, authorization, cryptographic verification, provenance, lifecycle management, operational context, compliance, and reputation.
 
 **The `identity` object is a top-level field on every OSSA resource, alongside `apiVersion`, `kind`, `metadata`, and `spec`.**
 
@@ -647,7 +647,7 @@ Every agent, skill, or tool published to a UADP node MUST have a complete identi
     "did": "did:web:acme.com:agents:security-auditor",
     "gaid": "agent://acme.com/agents/security-auditor",
     "dns": {
-      "record": "_uadp-agent.security-auditor.acme.com",
+      "record": "_duadp-agent.security-auditor.acme.com",
       "verified": true
     },
     "keys": {
@@ -898,7 +898,7 @@ Nodes MUST NOT serve resources with `status: revoked`. Nodes SHOULD warn consume
 | `identity.reputation.verified_by` | string | MAY | DID of the verifying authority |
 | `identity.reputation.attestations_count` | integer | MAY | Number of third-party attestations |
 | `identity.reputation.usage_count` | integer | MAY | Number of times this resource has been invoked |
-| `identity.reputation.nodes_registered` | integer | MAY | Number of UADP nodes carrying this resource |
+| `identity.reputation.nodes_registered` | integer | MAY | Number of DUADP nodes carrying this resource |
 | `identity.reputation.community_rating` | number | MAY | Aggregate rating (0.0-5.0) |
 | `identity.reputation.incidents` | integer | MAY | Number of reported security/safety incidents |
 
@@ -907,16 +907,16 @@ Nodes MUST NOT serve resources with `status: revoked`. Nodes SHOULD warn consume
 Each resource SHOULD have a DNS TXT record under the node's domain:
 
 ```
-_uadp-agent.security-auditor.acme.com.  IN TXT "v=uadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
-_uadp-skill.code-review.acme.com.       IN TXT "v=uadp1 kind=Skill did=did:web:acme.com:skills:code-review"
-_uadp-tool.web-search.skills.sh.        IN TXT "v=uadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
+_duadp-agent.security-auditor.acme.com.  IN TXT "v=duadp1 kind=Agent did=did:web:acme.com:agents:security-auditor"
+_duadp-skill.code-review.acme.com.       IN TXT "v=duadp1 kind=Skill did=did:web:acme.com:skills:code-review"
+_duadp-tool.web-search.skills.sh.        IN TXT "v=duadp1 kind=Tool did=did:web:skills.sh:tools:web-search"
 ```
 
 DNS TXT record fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `v` | MUST | Version tag. Current: `uadp1` |
+| `v` | MUST | Version tag. Current: `duadp1` |
 | `kind` | MUST | Resource kind: `Agent`, `Skill`, `Tool` |
 | `did` | MUST | DID of the resource |
 | `status` | MAY | `active`, `suspended`, `deprecated`, `revoked` |
@@ -962,9 +962,9 @@ The DID document for a resource MUST include:
   }],
   "service": [
     {
-      "id": "did:web:acme.com:agents:security-auditor#uadp",
-      "type": "UadpResource",
-      "serviceEndpoint": "https://acme.com/uadp/v1/agents/security-auditor"
+      "id": "did:web:acme.com:agents:security-auditor#duadp",
+      "type": "DuadpResource",
+      "serviceEndpoint": "https://acme.com/api/v1/agents/security-auditor"
     },
     {
       "id": "did:web:acme.com:agents:security-auditor#invoke",
@@ -990,13 +990,13 @@ Agents that perform autonomous operations MUST use a dedicated service account /
 5. **Time-bounded** — tokens SHOULD have expiration; refresh via `token_endpoint`
 6. **Rate-limited** — per-account rate limits prevent abuse
 
-**Standard UADP scopes:**
+**Standard DUADP scopes:**
 
 | Scope | Description |
 |-------|-------------|
-| `read:skills` | Read skills from any UADP endpoint |
-| `read:agents` | Read agents from any UADP endpoint |
-| `read:tools` | Read tools from any UADP endpoint |
+| `read:skills` | Read skills from any DUADP endpoint |
+| `read:agents` | Read agents from any DUADP endpoint |
+| `read:tools` | Read tools from any DUADP endpoint |
 | `write:skills` | Publish/update/delete skills |
 | `write:agents` | Publish/update/delete agents |
 | `write:tools` | Publish/update/delete tools |
@@ -1011,7 +1011,7 @@ When a consumer encounters a resource, it SHOULD verify identity through this ch
 
 ```
 1. Parse GAID → extract domain (e.g., acme.com)
-2. DNS TXT lookup → _uadp-agent.security-auditor.acme.com
+2. DNS TXT lookup → _duadp-agent.security-auditor.acme.com
    → Confirms domain claims this resource
    → Gets DID
 3. DID resolution → did:web:acme.com:agents:security-auditor
@@ -1036,7 +1036,7 @@ Each step is optional but adds confidence. A fully verified resource has:
 
 The identity model satisfies the following NIST requirements:
 
-| NIST Control | How UADP Identity Addresses It |
+| NIST Control | How DUADP Identity Addresses It |
 |-------------|-------------------------------|
 | **AC-6** (Least Privilege) | Scoped service accounts with minimal permissions |
 | **AU-2** (Audit Events) | Per-agent audit logs with service account attribution |
@@ -1067,10 +1067,10 @@ Examples:
 Given a GAID, a client resolves it through this chain:
 
 1. Extract the namespace (domain): `acme.com`
-2. Check DNS TXT record: `_uadp.acme.com`
-3. If no TXT, try well-known: `https://acme.com/.well-known/uadp.json`
+2. Check DNS TXT record: `_duadp.acme.com`
+3. If no TXT, try well-known: `https://acme.com/.well-known/duadp.json`
 4. From the manifest, find the appropriate endpoint (skills/agents/tools)
-5. Query `GET /uadp/v1/{type}/{name}` for the specific resource
+5. Query `GET /api/v1/{type}/{name}` for the specific resource
 
 Alternatively, use WebFinger:
 ```
@@ -1079,7 +1079,7 @@ GET https://acme.com/.well-known/webfinger?resource=agent://acme.com/skills/code
 
 ## 9. OSSA Integration
 
-UADP is the transport and discovery layer; OSSA is the payload format.
+DUADP is the transport and discovery layer; OSSA is the payload format.
 
 - All items in `data[]` arrays MUST include `apiVersion` (e.g., `ossa/v0.4`) and `kind` (`Skill`, `Agent`, or `Tool`)
 - All items MUST include a `metadata` object with at least `name`
@@ -1100,14 +1100,14 @@ Because OSSA enforces explicit `safety` guardrails declaratively, a downstream n
 - Gossip protocol MUST respect `max_hops` to prevent amplification attacks
 - Federated search MUST implement timeouts per peer (recommended: 5 seconds)
 
-## 11. Implementing a Minimal UADP Node
+## 11. Implementing a Minimal DUADP Node
 
-The simplest possible UADP node is two static JSON files:
+The simplest possible DUADP node is two static JSON files:
 
 ```
 your-domain.com/
-  .well-known/uadp.json     <- discovery manifest
-  uadp/v1/skills             <- skills list (can be static JSON)
+  .well-known/duadp.json     <- discovery manifest
+  duadp/v1/skills             <- skills list (can be static JSON)
 ```
 
 A more complete implementation adds:
@@ -1123,8 +1123,8 @@ Reference implementations:
 - **SQLite Reference Node**: `reference-node/` — Express + SQLite, all 26 endpoints verified, Docker-ready
 - **TypeScript SDK**: `@bluefly/duadp` with Express server helper (136 tests passing)
 - **Drupal**: `ai_agents_marketplace` module (PHP) — full DUADP node with federation
-- **Python SDK**: `bluefly-duadp` with FastAPI server helper
-- **Go SDK**: `uadp-go` with `net/http` handler
+- **Python SDK**: `duadp` with FastAPI server helper
+- **Go SDK**: `duadp-go` with `net/http` handler
 - **Static**: GitHub Pages with JSON files — planned
 
 The reference node (`reference-node/`) implements every endpoint in this spec and can be started locally with `npx tsx src/index.ts` or via Docker. See the [root README](../README.md) for setup instructions.
@@ -1132,30 +1132,30 @@ The reference node (`reference-node/`) implements every endpoint in this spec an
 ## Appendix A: JSON Schemas
 
 See `schemas/` directory:
-- `uadp-manifest.schema.json` — `/.well-known/uadp.json` validation
-- `uadp-skills-response.schema.json` — `/uadp/v1/skills` response
-- `uadp-agents-response.schema.json` — `/uadp/v1/agents` response
-- `uadp-tools-response.schema.json` — `/uadp/v1/tools` response
-- `uadp-federation-response.schema.json` — `/uadp/v1/federation` response
-- `uadp-publish-request.schema.json` — `/uadp/v1/publish` request
-- `uadp-webfinger-response.schema.json` — WebFinger response
+- `duadp-manifest.schema.json` — `/.well-known/duadp.json` validation
+- `duadp-skills-response.schema.json` — `/api/v1/skills` response
+- `duadp-agents-response.schema.json` — `/api/v1/agents` response
+- `duadp-tools-response.schema.json` — `/api/v1/tools` response
+- `duadp-federation-response.schema.json` — `/api/v1/federation` response
+- `duadp-publish-request.schema.json` — `/api/v1/publish` request
+- `duadp-webfinger-response.schema.json` — WebFinger response
 
 ## Appendix B: OpenAPI Specification
 
-See `openapi.yaml` for the complete OpenAPI 3.1 definition of all UADP endpoints.
+See `openapi.yaml` for the complete OpenAPI 3.1 definition of all DUADP endpoints.
 
 ## Appendix C: Changelog
 
 ### 0.2.0 (2026-03-06)
-- Tools endpoint (`/uadp/v1/tools`) — MCP tools, A2A tools as first-class resources
-- Publishing API (`POST /uadp/v1/publish`) — write operations for resource creation
+- Tools endpoint (`/api/v1/tools`) — MCP tools, A2A tools as first-class resources
+- Publishing API (`POST /api/v1/publish`) — write operations for resource creation
 - WebFinger resolution for individual resource lookup by GAID
-- DNS TXT record discovery (`_uadp.<domain>`) for zero-configuration
+- DNS TXT record discovery (`_duadp.<domain>`) for zero-configuration
 - Gossip protocol for automatic peer propagation
 - DID-based identity (`did:web:`, `did:key:`) for verifiable node identity
 - Resource signatures with Ed25519
 - Federated search (`?federated=true`) with source attribution
-- Single resource lookup by name (`GET /uadp/v1/skills/{name}`)
+- Single resource lookup by name (`GET /api/v1/skills/{name}`)
 - `node_id` field using DIDs
 - `tags` field on metadata for flexible categorization
 - `Tool` kind for MCP/A2A/function-calling tools
@@ -1163,7 +1163,7 @@ See `openapi.yaml` for the complete OpenAPI 3.1 definition of all UADP endpoints
 
 ### 0.1.0 (2026-03-06)
 - Initial draft specification
-- Discovery layer (`/.well-known/uadp.json`)
+- Discovery layer (`/.well-known/duadp.json`)
 - Skills and Agents endpoints with OSSA payloads
 - Federation with peer registration and circuit breaker
 - Trust tiers and GAID identifiers

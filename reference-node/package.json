@@ -1,23 +1,32 @@
 {
-  "name": "@bluefly/duadp-reference-node",
-  "version": "0.1.0",
+  "name": "@bluefly/duadp-node",
+  "version": "0.2.0",
+  "description": "DUADP Reference Node — federated AI agent discovery with trust verification",
   "type": "module",
+  "bin": {
+    "duadp-node": "./dist/index.js"
+  },
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "seed": "tsx src/seed.ts"
+    "test": "tsx --test src/**/*.test.ts",
+    "seed": "tsx src/seed.ts",
+    "demo": "tsx src/demo-mcp-client.ts"
   },
   "dependencies": {
     "@bluefly/duadp": "^0.1.2",
+    "@cedar-policy/cedar-wasm": "^4.9.1",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
     "express": "^5.0.0",
-    "cors": "^2.8.5"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.0",
-    "@types/express": "^5.0.0",
     "@types/cors": "^2.8.0",
+    "@types/express": "^5.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   }

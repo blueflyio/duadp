@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bluefly-duadp"
-version = "0.1.0"
+name = "duadp"
+version = "0.2.0"
 description = "DUADP — Decentralized Universal AI Discovery Protocol SDK"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-keywords = ["uadp", "duadp", "ossa", "agent", "discovery", "federation", "ai"]
+keywords = ["duadp", "ossa", "agent", "discovery", "federation", "ai", "mcp"]
 
 dependencies = [
     "httpx>=0.27.0",
@@ -18,8 +18,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://duadp.org"
-Repository = "https://gitlab.com/blueflyio/ossa/lab/duadp"
-Issues = "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
+Repository = "https://gitlab.com/blueflyio/duadp/duadp"
+Issues = "https://gitlab.com/blueflyio/duadp/duadp/-/issues"
 
 [project.optional-dependencies]
 crypto = ["cryptography>=43.0"]
@@ -28,4 +28,11 @@ test = ["pytest>=8.0", "pytest-asyncio>=0.24", "pytest-httpx>=0.30"]
 all = ["cryptography>=43.0", "fastapi>=0.115.0", "uvicorn>=0.30.0"]
 
 [project.scripts]
-uadp-test = "bluefly_uadp.conformance:main"
+duadp = "duadp.cli:main"
+duadp-test = "duadp.conformance:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/duadp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/duadp", "README.md", "pyproject.toml"]

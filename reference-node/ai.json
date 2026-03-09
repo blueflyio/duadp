@@ -1,0 +1,28 @@
+{
+  "protocol": "DUADP/1.0",
+  "name": "duadp-reference-node",
+  "version": "0.1.2",
+  "description": "DUADP Reference Implementation",
+  "capabilities": ["code-generation", "autonomous-research", "discovery", "federation"],
+  "links": {
+    "context": "ipfs://QmDUAD...",
+    "documentation": "/llms.txt",
+    "instructions": "/AGENTS.md",
+    "toolkit": "/mcp.json",
+    "contract": "/CONTRACT.md",
+    "data_provenance": "/DATA.md"
+  },
+  "trust_score_provider": "https://verify.openstandardagents.org",
+  "federation": {
+    "status": "enabled",
+    "peers": ["duadp://discover.duadp.org"],
+    "syncInterval": 300
+  },
+  "endpoints": {
+    "webfinger": "/.well-known/webfinger",
+    "duadp_well_known": "/.well-known/duadp",
+    "agents": "/api/v1/agents",
+    "publish": "/api/v1/publish",
+    "search": "/api/v1/search"
+  }
+}
