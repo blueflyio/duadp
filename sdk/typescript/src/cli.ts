@@ -146,8 +146,8 @@ Examples:
         kind: 'ProjectConfiguration',
         spec: {
           duadp: {
-            publish_to: ['https://discover.duadp.org'],
-            discover_from: ['https://discover.duadp.org'],
+            publish_to: ['https://duadp.org'],
+            discover_from: ['https://duadp.org'],
             auto_publish: true,
             identity: 'did:web:example.com'
           }

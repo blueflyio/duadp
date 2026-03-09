@@ -6,9 +6,7 @@ MCP connects tools. A2A connects agents. But how do agents *find* each other acr
 
 [![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
-[![Live Node](https://img.shields.io/badge/live-discover.duadp.org-brightgreen)](https://discover.duadp.org/.well-known/duadp.json)
-
-> **[duadp.org](https://duadp.org)** | **[Live Discovery Node](https://discover.duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)** | **[OSSA](https://openstandardagents.org)**
+> **[duadp.org](https://duadp.org)** | **[Live Discovery Node](https://duadp.org/discover)** | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)** | **[OSSA](https://openstandardagents.org)**
 
 ---
 
@@ -60,10 +58,7 @@ GET  /api/v1/health                   Node health and resource count
 
 ### Client -- discover any node
 
-```python
-from duadp import DuadpClient, resolve_gaid
-
-async with DuadpClient("https://discover.duadp.org") as client:
+async with DuadpClient("https://duadp.org") as client:
     # Discovery
     manifest = await client.discover()
     print(f"{manifest.node_name} — {manifest.protocol_version}")
@@ -135,7 +130,7 @@ doc = await resolve_did("did:key:z6Mkf5rG...")       # did:key support
 ## Full Client API
 
 ```python
-async with DuadpClient("https://discover.duadp.org", token="...") as client:
+async with DuadpClient("https://duadp.org", token="...") as client:
 
     # Core Discovery
     await client.discover()                          # Fetch manifest
@@ -242,19 +237,17 @@ from duadp.types import (
 )
 ```
 
-## Try It Now
-
-The reference node is live at [discover.duadp.org](https://discover.duadp.org) with 65 resources (57 agents, 5 skills, 3 tools).
+The reference node is live at [duadp.org/discover](https://duadp.org/discover) with 65 resources (57 agents, 5 skills, 3 tools).
 
 ```bash
 # Discover the node
-curl https://discover.duadp.org/.well-known/duadp.json
+curl https://duadp.org/.well-known/duadp.json
 
 # List agents
-curl https://discover.duadp.org/api/v1/agents
+curl https://duadp.org/api/v1/agents
 
 # Search
-curl "https://discover.duadp.org/api/v1/search?q=security&facets=true"
+curl "https://duadp.org/api/v1/search?q=security&facets=true"
 ```
 
 ## Also Available

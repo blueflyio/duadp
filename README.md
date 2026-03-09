@@ -222,37 +222,10 @@ DUADP is the **transport, discovery, and publishing layer**. [OSSA](https://open
 
 ## Live Reference Node
 
-**Try it now** — the hosted reference node is live at [`discover.duadp.org`](https://discover.duadp.org/.well-known/duadp.json):
-
-```bash
-# Discovery manifest
-curl https://discover.duadp.org/.well-known/duadp.json
-
-# Browse skills, agents, tools
-curl https://discover.duadp.org/api/v1/skills
-curl https://discover.duadp.org/api/v1/agents
-curl https://discover.duadp.org/api/v1/tools
-
-# Health check
-curl https://discover.duadp.org/api/v1/health
-
-# Governance (NIST AI RMF)
-curl https://discover.duadp.org/api/v1/governance
-
-# Search across all resources
-curl "https://discover.duadp.org/api/v1/search?q=code+review"
-
-# Agent reputation
-curl "https://discover.duadp.org/api/v1/reputation/agent%3A%2F%2Fagents%2Forchestrator"
-
-# Publish a resource (POST)
-curl -X POST https://discover.duadp.org/api/v1/publish \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer your-token" \
   -d '{"apiVersion":"ossa/v0.5","kind":"Skill","metadata":{"name":"my-skill","description":"My custom skill"}}'
 ```
 
-Node ID: `did:web:discover.duadp.org` | Protocol: DUADP v0.1.3 | 5 skills, 3 agents, 3 tools seeded
+Node ID: `did:web:duadp.org` | Protocol: DUADP v0.1.3 | 5 skills, 3 agents, 3 tools seeded
 
 ## Run the Reference Node Locally
 
@@ -352,7 +325,7 @@ cd sdk/typescript && npm test
 
 | Platform | Status | Description |
 |----------|--------|-------------|
-| [OSSA Reference Node](https://discover.duadp.org/.well-known/duadp.json) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
+| [OSSA Reference Node](https://duadp.org/discover) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
 | [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.1.3** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
 | [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.1.3** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
 | Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |

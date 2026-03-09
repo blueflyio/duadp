@@ -6,7 +6,7 @@
         "dist/mcp-server/index.js"
       ],
       "env": {
-        "DUADP_REGISTRY_URL": "https://discover.duadp.org"
+        "DUADP_REGISTRY_URL": "https://duadp.org"
       }
     }
   },

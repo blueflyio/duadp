@@ -417,6 +417,43 @@ export function createMcpRouter(baseUrl: string) {
       }
     );
 
+    // 22. duadp_mcp_bridge -> MCP Bidirectional Bridge
+    server.tool(
+      "duadp_mcp_bridge",
+      "Establish a bidirectional bridge to an external MCP server",
+      {
+        server_url: z.string().describe("SSE URL of the external MCP server to bridge"),
+        method: z.enum(["list_tools", "call_tool"]).describe("MCP method to invoke on the bridged server"),
+        tool_name: z.string().optional().describe("Name of the tool to call (if method is call_tool)"),
+        arguments: z.record(z.string(), z.any()).optional().describe("Arguments for the tool call")
+      },
+      async ({ server_url, method, tool_name, arguments: args }) => {
+        try {
+          // Note: In a production bridge, we would maintain a persistent connection.
+          // For the reference implementation, we perform a point-to-point proxy call.
+          const res = await fetch(server_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: method === "list_tools" ? "tools/list" : "tools/call",
+              params: method === "list_tools" ? {} : { name: tool_name, arguments: args }
+            })
+          });
+          const data = await res.json();
+          return {
+            content: [{ type: "text", text: JSON.stringify(data, null, 2) }]
+          };
+        } catch (err: any) {
+          return {
+            content: [{ type: "text", text: `Bridge Error: ${err.message}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
     return server;
   }
 

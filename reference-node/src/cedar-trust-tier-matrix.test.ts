@@ -42,15 +42,15 @@ function makeRequest(overrides: {
 // Policy 1: allow-publish-community — the ONLY unconditional publish permit
 // =============================================================================
 describe('Policy 1: Community Tier Publishing', () => {
-  test('allows publish with trust_tier=community', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows publish with trust_tier=community', async () => {
+    const result = await evaluateCedar(makeRequest({
       context: { trust_tier: 'community' },
     }));
     assert.equal(result.decision, 'Allow');
   });
 
-  test('denies publish with NO trust_tier context (default deny)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('denies publish with NO trust_tier context (default deny)', async () => {
+    const result = await evaluateCedar(makeRequest({
       context: {},
     }));
     // No trust_tier => Policy 1 doesnt fire, no permit => Deny
@@ -76,16 +76,16 @@ describe('Policy 2: Signature Enforcement (forbid gate)', () => {
   const TIERS_REQUIRING_SIGNATURE = ['signed', 'verified-signature', 'verified', 'official'] as const;
 
   for (const tier of TIERS_REQUIRING_SIGNATURE) {
-    test(`denies ${tier} tier publish WITHOUT has_signature (no permit + forbid)`, () => {
-      const result = evaluateCedar(makeRequest({
+    test(`denies ${tier} tier publish WITHOUT has_signature (no permit + forbid)`, async () => {
+      const result = await evaluateCedar(makeRequest({
         context: { trust_tier: tier, has_signature: false },
       }));
       assert.equal(result.decision, 'Deny');
     });
 
-    test(`denies ${tier} tier publish even WITH has_signature (no matching permit)`, () => {
+    test(`denies ${tier} tier publish even WITH has_signature (no matching permit)`, async () => {
       // Even with signature, there is no `permit` for non-community tiers
-      const result = evaluateCedar(makeRequest({
+      const result = await evaluateCedar(makeRequest({
         context: { trust_tier: tier, has_signature: true, has_did: true },
       }));
       assert.equal(result.decision, 'Deny');
@@ -97,15 +97,15 @@ describe('Policy 2: Signature Enforcement (forbid gate)', () => {
 // Policy 3: require-did-for-verified-tier (forbid gate on top of Policy 2)
 // =============================================================================
 describe('Policy 3: DID Enforcement', () => {
-  test('verified-signature without DID is denied (forbid + no permit)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('verified-signature without DID is denied (forbid + no permit)', async () => {
+    const result = await evaluateCedar(makeRequest({
       context: { trust_tier: 'verified-signature', has_signature: true, has_did: false },
     }));
     assert.equal(result.decision, 'Deny');
   });
 
-  test('verified without DID is denied (forbid + no permit)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('verified without DID is denied (forbid + no permit)', async () => {
+    const result = await evaluateCedar(makeRequest({
       context: { trust_tier: 'verified', has_signature: true, has_did: false },
     }));
     assert.equal(result.decision, 'Deny');
@@ -118,19 +118,19 @@ describe('Policy 3: DID Enforcement', () => {
 // (This is a defense-in-depth forbid on top of no-permit.)
 // =============================================================================
 describe('Policy 4: Revocation Authorization', () => {
-  test('denies revocation by a random principal (no permit for revoke)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('denies revocation by a random principal (no permit for revoke)', async () => {
+    const result = await evaluateCedar(makeRequest({
       actionId: 'revoke',
       context: { is_publisher: false, is_governance_admin: false },
     }));
     assert.equal(result.decision, 'Deny');
   });
 
-  test('denies revocation even by publisher (no permit for revoke action)', () => {
+  test('denies revocation even by publisher (no permit for revoke action)', async () => {
     // There is no `permit` for action == "revoke", so even with is_publisher
     // the result is Deny. Policy 4 is a forbid-unless which adds another
     // denial layer, but the absence of a permit already blocks.
-    const result = evaluateCedar(makeRequest({
+    const result = await evaluateCedar(makeRequest({
       actionId: 'revoke',
       context: { is_publisher: true },
     }));
@@ -144,24 +144,24 @@ describe('Policy 4: Revocation Authorization', () => {
 // Policy 6 forbids when protocol_version doesnt match "0.*".
 // =============================================================================
 describe('Policy 5-6: Federation Peering', () => {
-  test('allows peering with v0.x protocol', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows peering with v0.x protocol', async () => {
+    const result = await evaluateCedar(makeRequest({
       actionId: 'peer',
       context: { protocol_version: '0.1.3' },
     }));
     assert.equal(result.decision, 'Allow');
   });
 
-  test('denies peering with incompatible protocol version (v1.x)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('denies peering with incompatible protocol version (v1.x)', async () => {
+    const result = await evaluateCedar(makeRequest({
       actionId: 'peer',
       context: { protocol_version: '1.0.0' },
     }));
     assert.equal(result.decision, 'Deny');
   });
 
-  test('allows peering without protocol_version context (open federation)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows peering without protocol_version context (open federation)', async () => {
+    const result = await evaluateCedar(makeRequest({
       actionId: 'peer',
       context: {},
     }));
@@ -173,16 +173,16 @@ describe('Policy 5-6: Federation Peering', () => {
 // Policy 7: allow-read-access — read always allowed
 // =============================================================================
 describe('Policy 7: Read Access', () => {
-  test('allows read access for any principal', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows read access for any principal', async () => {
+    const result = await evaluateCedar(makeRequest({
       actionId: 'read',
       context: {},
     }));
     assert.equal(result.decision, 'Allow');
   });
 
-  test('allows read access even for anonymous principal', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows read access even for anonymous principal', async () => {
+    const result = await evaluateCedar(makeRequest({
       principalId: 'anonymous',
       actionId: 'read',
       context: {},
@@ -204,8 +204,8 @@ describe('Policy 8: Anonymous Write Blocking', () => {
   // must pass entities with the principal's attributes for this to work.
   // This test documents the current behavior (Allow) as a known gap.
 
-  test('anonymous publish with community tier — currently ALLOWED (entity attrs not passed)', () => {
-    const result = evaluateCedar(makeRequest({
+  test('anonymous publish with community tier — currently ALLOWED (entity attrs not passed)', async () => {
+    const result = await evaluateCedar(makeRequest({
       principalId: 'anonymous',
       actionId: 'publish',
       context: { trust_tier: 'community' },
@@ -215,8 +215,8 @@ describe('Policy 8: Anonymous Write Blocking', () => {
     assert.equal(result.decision, 'Allow');
   });
 
-  test('allows non-anonymous publish with community trust_tier', () => {
-    const result = evaluateCedar(makeRequest({
+  test('allows non-anonymous publish with community trust_tier', async () => {
+    const result = await evaluateCedar(makeRequest({
       principalId: 'publisher-1',
       actionId: 'publish',
       context: { trust_tier: 'community' },
@@ -229,38 +229,38 @@ describe('Policy 8: Anonymous Write Blocking', () => {
 // Combined tier + principal matrix — the key NIST compliance proof
 // =============================================================================
 describe('NIST Compliance Matrix: Trust Tier × Principal × Action', () => {
-  test('authenticated publisher + community tier = ALLOW', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: { trust_tier: 'community' } }));
+  test('authenticated publisher + community tier = ALLOW', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: { trust_tier: 'community' } }));
     assert.equal(r.decision, 'Allow');
   });
 
-  test('anonymous + community tier = ALLOW (Policy 8 needs entity attrs to enforce)', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'anonymous', actionId: 'publish', context: { trust_tier: 'community' } }));
+  test('anonymous + community tier = ALLOW (Policy 8 needs entity attrs to enforce)', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'anonymous', actionId: 'publish', context: { trust_tier: 'community' } }));
     assert.equal(r.decision, 'Allow'); // See Policy 8 note above
   });
 
-  test('authenticated + signed tier WITHOUT signature = DENY', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: { trust_tier: 'signed', has_signature: false } }));
+  test('authenticated + signed tier WITHOUT signature = DENY', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: { trust_tier: 'signed', has_signature: false } }));
     assert.equal(r.decision, 'Deny');
   });
 
-  test('authenticated + no trust_tier = DENY (no permit matches)', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: {} }));
+  test('authenticated + no trust_tier = DENY (no permit matches)', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'publisher-1', actionId: 'publish', context: {} }));
     assert.equal(r.decision, 'Deny');
   });
 
-  test('any principal + read = ALLOW (always)', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'anyone', actionId: 'read', context: {} }));
+  test('any principal + read = ALLOW (always)', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'anyone', actionId: 'read', context: {} }));
     assert.equal(r.decision, 'Allow');
   });
 
-  test('any principal + peer + v0.x = ALLOW', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'node-1', actionId: 'peer', context: { protocol_version: '0.1.0' } }));
+  test('any principal + peer + v0.x = ALLOW', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'node-1', actionId: 'peer', context: { protocol_version: '0.1.0' } }));
     assert.equal(r.decision, 'Allow');
   });
 
-  test('any principal + peer + v2.x = DENY (protocol mismatch)', () => {
-    const r = evaluateCedar(makeRequest({ principalId: 'node-1', actionId: 'peer', context: { protocol_version: '2.0.0' } }));
+  test('any principal + peer + v2.x = DENY (protocol mismatch)', async () => {
+    const r = await evaluateCedar(makeRequest({ principalId: 'node-1', actionId: 'peer', context: { protocol_version: '2.0.0' } }));
     assert.equal(r.decision, 'Deny');
   });
 });
@@ -269,8 +269,8 @@ describe('NIST Compliance Matrix: Trust Tier × Principal × Action', () => {
 // Performance — <100ms per the NIST compliance claim
 // =============================================================================
 describe('Performance', () => {
-  test('Cedar evaluation completes in under 100ms', () => {
-    const result = evaluateCedar(makeRequest({
+  test('Cedar evaluation completes in under 100ms', async () => {
+    const result = await evaluateCedar(makeRequest({
       context: { trust_tier: 'community' },
     }));
     assert.ok(result.evaluation_ms < 100, `Evaluation took ${result.evaluation_ms}ms, expected <100ms`);
