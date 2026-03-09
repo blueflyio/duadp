@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 
-> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** (coming soon) | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)**
 
 ## Install
 
@@ -208,4 +208,4 @@ The SDK exports 80+ types covering:
 
 ## License
 
-Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
+Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/LICENSE)

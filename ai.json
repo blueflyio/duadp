@@ -4,7 +4,7 @@
     "name": "blueflyio-duadp",
     "description": "Decentralized Universal AI Discovery Protocol (DUADP) Reference Implementation",
     "homepage": "https://duadp.org",
-    "repository": "https://gitlab.com/blueflyio/ossa/lab/duadp"
+    "repository": "https://gitlab.com/blueflyio/duadp/duadp"
   },
   "capabilities": {
     "discovery": true,

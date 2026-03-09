@@ -10,12 +10,12 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/blueflyio/ossa/lab/duadp.git",
+    "url": "https://gitlab.com/blueflyio/duadp/duadp.git",
     "directory": "sdk/typescript"
   },
   "homepage": "https://duadp.org",
   "bugs": {
-    "url": "https://gitlab.com/blueflyio/ossa/lab/duadp/-/issues"
+    "url": "https://gitlab.com/blueflyio/duadp/duadp/-/issues"
   },
   "author": "Bluefly <hello@bluefly.io>",
   "publishConfig": {

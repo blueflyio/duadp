@@ -15,9 +15,9 @@ The protocol addresses a fundamental problem in the AI ecosystem: **there is no 
 This SDK provides both a **client** for consuming any DUADP node and a **server router** for turning your Express app into a fully compliant DUADP node — with validation, cryptographic signing, DID resolution, and conformance testing built in.
 
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/LICENSE)
 
-> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)**
+> **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** | **[duadp.org](https://duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)**
 
 ---
 
@@ -155,7 +155,7 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 
 ## Reference Node
 
-A complete reference implementation using this SDK ships in the same repository: [`reference-node/`](https://gitlab.com/blueflyio/ossa/lab/duadp/-/tree/main/reference-node) — Express + SQLite, all protocol endpoints (15 SDK + 11 governance), Docker-ready, seeded with demo data.
+A complete reference implementation using this SDK ships in the same repository: [`reference-node/`](https://gitlab.com/blueflyio/duadp/duadp/-/tree/main/reference-node) — Express + SQLite, all protocol endpoints (15 SDK + 11 governance), Docker-ready, seeded with demo data.
 
 ```bash
 cd reference-node
@@ -179,4 +179,4 @@ npm test
 
 ## License
 
-Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/LICENSE)
+Apache-2.0 — See [LICENSE](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/LICENSE)

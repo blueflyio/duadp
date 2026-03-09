@@ -8,7 +8,7 @@ MCP connects tools. A2A connects agents. But how do agents *find* each other acr
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](../../LICENSE)
 [![Live Node](https://img.shields.io/badge/live-discover.duadp.org-brightgreen)](https://discover.duadp.org/.well-known/duadp.json)
 
-> **[duadp.org](https://duadp.org)** | **[Live Discovery Node](https://discover.duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/ossa/lab/duadp/-/blob/main/spec/README.md)** | **[OSSA](https://openstandardagents.org)**
+> **[duadp.org](https://duadp.org)** | **[Live Discovery Node](https://discover.duadp.org)** | **[Full Spec](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/spec/README.md)** | **[OSSA](https://openstandardagents.org)**
 
 ---
 
