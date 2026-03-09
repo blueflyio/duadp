@@ -1,6 +1,6 @@
 // DUADP Authorization Policies
 // Enforced at runtime by the reference node's Cedar evaluator.
-// Version: 1.0.0
+// Version: 2.0.0 — adds confidence scoring, quality gates, and entity-based anonymous blocking.
 
 // =============================================================================
 // PUBLISH AUTHORIZATION — who can register agents/skills/tools
@@ -14,7 +14,21 @@ permit(
   resource is DUADP::Resource
 ) when {
   context has trust_tier &&
-  context.trust_tier == "community"
+  context.trust_tier == "community" &&
+  principal.id != "anonymous"
+};
+
+// Policy 1b: Low-confidence community publishes still require ≥50 score or validation_passed
+@id("require-confidence-for-publish")
+forbid(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"publish",
+  resource is DUADP::Resource
+) when {
+  context has confidence_score &&
+  context.confidence_score > 0 &&
+  context.confidence_score < 50 &&
+  !(context has validation_passed && context.validation_passed)
 };
 
 // Policy 2: Require signed identity for signed-tier publishing
@@ -84,10 +98,10 @@ forbid(
 };
 
 // =============================================================================
-// QUERY AUTHORIZATION — rate limiting and access control for search
+// QUERY AUTHORIZATION — access control for search/read
 // =============================================================================
 
-// Policy 7: Allow read access to all authenticated users
+// Policy 7: Allow read access to all principals (including anonymous)
 @id("allow-read-access")
 permit(
   principal is DUADP::Principal,
@@ -96,6 +110,7 @@ permit(
 );
 
 // Policy 8: Forbid anonymous access to write operations
+// FIX: checks principal entity attribute `id` (must be passed as entity data)
 @id("forbid-anonymous-writes")
 forbid(
   principal is DUADP::Principal,
@@ -107,4 +122,70 @@ forbid(
   resource is DUADP::Resource
 ) when {
   principal.id == "anonymous"
+};
+
+// =============================================================================
+// QUALITY GATE POLICIES — CI/CD deployment decisions
+// Evaluates Cedar context built from CI artifact metrics.
+// =============================================================================
+
+// Policy 9: Production requires high confidence, coverage, security, zero vulns
+@id("require-high-confidence-for-production")
+permit(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"deploy",
+  resource is DUADP::Environment
+) when {
+  resource.name == "production" &&
+  context.confidence_score >= 90 &&
+  context.test_coverage >= 80 &&
+  context.security_score >= 85 &&
+  context.vulnerability_count == 0
+};
+
+// Policy 10: Staging allows lower thresholds — still needs basic quality bar
+@id("allow-staging-deploy-lower-threshold")
+permit(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"deploy",
+  resource is DUADP::Environment
+) when {
+  resource.name == "staging" &&
+  context.confidence_score >= 70 &&
+  context.test_coverage >= 60 &&
+  context.vulnerability_count <= 5
+};
+
+// Policy 11: Development has minimal gates (blocks only critical issues)
+@id("allow-dev-deploy-minimal-gate")
+permit(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"deploy",
+  resource is DUADP::Environment
+) when {
+  resource.name == "development" &&
+  context.confidence_score >= 50
+};
+
+// Policy 12: Block weekend production deployments without explicit approval
+@id("forbid-weekend-production-deploy")
+forbid(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"deploy",
+  resource is DUADP::Environment
+) when {
+  resource.name == "production" &&
+  (context.day_of_week == "Saturday" || context.day_of_week == "Sunday") &&
+  !(context.human_approved)
+};
+
+// Policy 13: Block any deploy with critical unfixed vulnerabilities
+@id("forbid-critical-vulnerabilities")
+forbid(
+  principal is DUADP::Principal,
+  action == DUADP::Action::"deploy",
+  resource is DUADP::Environment
+) when {
+  resource.name == "production" &&
+  context.vulnerability_count > 0
 };

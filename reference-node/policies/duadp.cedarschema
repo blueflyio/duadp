@@ -1,0 +1,121 @@
+// DUADP Cedar Schema — defines entity types and action context shapes.
+// Validated by the Cedar CLI on every CI run.
+// Version: 2.0.0 — adds confidence scoring and quality gate context.
+
+namespace DUADP {
+
+  // =========================================================================
+  // ENTITY TYPES
+  // =========================================================================
+
+  entity Principal in [PrincipalGroup] {
+    // The string ID of the principal — "anonymous", a DID, or a node ID.
+    id: String,
+    // Trust tier of this principal's identity.
+    tier: String,
+    // Whether this principal has presented a valid DID document.
+    has_did: Bool,
+    // Whether this principal has presented a valid cryptographic signature.
+    has_signature: Bool,
+  };
+
+  entity PrincipalGroup {};
+
+  entity Resource {
+    // The GAID/name of the resource being acted on.
+    name: String,
+    // The kind: "Agent", "Skill", "Tool"
+    kind: String,
+    // Trust tier asserted for this resource.
+    trust_tier: String,
+  };
+
+  entity Environment {
+    // Deployment target: "production", "staging", "development"
+    name: String,
+  };
+
+  // =========================================================================
+  // ACTIONS
+  // =========================================================================
+
+  action "publish" appliesTo {
+    principal: [Principal],
+    resource: [Resource],
+    context: {
+      // Trust tier being requested for the published resource.
+      trust_tier: String,
+      // Whether the payload carries a valid cryptographic signature.
+      has_signature: Bool,
+      // Whether the payload carries a valid DID.
+      has_did: Bool,
+      // Confidence score [0–100] from the AI model/pipeline (0 = unset).
+      confidence_score: Long,
+      // OSSA schema validation passed?
+      validation_passed: Bool,
+      // Number of publish requests from this principal in the current window.
+      request_count: Long,
+    }
+  };
+
+  action "revoke" appliesTo {
+    principal: [Principal],
+    resource: [Resource],
+    context: {
+      // True if principal is the original publisher of this resource.
+      is_publisher: Bool,
+      // True if principal has governance admin permissions.
+      is_governance_admin: Bool,
+    }
+  };
+
+  action "peer" appliesTo {
+    principal: [Principal],
+    resource: [Resource],
+    context: {
+      // DUADP protocol version string from the peering node.
+      protocol_version: String,
+    }
+  };
+
+  action "read" appliesTo {
+    principal: [Principal],
+    resource: [Resource],
+    context: {}
+  };
+
+  action "update" appliesTo {
+    principal: [Principal],
+    resource: [Resource],
+    context: {
+      trust_tier: String,
+      has_signature: Bool,
+      has_did: Bool,
+      confidence_score: Long,
+    }
+  };
+
+  // =========================================================================
+  // QUALITY GATE ACTION — for CI/CD pipeline deployment decisions
+  // =========================================================================
+
+  action "deploy" appliesTo {
+    principal: [Principal],
+    resource: [Environment],
+    context: {
+      // AI model confidence score [0–100] from evaluation pipeline.
+      confidence_score: Long,
+      // Test coverage percentage [0–100].
+      test_coverage: Long,
+      // Security scan score [0–100] (e.g., from Trivy/SAST).
+      security_score: Long,
+      // Number of unfixed vulnerabilities (critical or high severity).
+      vulnerability_count: Long,
+      // The day of week: "Monday"..."Sunday" — for time-based policies.
+      day_of_week: String,
+      // Whether a human has reviewed and approved this deploy.
+      human_approved: Bool,
+    }
+  };
+
+}
