@@ -1,6 +1,6 @@
 # Decentralized Universal AI Discovery Protocol (DUADP)
 
-**Decentralized, federated discovery and publishing for AI Agents, Skills, Tools, and Marketplaces.**
+**Federated discovery and publishing for AI Agents, Skills, Tools, and Marketplaces.**
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Spec Version](https://img.shields.io/badge/spec-v0.1.3-green.svg)](spec/README.md)
@@ -8,11 +8,76 @@
 [![PyPI](https://img.shields.io/pypi/v/duadp)](https://pypi.org/project/duadp/)
 [![Website](https://img.shields.io/badge/website-duadp.org-blue)](https://duadp.org)
 
-> **[duadp.org](https://duadp.org)** | **[openstandardagents.org/duadp](https://openstandardagents.org/duadp/)** for protocol details | **[OSSA ecosystem](https://openstandardagents.org)**
+> **[duadp.org](https://duadp.org)** | **[OSSA ecosystem](https://openstandardagents.org)** — DUADP is the discovery layer; OSSA is the identity layer. They are designed to work together.
 
 > **GitLab**: [gitlab.com/blueflyio/duadp/duadp](https://gitlab.com/blueflyio/duadp/duadp) | **GitHub mirror**: [github.com/blueflyio/duadp](https://github.com/blueflyio/duadp)
 
-## What is DUADP?
+## The Three-Layer Agent Security Architecture
+
+> *"AI agents require the same foundational infrastructure the internet required: identity, discovery, and governance."*
+
+DUADP is Layer 2 of a three-layer open architecture for secure, interoperable AI agents:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 1 — IDENTITY                                         │
+│  OSSA (Open Standard for Software Agents)                   │
+│  openstandardagents.org | npm install @bluefly/openstandardagents │
+│                                                             │
+│  · Agent DID (W3C decentralized identity)                   │
+│  · Signed manifests (cryptographic provenance)              │
+│  · Capability permissions                                   │
+│  · Cedar policy enforcement (zero-trust bounds)             │
+│  · NIST SP 800-53 control mapping                           │
+└────────────────────┬────────────────────────────────────────┘
+                     │  secure identity
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 2 — DISCOVERY                                        │
+│  DUADP (this repo)                                          │
+│  duadp.org | npm install @bluefly/duadp                     │
+│                                                             │
+│  · Federated DNS + WebFinger discovery                      │
+│  · Cross-node gossip federation                             │
+│  · Policy-aware capability routing                          │
+│  · 17 MCP tools for agent-to-agent discovery                │
+│  · Trust-tier gating (community → verified → federal)       │
+└────────────────────┬────────────────────────────────────────┘
+                     │  policy-filtered
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 3 — EXECUTION                                        │
+│  Your runtime environment                                   │
+│                                                             │
+│  · Kubernetes / serverless / enterprise platforms           │
+│  · Claude, OpenAI, Anthropic, LangChain, CrewAI             │
+│  · Drupal AI Agents, n8n, Temporal, GitLab Duo              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+This architecture answers the [NIST CAISI RFI (NIST-2025-0035)](https://www.regulations.gov/docket/NIST-2025-0035) directly:
+
+| NIST Concern | This Architecture |
+|---|---|
+| Agent identity & authentication | OSSA manifests + W3C DID (GAID) |
+| Authorization & least-privilege | Cedar policies in OSSA |
+| Governance & human oversight | Signed manifests + audit endpoints |
+| Interoperability | DUADP federated discovery |
+| Monitoring & incident response | DUADP audit log + attestation API |
+| Supply chain security | `x-signature` + SBOM pointers |
+
+**Policy-aware agent discovery example:**
+```typescript
+// Find federal-verified fraud detection agents across the network
+const agents = await client.search({
+  capability: 'fraud_detection',
+  trust_tier: 'federal_verified',
+  has_signature: true,
+});
+```
+
+> See [DUADP NIST alignment →](https://duadp.org/nist) | [OSSA NIST whitepaper →](https://openstandardagents.org/nist/whitepaper)
+
 
 DUADP is an open protocol that lets any system discover, publish, and exchange AI capabilities across organizational boundaries. Like DNS for websites or ActivityPub for social networks, DUADP provides a standard way for AI registries, marketplaces, and tools to find each other.
 
