@@ -14,7 +14,9 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { execSync } from 'node:child_process';
+import { tmpdir, homedir, platform } from 'node:os';
 
 const DEFAULT_NODE = process.env.DUADP_NODE || 'http://localhost:4200';
 const args = process.argv.slice(2);
@@ -332,6 +334,100 @@ async function cmdHealth() {
   console.log(JSON.stringify(health, null, 2));
 }
 
+async function cmdProtocol() {
+  const action = args[1]; // register, handle
+  
+  if (action === 'register') {
+    if (platform() !== 'darwin') {
+      console.error('Protocol registration is currently only supported on macOS.');
+      process.exit(1);
+    }
+  
+    const appName = 'DUADPProtocolHandler';
+    const appDir = join(homedir(), 'Applications', `${appName}.app`);
+    
+    // We use npx to ensure the globally available or local DUADP CLI is targeted.
+    const cliCommand = 'npx --yes @bluefly/duadp-cli protocol handle';
+    
+    const scriptContent = `
+  on open location this_URL
+    do shell script "export PATH=\\"$HOME/.volta/bin:/usr/local/bin:/opt/homebrew/bin:$PATH\\" && ${cliCommand} " & quoted form of this_URL
+  end open location
+    `.trim();
+  
+    const scriptPath = join(tmpdir(), 'agent_handler.applescript');
+    writeFileSync(scriptPath, scriptContent);
+  
+    console.log(`Building macOS application bundle at ${appDir}...`);
+    try {
+      execSync(`osacompile -o "${appDir}" "${scriptPath}"`, { stdio: 'inherit' });
+  
+      const plistPath = join(appDir, 'Contents', 'Info.plist');
+      const addUrlTypesCmd = `
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string 'Agent Protocol'" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string 'agent'" "${plistPath}"
+      `.trim();
+  
+      for (const cmd of addUrlTypesCmd.split('\\n')) {
+        try { execSync(cmd.trim(), { stdio: 'ignore' }); } catch {}
+      }
+  
+      console.log('Registering with macOS LaunchServices...');
+      execSync(`/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -f "${appDir}"`, { stdio: 'inherit' });
+  
+      console.log(`\\n✅ Successfully registered the universal agent:// protocol handler.`);
+      console.log(`Test it in your browser: agent://install-mcp?ide=cursor`);
+    } catch (err) {
+      console.error(`Failed to register protocol handler: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
+  } else if (action === 'handle') {
+    const uriStr = args[2];
+    if (!uriStr) {
+      console.error('Missing URI argument. Usage: duadp protocol handle <uri>');
+      process.exit(1);
+    }
+    
+    console.log(`DUADP Received Protocol Intent: ${uriStr}`);
+    const url = new URL(uriStr);
+    
+    if (url.protocol !== 'agent:') {
+      console.error(`Unsupported protocol: ${url.protocol}`);
+      process.exit(1);
+    }
+    
+    // Action route ("agent://install-mcp")
+    const route = url.host || url.pathname.replace(/^[/]+/, '');
+    
+    if (route === 'install-mcp') {
+      const ide = url.searchParams.get('ide');
+      if (!ide) {
+        console.error('Missing "ide" query parameter (e.g. ?ide=cursor)');
+        process.exit(1);
+      }
+      console.log(`Configuring IDE: ${ide}`);
+      
+      // We cleanly shell out to the specialized installer tool
+      // instead of bloating the DUADP CLI with thousands of lines of ide-specific parsing
+      try {
+        console.log(`Executing: npx -y @bluefly/ide-supercharger mcp install ${ide} --force`);
+        execSync(`npx -y @bluefly/ide-supercharger mcp install ${ide} --force`, { stdio: 'inherit' });
+        console.log(`✅ Success: ${ide} configured via universal agent:// protocol.`);
+      } catch (err) {
+         console.error(`❌ Failed to install IDE config via ide-supercharger.`);
+      }
+    } else {
+      console.error(`Unknown universal action route: ${route}`);
+    }
+  } else {
+    console.error('Usage: duadp protocol <register|handle [uri]>');
+    process.exit(1);
+  }
+}
+
 // --- Main ---
 
 const COMMANDS: Record<string, () => Promise<void>> = {
@@ -343,6 +439,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   peers: cmdPeers,
   revocations: cmdRevocations,
   health: cmdHealth,
+  protocol: cmdProtocol,
 };
 
 function printHelp() {
@@ -358,6 +455,7 @@ Commands:
   search <query>      Search across nodes (--federated for cross-node)
   status              Show node status and registered agents
   peers               Show federation peers
+  protocol            Manage universal agent:// protocol (register, handle)
   revocations         List revoked resources
   health              Check node health (JSON)
 
