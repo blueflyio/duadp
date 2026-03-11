@@ -366,9 +366,9 @@ async function cmdProtocol() {
       const addUrlTypesCmd = `
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "${plistPath}"
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "${plistPath}"
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string 'Agent Protocol'" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLName string 'DUADP Protocol'" "${plistPath}"
   /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "${plistPath}"
-  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string 'agent'" "${plistPath}"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string 'duadp'" "${plistPath}"
       `.trim();
   
       for (const cmd of addUrlTypesCmd.split('\\n')) {
@@ -378,8 +378,8 @@ async function cmdProtocol() {
       console.log('Registering with macOS LaunchServices...');
       execSync(`/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -f "${appDir}"`, { stdio: 'inherit' });
   
-      console.log(`\\n✅ Successfully registered the universal agent:// protocol handler.`);
-      console.log(`Test it in your browser: agent://install-mcp?ide=cursor`);
+      console.log(`\\n✅ Successfully registered the universal duadp:// protocol handler.`);
+      console.log(`Test it in your browser: duadp://install-mcp?ide=cursor`);
     } catch (err) {
       console.error(`Failed to register protocol handler: ${err instanceof Error ? err.message : String(err)}`);
       process.exit(1);
@@ -394,12 +394,12 @@ async function cmdProtocol() {
     console.log(`DUADP Received Protocol Intent: ${uriStr}`);
     const url = new URL(uriStr);
     
-    if (url.protocol !== 'agent:') {
+    if (url.protocol !== 'duadp:') {
       console.error(`Unsupported protocol: ${url.protocol}`);
       process.exit(1);
     }
     
-    // Action route ("agent://install-mcp")
+    // Action route ("duadp://install-mcp")
     const route = url.host || url.pathname.replace(/^[/]+/, '');
     
     if (route === 'install-mcp') {
@@ -415,7 +415,7 @@ async function cmdProtocol() {
       try {
         console.log(`Executing: npx -y @bluefly/ide-supercharger mcp install ${ide} --force`);
         execSync(`npx -y @bluefly/ide-supercharger mcp install ${ide} --force`, { stdio: 'inherit' });
-        console.log(`✅ Success: ${ide} configured via universal agent:// protocol.`);
+        console.log(`✅ Success: ${ide} configured via universal duadp:// protocol.`);
       } catch (err) {
          console.error(`❌ Failed to install IDE config via ide-supercharger.`);
       }
@@ -455,7 +455,7 @@ Commands:
   search <query>      Search across nodes (--federated for cross-node)
   status              Show node status and registered agents
   peers               Show federation peers
-  protocol            Manage universal agent:// protocol (register, handle)
+  protocol            Manage universal duadp:// protocol (register, handle)
   revocations         List revoked resources
   health              Check node health (JSON)
 
