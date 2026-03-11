@@ -1,6 +1,6 @@
 {
   "name": "@bluefly/duadp-node",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "DUADP Reference Node — federated AI agent discovery with trust verification",
   "type": "module",
   "bin": {
@@ -15,7 +15,7 @@
     "demo": "tsx src/demo-mcp-client.ts"
   },
   "dependencies": {
-    "@bluefly/duadp": "^0.1.3",
+    "@bluefly/duadp": "^0.1.4",
     "@chainsafe/libp2p-gossipsub": "^14.1.2",
     "@chainsafe/libp2p-noise": "^17.0.0",
     "@chainsafe/libp2p-yamux": "^8.0.1",
