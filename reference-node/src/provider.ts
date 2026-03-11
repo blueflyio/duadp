@@ -181,11 +181,11 @@ export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataPr
 
       try {
         db.prepare(
-          'INSERT INTO resources (kind, name, data) VALUES (?, ?, ?)',
+          `INSERT OR REPLACE INTO resources (kind, name, data, updated_at) VALUES (?, ?, ?, datetime('now'))`,
         ).run(kind, name, data);
 
         const gaid = resource.identity?.gaid ?? `agent://${name}`;
-        auditLog(db, 'resource.created', gaid, token ? `token:${token.slice(0, 8)}...` : 'system', {
+        auditLog(db, 'resource.created_or_updated', gaid, token ? `token:${token.slice(0, 8)}...` : 'system', {
           kind,
           name,
         });
@@ -193,6 +193,7 @@ export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataPr
         return { success: true, resource };
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        console.error('db.publishResource error:', message);
         // Duplicate name
         if (message.includes('UNIQUE constraint')) {
           return { success: false };

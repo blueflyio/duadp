@@ -430,7 +430,7 @@ The reference node seeds with realistic OSSA-formatted resources:
 | Kind | Count | Examples |
 |------|-------|---------|
 | Skills | 5 | `web-search`, `code-review`, `text-summarizer`, `data-analyzer`, `image-classifier` |
-| Agents | 3 | `orchestrator` (multi-agent), `code-reviewer` (worker), `security-auditor` (specialist) |
+| Agents | 6 | `orchestrator`, `code-reviewer`, `drupal-contributor`, `gitlab-ci-agent`, `security-audit-agent` |
 | Tools | 3 | `mcp-filesystem` (MCP), `a2a-email` (A2A), `openapi-weather` (REST) |
 | Audit Log | 10 | Resource creation, updates, federation sync, auth events |
 | Feedback | 5 | Human, agent, and system feedback with structured dimensions |

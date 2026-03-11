@@ -17,6 +17,7 @@ import { kadDHT } from '@libp2p/kad-dht';
 import { bootstrap } from '@libp2p/bootstrap';
 import { noise } from '@chainsafe/libp2p-noise';
 import { yamux } from '@chainsafe/libp2p-yamux';
+import { ping } from '@libp2p/ping';
 
 // ─── Types ──────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export async function createP2PNode(config: P2PConfig = {}): Promise<P2PNode> {
     // This is safe — the runtime behavior is correct.
     services: {
       identify: identify(),
+      ping: ping(),
       pubsub: gossipsub({
         emitSelf: false,
         fallbackToFloodsub: true,

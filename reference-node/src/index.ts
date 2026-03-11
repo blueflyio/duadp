@@ -492,6 +492,14 @@ app.post('/api/v1/publish', async (req: Request, res: Response) => {
   }
 
   const result = await provider.publishResource!(resource, token);
+  
+  if (result.success && p2pNode) {
+    p2pNode.publishAgent(resource).catch(console.error);
+    const kind = resource?.kind || 'Agent';
+    crdtRegistry?.put(kind, resourceName || 'unknown', resource);
+    contentStore?.put(resource).catch(console.error);
+  }
+
   res.status(result.success ? 201 : 400).json({
     ...result,
     trust_verification: verification,
@@ -503,6 +511,12 @@ for (const kind of ['skills', 'agents', 'tools']) {
   app.post(`/api/v1/${kind}`, async (req: Request, res: Response) => {
     const token = getToken(req);
     const result = await provider.publishResource!(req.body, token);
+    if (result.success && p2pNode) {
+      p2pNode.publishAgent(req.body).catch(console.error);
+      const resourceKind = req.body?.kind || (kind === 'skills' ? 'Skill' : kind === 'agents' ? 'Agent' : 'Tool');
+      crdtRegistry?.put(resourceKind, req.body?.metadata?.name || 'unknown', req.body);
+      contentStore?.put(req.body).catch(console.error);
+    }
     res.status(result.success ? 201 : 400).json(result);
   });
 
@@ -510,6 +524,12 @@ for (const kind of ['skills', 'agents', 'tools']) {
     const token = getToken(req);
     if (!token) { res.status(401).json({ error: 'Authentication required' }); return; }
     const result = await provider.updateResource!(kind, req.params.name as string, req.body, token);
+    if (result.success && p2pNode) {
+      p2pNode.publishAgent(req.body).catch(console.error);
+      const resourceKind = req.body?.kind || (kind === 'skills' ? 'Skill' : kind === 'agents' ? 'Agent' : 'Tool');
+      crdtRegistry?.put(resourceKind, req.params.name as string, req.body);
+      contentStore?.put(req.body).catch(console.error);
+    }
     res.json(result);
   });
 
