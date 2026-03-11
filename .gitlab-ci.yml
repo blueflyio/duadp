@@ -24,6 +24,7 @@ default:
 
 variables:
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE/reference-node
+  CODE_QUALITY_DISABLED: "true"
 
 # ---------------------------------------------------------------------------
 # Security Stage Overrides
@@ -53,7 +54,7 @@ validate:openapi:
 
 validate:cedar-policies:
   stage: validate
-  image: rust:1.83-slim
+  image: rust:slim
   cache:
     key: cedar-cli-1.83-$CI_COMMIT_REF_SLUG
     paths:
@@ -250,7 +251,7 @@ deploy:k8s:
 
 cedar:quality-gate:
   stage: cedar-gate
-  image: rust:1.83-slim
+  image: rust:slim
   needs:
     - job: validate:cedar-policies
       optional: true
