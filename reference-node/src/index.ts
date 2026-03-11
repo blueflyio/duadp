@@ -1,9 +1,11 @@
-import type { UadpManifest as DuadpManifest, FederationResponse } from '@bluefly/duadp';
+import type { DuadpManifest, FederationResponse } from '@bluefly/duadp';
 import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
 import { evaluateCedar, evaluateManifestCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
 import { confidenceGate, extractConfidenceScore } from './confidence-gate.js';
+import { createContentStore, type ContentStore } from './content-store.js';
+import { createCRDTRegistry, type CRDTRegistry } from './crdt-registry.js';
 import { initDb } from './db.js';
 import {
     deduplicateByGaid,
@@ -15,6 +17,7 @@ import {
 } from './federation.js';
 import { createGovernanceRouter } from './governance.js';
 import { createMcpRouter } from './mcp.js';
+import { createP2PNode, type P2PNode } from './p2p.js';
 import { createSqliteProvider } from './provider.js';
 import { isNameRevoked, isRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
 import { verifyPublisherSignature } from './signature-verifier.js';
@@ -29,7 +32,16 @@ const NODE_ID = process.env.NODE_ID || process.env.DUADP_NODE_ID || 'did:web:loc
 const COMPLIANCE_ENGINE_URL = process.env.COMPLIANCE_ENGINE_URL || process.env.COMPLIANCE_API_URL || 'https://compliance.blueflyagents.com';
 // Note: COMPLIANCE_ENGINE_URL is passed to cedar-evaluator.ts via process.env — no local Cedar runs here.
 
+const P2P_PORT = parseInt(process.env.P2P_PORT || '4201');
+const P2P_ENABLED = process.env.DUADP_P2P !== 'false'; // opt-out via DUADP_P2P=false
+const P2P_BOOTSTRAP_PEERS = (process.env.DUADP_P2P_PEERS || '').split(',').filter(Boolean);
+
 const db = initDb(DB_PATH);
+
+// Decentralization layer state (initialized in listen callback)
+let p2pNode: P2PNode | null = null;
+let contentStore: ContentStore | null = null;
+let crdtRegistry: CRDTRegistry | null = null;
 const provider = createSqliteProvider(db);
 const providerAny = provider as typeof provider & {
   getAgentCard?: (gaid: string) => Promise<unknown | null>;
@@ -664,6 +676,25 @@ app.get(/^\/api\/v1\/resolve\/(.+)$/, async (req: Request, res: Response) => {
   res.status(404).json({ error: 'GAID not found', gaid, resolved: false });
 });
 
+// P2P Status endpoint
+app.get('/api/v1/p2p/status', (_req: Request, res: Response) => {
+  if (!p2pNode) {
+    res.json({
+      enabled: false,
+      message: P2P_ENABLED ? 'P2P node starting...' : 'P2P disabled (set DUADP_P2P=true to enable)',
+    });
+    return;
+  }
+  res.json({
+    enabled: true,
+    peer_id: p2pNode.getPeerId(),
+    multiaddrs: p2pNode.getMultiaddrs(),
+    connected_peers: p2pNode.getPeerCount(),
+    content_store: contentStore?.stats() ?? null,
+    crdt_registry: crdtRegistry?.stats() ?? null,
+  });
+});
+
 // Governance & analytics
 app.use(createGovernanceRouter(db, NODE_NAME));
 
@@ -682,4 +713,45 @@ app.listen(PORT, async () => {
   // Start background health checks (every 60s)
   startHealthChecks(db, NODE_ID);
   console.log(`Federation: health checks started (60s interval)`);
+
+  // --- Decentralization layer ---
+  if (P2P_ENABLED) {
+    try {
+      // Initialize CRDT registry
+      crdtRegistry = createCRDTRegistry();
+      console.log(`CRDT: Yjs registry initialized`);
+
+      // Initialize content-addressable storage
+      contentStore = await createContentStore();
+      console.log(`Content Store: ${contentStore.stats().storedCount} manifests`);
+
+      // Start libp2p P2P node
+      p2pNode = await createP2PNode({
+        port: P2P_PORT,
+        bootstrapPeers: P2P_BOOTSTRAP_PEERS,
+      });
+
+      // Wire: incoming gossip → CRDT registry + content store
+      p2pNode.onAgentPublished(async (manifest, peerId) => {
+        const name = (manifest as any)?.metadata?.name || 'unknown';
+        const kind = (manifest as any)?.kind || 'Agent';
+        console.log(`P2P: received ${kind} "${name}" from peer ${peerId}`);
+
+        // Store in CRDT
+        crdtRegistry?.put(kind, name, manifest);
+
+        // Store CID in content store
+        const cid = await contentStore?.put(manifest);
+        if (cid) console.log(`  → CID: ${cid}`);
+      });
+
+      console.log(`P2P: libp2p node started`);
+      console.log(`  Peer ID:  ${p2pNode.getPeerId()}`);
+      console.log(`  Listen:   /ip4/0.0.0.0/tcp/${P2P_PORT}`);
+      console.log(`  P2P Status: ${BASE_URL}/api/v1/p2p/status`);
+    } catch (err) {
+      console.warn(`P2P: failed to start (non-fatal):`, (err as Error).message);
+      console.warn(`  Node continues with HTTP federation only.`);
+    }
+  }
 });

@@ -20,6 +20,28 @@ DUADP is an open protocol that lets any system discover, publish, and exchange A
 
 **Any system that implements a few HTTP endpoints is a DUADP node.** There is no required language, framework, or database. Agents are distributed using the `.ajson` / `.jsona` (Agent JSON) payload format.
 
+### The Agent Internet Stack
+
+DUADP is the **discovery layer** of a three-layer agent internet stack:
+
+```
+┌───────────────────────────────────────────────────┐
+│  RUNTIME    MCP (tools) · A2A (agent-to-agent)    │
+├───────────────────────────────────────────────────┤
+│  DEFINITION OSSA manifests (vendor-neutral)       │
+├───────────────────────────────────────────────────┤
+│  DISCOVERY  DUADP (DNS + WebFinger + gossip)      │
+└───────────────────────────────────────────────────┘
+```
+
+| Web Stack | Agent Stack | Purpose |
+|-----------|-------------|---------|
+| DNS       | **DUADP**   | Find things on the network |
+| OpenAPI   | **OSSA**    | Define what a service/agent does |
+| HTTP/REST | **MCP + A2A** | Communicate and execute |
+
+> 📖 See [VISION.md](VISION.md) for the full strategic document.
+
 ```
               DNS TXT: _duadp.skills.sh → "v=duadp1 url=..."
 

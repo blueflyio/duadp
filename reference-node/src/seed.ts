@@ -314,6 +314,122 @@ const agents = [
     },
     risk: { level: 'moderate', autonomy_level: 'human-in-the-loop', data_sensitivity: 'confidential' },
   },
+  // ── OSSA-Native Dev Agents ──
+  {
+    apiVersion: 'ossa/v0.5',
+    kind: 'Agent',
+    metadata: {
+      name: 'drupal-contributor',
+      version: '1.0.0',
+      description: 'Autonomous Drupal issue contributor. Discovers issues, implements patches, pushes MRs, and monitors CI pipelines.',
+      category: 'development',
+      trust_tier: 'signed',
+      tags: ['drupal', 'contributor', 'issue-fixing', 'merge-request', 'ossa-native'],
+      created: '2026-03-10T12:00:00Z',
+      updated: '2026-03-10T12:00:00Z',
+    },
+    identity: {
+      gaid: 'agent://agents/drupal-contributor',
+      did: `did:web:${SEED_DOMAIN}:agents:drupal-contributor`,
+      operational: {
+        endpoint: `https://agents.${SEED_DOMAIN}/drupal-contributor`,
+        protocol: 'a2a',
+        transport: 'https',
+        health_check: `https://agents.${SEED_DOMAIN}/drupal-contributor/health`,
+      },
+      relationships: {
+        parent_agent: 'agent://agents/orchestrator',
+        skills: ['agent://skills/code-review'],
+      },
+    },
+    spec: {
+      agent_type: 'worker',
+      model: 'claude-sonnet-4-20250514',
+      max_context_tokens: 100000,
+      skills: ['code-review'],
+      supported_languages: ['php'],
+      tools: ['drupalorg-cli', 'phpstan', 'phpcs', 'git'],
+    },
+    risk: { level: 'low', autonomy_level: 'human-in-the-loop', data_sensitivity: 'internal' },
+  },
+  {
+    apiVersion: 'ossa/v0.5',
+    kind: 'Agent',
+    metadata: {
+      name: 'gitlab-ci-agent',
+      version: '1.0.0',
+      description: 'Pipeline fixer agent. Detects broken CI/CD pipelines, inspects job logs, diagnoses failures, and applies fixes.',
+      category: 'devops',
+      trust_tier: 'signed',
+      tags: ['gitlab', 'ci', 'pipeline', 'buildkit', 'ossa-native'],
+      created: '2026-03-10T12:00:00Z',
+      updated: '2026-03-10T12:00:00Z',
+    },
+    identity: {
+      gaid: 'agent://agents/gitlab-ci-agent',
+      did: `did:web:${SEED_DOMAIN}:agents:gitlab-ci-agent`,
+      operational: {
+        endpoint: `https://agents.${SEED_DOMAIN}/gitlab-ci-agent`,
+        protocol: 'a2a',
+        transport: 'https',
+        health_check: `https://agents.${SEED_DOMAIN}/gitlab-ci-agent/health`,
+      },
+      relationships: {
+        parent_agent: 'agent://agents/orchestrator',
+      },
+    },
+    spec: {
+      agent_type: 'worker',
+      model: 'claude-sonnet-4-20250514',
+      max_context_tokens: 100000,
+      tools: ['buildkit', 'gitlab-api'],
+    },
+    risk: { level: 'low', autonomy_level: 'human-in-the-loop', data_sensitivity: 'internal' },
+  },
+  {
+    apiVersion: 'ossa/v0.5',
+    kind: 'Agent',
+    metadata: {
+      name: 'security-audit-agent',
+      version: '1.0.0',
+      description: 'Repository security scanner. Runs static analysis, dependency audits, secret detection, and Dragonfly audit rules.',
+      category: 'security',
+      trust_tier: 'signed',
+      tags: ['security', 'audit', 'phpstan', 'dragonfly', 'ossa-native'],
+      created: '2026-03-10T12:00:00Z',
+      updated: '2026-03-10T12:00:00Z',
+    },
+    identity: {
+      gaid: 'agent://agents/security-audit-agent',
+      did: `did:web:${SEED_DOMAIN}:agents:security-audit-agent`,
+      operational: {
+        endpoint: `https://agents.${SEED_DOMAIN}/security-audit-agent`,
+        protocol: 'a2a',
+        transport: 'https',
+        health_check: `https://agents.${SEED_DOMAIN}/security-audit-agent/health`,
+      },
+      relationships: {
+        parent_agent: 'agent://agents/orchestrator',
+        skills: ['agent://skills/code-review'],
+      },
+      compliance: {
+        nist_controls: ['SI-7', 'CM-3', 'AU-2', 'AU-3', 'RA-5'],
+        safety: {
+          human_oversight: 'required',
+          max_autonomy_level: 'human-in-loop',
+          restricted_actions: ['deploy', 'delete', 'modify-production'],
+        },
+      },
+    },
+    spec: {
+      agent_type: 'specialist',
+      model: 'claude-sonnet-4-20250514',
+      max_context_tokens: 100000,
+      capabilities: ['sast', 'dependency-scan', 'secret-detection', 'dragonfly-audit'],
+      frameworks: ['NIST AI RMF 1.0', 'OWASP Top 10', 'CWE Top 25'],
+    },
+    risk: { level: 'moderate', autonomy_level: 'human-in-the-loop', data_sensitivity: 'confidential' },
+  },
 ];
 
 // ============================================================
