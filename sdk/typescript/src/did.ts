@@ -34,6 +34,7 @@ export interface VerificationMethod {
   controller: string;
   publicKeyMultibase?: string;
   publicKeyJwk?: Record<string, string>;
+  publicKeyBase58?: string;
 }
 
 export interface ServiceEndpoint {
@@ -48,6 +49,7 @@ export interface DIDResolutionResult {
     id: string;
     type: string;
     publicKeyMultibase?: string;
+    publicKeyBase58?: string;
     purpose: string[];
   }>;
   duadpEndpoint?: string;
@@ -163,15 +165,51 @@ export async function verifyResourceIdentity(
 
   // Check 4: Verify signature (if present and not skipped)
   if (!options?.skipSignature && resource.signature) {
-    if (resolution.publicKeys.length > 0 && resolution.publicKeys[0].publicKeyMultibase) {
-      try {
-        const { fromMultibase, importPublicKey, verifySignature } = await import('./crypto.js');
-        const rawKey = fromMultibase(resolution.publicKeys[0].publicKeyMultibase);
-        const pubKey = await importPublicKey(rawKey);
-        const valid = await verifySignature(resource, pubKey);
-        checks.push({ check: 'signature_valid', passed: valid, detail: valid ? 'Ed25519 signature verified' : 'Signature verification failed' });
-      } catch (err) {
-        checks.push({ check: 'signature_valid', passed: false, detail: String(err) });
+    if (resolution.publicKeys.length > 0) {
+      const pk = resolution.publicKeys[0];
+      if (pk.publicKeyMultibase) {
+        try {
+          const { fromMultibase, importPublicKey, verifySignature } = await import('./crypto.js');
+          const rawKey = fromMultibase(pk.publicKeyMultibase);
+          const pubKey = await importPublicKey(rawKey);
+          const valid = await verifySignature(resource, pubKey);
+          checks.push({ check: 'signature_valid', passed: valid, detail: valid ? 'Ed25519 signature verified (multibase)' : 'Signature verification failed' });
+        } catch (err) {
+          checks.push({ check: 'signature_valid', passed: false, detail: String(err) });
+        }
+      } else if (pk.publicKeyBase58) {
+        try {
+          const { importPublicKey, verifySignature } = await import('./crypto.js');
+          // base58 decoding (without the Z or 0xed01 prefixes)
+          const ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+          const decodeBase58Btc = (str: string) => {
+            if (str.length === 0) return new Uint8Array(0);
+            const bytes = [0];
+            for (let i = 0; i < str.length; i++) {
+              const c = str[i];
+              if (!(ALPHABET.includes(c))) throw new Error('Non-base58 character');
+              for (let j = 0; j < bytes.length; j++) bytes[j] *= 58;
+              bytes[0] += ALPHABET.indexOf(c);
+              let carry = 0;
+              for (let j = 0; j < bytes.length; j++) {
+                bytes[j] += carry;
+                carry = bytes[j] >> 8;
+                bytes[j] &= 0xff;
+              }
+              while (carry) { bytes.push(carry & 0xff); carry >>= 8; }
+            }
+            for (let i = 0; i < str.length && str[i] === '1'; i++) bytes.push(0);
+            return new Uint8Array(bytes.reverse());
+          };
+          const rawKey = decodeBase58Btc(pk.publicKeyBase58);
+          const pubKey = await importPublicKey(rawKey);
+          const valid = await verifySignature(resource, pubKey);
+          checks.push({ check: 'signature_valid', passed: valid, detail: valid ? 'Ed25519 signature verified (base58)' : 'Signature verification failed' });
+        } catch (err) {
+          checks.push({ check: 'signature_valid', passed: false, detail: String(err) });
+        }
+      } else {
+        checks.push({ check: 'signature_valid', passed: false, detail: 'No public key in DID document for verification' });
       }
     } else {
       checks.push({ check: 'signature_valid', passed: false, detail: 'No public key in DID document for verification' });
@@ -236,6 +274,7 @@ function convertVM(vm: DIFVerificationMethod): VerificationMethod {
     controller: vm.controller,
     publicKeyMultibase: vm.publicKeyMultibase,
     publicKeyJwk: vm.publicKeyJwk as Record<string, string> | undefined,
+    publicKeyBase58: (vm as any).publicKeyBase58,
   };
 }
 
@@ -272,6 +311,7 @@ function extractKeys(document: DIDDocument): DIDResolutionResult {
       id: vm.id,
       type: vm.type,
       publicKeyMultibase: vm.publicKeyMultibase,
+      publicKeyBase58: vm.publicKeyBase58,
       purpose,
     });
   }
@@ -285,6 +325,7 @@ function extractKeys(document: DIDDocument): DIDResolutionResult {
           id: item.id,
           type: item.type,
           publicKeyMultibase: item.publicKeyMultibase,
+          publicKeyBase58: (item as any).publicKeyBase58,
           purpose: ['verification'],
         });
       }

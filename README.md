@@ -127,6 +127,41 @@ Your App                              skills.sh (DUADP node)
   |<-----------------------------------------|
 ```
 
+## 🚀 The Universal Protocol (`duadp://`)
+
+DUADP includes a native OS-level protocol handler that bridges the gap between web discovery and local desktop execution. This is the **Universal Agent Protocol**.
+
+By registering the `duadp://` URI scheme on your local machine, any website (like an Agent Marketplace or a tool directory) can trigger secure, native actions on your desktop with a single click—bypassing the need for complex cloud orchestrators or copy-pasting CLI commands.
+
+### The Power of `duadp://`
+
+The true power of this protocol lies in its **zero-friction, decentralized execution**:
+1. **1-Click IDE Configuration**: Click a link like `duadp://install-mcp?ide=cursor` on a website. Your OS intercepts it, wakes the local DUADP CLI offline, pulls the discovery payload from the federated network, and instantly writes the `.json` or `.toml` configuration directly into your IDE.
+2. **Universal Intents (Coming Soon)**: Imagine clicking `duadp://run?gaid=agent://skills.sh/code-reviewer`. Your machine instantly fetches the agent manifest from the decentralized network and executes it locally.
+3. **True Web-to-Local Bridge**: No webhooks, no API tokens, no cloud proxies. It uses your operating system's native `LaunchServices` to pass web intents directly to your local development environment.
+
+### How to Use It
+
+**1. Register the Protocol (Once per developer machine):**
+```bash
+npx @bluefly/duadp-cli protocol register
+```
+*(This compiles a native macOS `.app` bundle, binds it to the `duadp://` schema via `PlistBuddy`, and registers it with `LaunchServices`.)*
+
+**2. Embed in Your Tools:**
+Any web application can now invoke local DUADP actions using standard HTML links or JavaScript redirects:
+```html
+<!-- HTML Link -->
+<a href="duadp://install-mcp?ide=vscode&force=true">Add to VSCode</a>
+
+<!-- React / JavaScript -->
+<button onClick={() => window.location.href = 'duadp://install-mcp?ide=cursor&force=true'}>
+  Add to Cursor
+</button>
+```
+
+When clicked, the OS securely launches the `duadp protocol handle` command, routing the intent to the appropriate local tool (e.g., `@bluefly/ide-supercharger`).
+
 ## Quick Start
 
 ### Consume a DUADP node

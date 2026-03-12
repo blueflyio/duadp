@@ -7,13 +7,15 @@ import { confidenceGate, extractConfidenceScore } from './confidence-gate.js';
 import { createContentStore, type ContentStore } from './content-store.js';
 import { createCRDTRegistry, type CRDTRegistry } from './crdt-registry.js';
 import { initDb } from './db.js';
+import { Server } from 'node:http';
+import { createControlPlaneRouter } from './control-plane-routes.js';
 import {
-    deduplicateByGaid,
-    federatedFetch,
-    registerEnvPeers,
-    resolveGaidFromPeers,
-    resolveGaidLocally,
-    startHealthChecks,
+  deduplicateByGaid,
+  federatedFetch,
+  registerEnvPeers,
+  resolveGaidFromPeers,
+  resolveGaidLocally,
+  startHealthChecks,
 } from './federation.js';
 import { createGovernanceRouter } from './governance.js';
 import { createMcpRouter } from './mcp.js';
@@ -492,7 +494,7 @@ app.post('/api/v1/publish', async (req: Request, res: Response) => {
   }
 
   const result = await provider.publishResource!(resource, token);
-  
+
   if (result.success && p2pNode) {
     p2pNode.publishAgent(resource).catch(console.error);
     const kind = resource?.kind || 'Agent';

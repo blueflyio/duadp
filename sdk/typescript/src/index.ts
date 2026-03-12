@@ -7,6 +7,7 @@ export {
   signResource, verifySignature,
   generateKeyPair, exportPublicKey, importPublicKey,
   toMultibase, fromMultibase,
+  generateDidKeyIdentity, signWithDidKey,
 } from './crypto.js';
 export {
   resolveDID, buildDidWeb, didWebToUrl, verifyResourceIdentity,
