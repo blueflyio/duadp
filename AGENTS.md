@@ -15,10 +15,11 @@
 
 ```bash
 # TypeScript SDK
-cd sdk/typescript && npm ci && npm test    # 136 tests, ~500ms
+cd sdk/typescript && npm ci && npm test    # 155 tests, ~800ms
 
 # Reference Node
 cd reference-node && npm ci
+npm test
 npx tsx src/seed.ts && npx tsx src/index.ts  # Port 4200
 
 # Python SDK
@@ -58,3 +59,19 @@ reference-node/
 - All API changes must update `spec/openapi.yaml` first
 - SDK changes must maintain backward compatibility with existing DUADP nodes
 - Every repo MUST have: README.md, AGENTS.md, llms.txt, CLAUDE.md
+
+---
+
+## Branch Policy
+
+- Local default branch is `release/v*.x`, never `main`.
+- Feature and bugfix branches are created from the active `release/v*.x` branch.
+- `main` is protected and must stay read-only for local development.
+- Only `release/v*.x` may be merged into `main`.
+
+### If A Local `main` Branch Exists
+- Stop and do not make any new commits on `main`.
+- Inspect divergence between `main` and the active `release/v*.x` branch before changing anything.
+- Preserve both sides first by creating local backup branches.
+- Move unique work from `main` back onto `release/v*.x` with a merge or cherry-picks (no reset --hard, rebase, or force push).
+- After verifying `release/v*.x` contains the needed work, delete the local `main` branch.

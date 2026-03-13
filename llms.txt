@@ -6,3 +6,10 @@ This project is part of the Bluefly.io/OSSA decentralized agent ecosystem.
 - **Metadata**: See `ai.json` for agent permissions, licensing, capability tags, and trust endpoints.
 - **Directives**: See `AGENTS.md` for build/test guides and architectural rules.
 - **Connectivity**: See `mcp.json` or `.mcp.json` for tool definitions.
+
+## Branch Policy
+- Local default: release/v*.x (never main)
+- Feature branches created from release/v*.x
+- main is read-only for local development
+- Only release/v*.x merges into main
+- If local main exists: stop, backup, move work to release/v*.x, delete main
