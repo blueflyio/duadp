@@ -1,0 +1,10 @@
+name: 'DUADP Discovery'
+type: module
+description: 'Config entity layer for the DUADP module. Allows any Drupal site to register as a DUADP federation node and expose drupal/ai plugins to the discovery mesh.'
+package: 'AI'
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - drupal:duadp
+  - drupal:node
+  - ai:ai
+  - drupal:key

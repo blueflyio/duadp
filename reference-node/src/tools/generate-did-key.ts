@@ -33,7 +33,7 @@ async function main() {
     }
   } else {
     console.log('No manifest path provided. Skipping signing step.');
-    console.log('Usage: npx tsx src/tools/generate-did-key.ts <path-to-unsigned-manifest.json>');
+    console.log('Usage: npx tsx scripts/generate-did-key.ts <path-to-unsigned-manifest.json>');
   }
 }
 

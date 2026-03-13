@@ -6,8 +6,9 @@ DUADP (Decentralized Universal AI Discovery Protocol) — the federated discover
 
 ## Quick Reference
 
-- **SDK Test**: `cd sdk/typescript && npm test` (155 tests)
+- **SDK Test**: `cd sdk/typescript && npm test` (136 tests)
 - **Reference Node**: `cd reference-node && npx tsx src/index.ts` (port 4200)
+- **Branch**: `main` (primary)
 - **Remote**: https://gitlab.com/blueflyio/duadp/duadp
 - **npm**: https://www.npmjs.com/package/@bluefly/duadp
 - **PyPI**: https://pypi.org/project/duadp/

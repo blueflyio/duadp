@@ -1,0 +1,50 @@
+# Feature Flags Configuration
+features:
+  eca_integration:
+    label: 'ECA Workflow Integration'
+    description: 'Event-Condition-Action automation for message routing.'
+    enabled: false
+    required_modules:
+      - eca
+    category: 'automation'
+
+  webhook_integration:
+    label: 'Webhook Support'
+    description: 'Webhook handling for external communication events.'
+    enabled: false
+    required_modules:
+      - webhook
+    category: 'protocol'
+
+  encryption:
+    label: 'Message Encryption'
+    description: 'End-to-end encryption for agent communication.'
+    enabled: false
+    required_modules:
+      - encrypt
+    category: 'security'
+
+  advanced_logging:
+    label: 'Advanced Logging'
+    description: 'Enhanced logging for communication events.'
+    enabled: true
+    required_modules: []
+    category: 'observability'
+
+categories:
+  automation:
+    label: 'Workflow Automation'
+    description: 'Automation engines'
+    weight: 0
+  protocol:
+    label: 'Protocol Integration'
+    description: 'Communication protocols'
+    weight: 1
+  security:
+    label: 'Security'
+    description: 'Security enhancements'
+    weight: 2
+  observability:
+    label: 'Observability'
+    description: 'Logging and monitoring'
+    weight: 3

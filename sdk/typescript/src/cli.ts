@@ -6,7 +6,6 @@
  *   npx @bluefly/duadp conformance https://node.example.com
  *   npx @bluefly/duadp discover https://node.example.com
  *   npx @bluefly/duadp verify agent://acme.com/agents/my-agent
- *   npx @bluefly/duadp inspect agent://acme.com/agents/my-agent
  */
 
 import * as fs from 'fs';
@@ -22,8 +21,6 @@ import { formatConformanceResults, runConformanceTests } from './conformance.js'
 import { didWebToUrl, resolveDID } from './did.js';
 
 const [,, command, target, ...flags] = process.argv;
-const getAuthToken = () =>
-  flags.find(f => f.startsWith('--token='))?.split('=')[1] || process.env.DUADP_TOKEN;
 
 async function main() {
   if (!command || command === '--help' || command === '-h') {
@@ -34,7 +31,6 @@ Commands:
   conformance <url>    Run conformance tests against a DUADP node
   discover <url>       Discover a DUADP node and show its manifest
   resolve <gaid>       Resolve a GAID URI to node + resource
-  inspect <gaid>       Resolve and inspect a GAID
   did <did>            Resolve a DID document
   search <url> <q>     Search skills/agents/tools on a node
   init                 Scaffold .agents/ossa.config.yaml in the current directory
@@ -45,9 +41,8 @@ Examples:
   npx @bluefly/duadp conformance https://marketplace.example.com
   npx @bluefly/duadp discover https://skills.sh
   npx @bluefly/duadp search https://skills.sh "code review"
-  npx @bluefly/duadp inspect agent://discover.duadp.org/agents/code-reviewer
   npx @bluefly/duadp init
-  DUADP_TOKEN=<token> npx @bluefly/duadp publish .agents/ --node=https://discover.duadp.org
+  npx @bluefly/duadp publish .agents/ --node=https://discover.duadp.org --token=myToken
   npx @bluefly/duadp generate-gitlab agent.ossa.yaml
 `);
     process.exit(0);
@@ -58,7 +53,7 @@ Examples:
     case 'test': {
       if (!target) { console.error('Usage: duadp conformance <url>'); process.exit(1); }
       console.log(`Running DUADP conformance tests against ${target}...\n`);
-      const token = getAuthToken();
+      const token = flags.find(f => f.startsWith('--token='))?.split('=')[1];
       const result = await runConformanceTests(target, { token });
       console.log(formatConformanceResults(result));
       process.exit(result.failed > 0 ? 1 : 0);
@@ -89,52 +84,6 @@ Examples:
       else if (kind === 'tools') resource = await client.getTool(name);
       if (resource) console.log(JSON.stringify(resource, null, 2));
       else console.log('Resource not found');
-      break;
-    }
-
-    case 'inspect': {
-      if (!target) { console.error('Usage: duadp inspect <gaid> [--json]'); process.exit(1); }
-      const { client } = await resolveGaid(target);
-      const inspection = await client.inspectGaid(target);
-
-      if (flags.includes('--json')) {
-        console.log(JSON.stringify(inspection, null, 2));
-        break;
-      }
-
-      console.log(`GAID:      ${inspection.gaid}`);
-      console.log(`Resolved:  ${inspection.resolved ? 'yes' : 'no'} via ${inspection.resolved_via}`);
-      console.log(`Source:    ${inspection.source_node}${inspection.source_url ? ` (${inspection.source_url})` : ''}`);
-      console.log(`Resource:  ${inspection.resource_kind} ${inspection.resource_name}`);
-      console.log(`DID:       ${inspection.did.value || 'none'}${inspection.did.resolved ? '' : ' (unresolved)'}`);
-      console.log(
-        `Trust:     ${inspection.trust_verification.verified_tier}`
-        + ` (claimed: ${inspection.trust_verification.claimed_tier}`
-        + `${inspection.trust_verification.downgraded ? ', downgraded' : ''})`,
-      );
-      console.log(
-        `Signature: ${inspection.signature_verification.verified ? 'verified' : 'not verified'}`
-        + ` (${inspection.signature_verification.trustLevel})`,
-      );
-      console.log(`Revoked:   ${inspection.revocation.revoked ? 'yes' : 'no'}`);
-      console.log(
-        `Policy:    anonymous=${inspection.policy.anonymous_publish.effective_decision}, `
-        + `claimed=${inspection.policy.claimed_publisher_publish.effective_decision}`,
-      );
-
-      if (inspection.resolution_trace?.length) {
-        console.log('\nResolution trace:');
-        for (const step of inspection.resolution_trace) {
-          console.log(`  ${step.status === 'passed' ? '✓' : '✗'} ${step.step}: ${step.detail}`);
-        }
-      }
-
-      if (inspection.provenance.links.length) {
-        console.log('\nProvenance links:');
-        for (const link of inspection.provenance.links) {
-          console.log(`  - ${link.rel}: ${link.href}`);
-        }
-      }
       break;
     }
 
@@ -212,10 +161,10 @@ Examples:
     case 'publish': {
       const dir = target || '.agents';
       const nodeUrl = flags.find(f => f.startsWith('--node='))?.split('=')[1];
-      const token = getAuthToken() || '';
+      const token = flags.find(f => f.startsWith('--token='))?.split('=')[1] || '';
 
       if (!nodeUrl) {
-        console.error('Usage: duadp publish <dir> --node=<url> [--token=<token>] (or set DUADP_TOKEN)');
+        console.error('Usage: duadp publish <dir> --node=<url> [--token=<token>]');
         process.exit(1);
       }
       if (!fs.existsSync(dir)) {

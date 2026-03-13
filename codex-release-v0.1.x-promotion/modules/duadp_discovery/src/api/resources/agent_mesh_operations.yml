@@ -1,0 +1,140 @@
+operations:
+  RegisterAgent:
+    httpMethod: "POST"
+    uri: "agents"
+    summary: "Register an agent with the mesh."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      id:
+        type: "string"
+        location: "json"
+        description: "Agent identifier"
+      name:
+        type: "string"
+        location: "json"
+        description: "Agent name"
+      type:
+        type: "string"
+        location: "json"
+        description: "Agent type (worker, analyzer, orchestrator, etc.)"
+      capabilities:
+        type: "array"
+        location: "json"
+        description: "Array of agent capabilities"
+      endpoint:
+        type: "string"
+        location: "json"
+        description: "Agent endpoint URL"
+      metadata:
+        type: "object"
+        location: "json"
+        description: "Additional metadata"
+
+  GetAgents:
+    httpMethod: "GET"
+    uri: "agents"
+    summary: "Get all registered agents."
+
+  GetAgent:
+    httpMethod: "GET"
+    uri: "agents/{agentId}"
+    summary: "Get a specific agent by ID."
+    parameters:
+      agentId:
+        location: "uri"
+        description: "The agent ID"
+        required: true
+        type: "string"
+
+  UpdateAgentStatus:
+    httpMethod: "PATCH"
+    uri: "agents/{agentId}/status"
+    summary: "Update an agent's status."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      agentId:
+        location: "uri"
+        description: "The agent ID"
+        required: true
+        type: "string"
+      status:
+        type: "string"
+        location: "json"
+        description: "Agent status (online, offline, busy, error)"
+      health:
+        type: "object"
+        location: "json"
+        description: "Health check data"
+      metrics:
+        type: "object"
+        location: "json"
+        description: "Performance metrics"
+
+  UnregisterAgent:
+    httpMethod: "DELETE"
+    uri: "agents/{agentId}"
+    summary: "Unregister an agent from the mesh."
+    parameters:
+      agentId:
+        location: "uri"
+        description: "The agent ID"
+        required: true
+        type: "string"
+
+  DiscoverByCapability:
+    httpMethod: "GET"
+    uri: "agents"
+    summary: "Discover agents by capability."
+    parameters:
+      capability:
+        location: "query"
+        description: "The capability to search for"
+        required: true
+        type: "string"
+
+  CheckHealth:
+    httpMethod: "GET"
+    uri: "health"
+    summary: "Check the health of the Agent Mesh service."
+
+  RegisterService:
+    httpMethod: "POST"
+    uri: "api/v1/mesh/services"
+    summary: "Register a service with the mesh (v1 API)."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      Authorization:
+        location: "header"
+        type: "string"
+      serviceId:
+        type: "string"
+        location: "json"
+        description: "Service identifier"
+      serviceType:
+        type: "string"
+        location: "json"
+        description: "Service type"
+      metadata:
+        type: "object"
+        location: "json"
+        description: "Service metadata"
+
+  GetServices:
+    httpMethod: "GET"
+    uri: "api/v1/mesh/services"
+    summary: "Get all services from mesh (v1 API)."
+    parameters:
+      Authorization:
+        location: "header"
+        type: "string"
+
+  MeshHealthCheck:
+    httpMethod: "GET"
+    uri: "api/v1/mesh/health"
+    summary: "Check mesh health (v1 API)."

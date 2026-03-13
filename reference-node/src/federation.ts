@@ -140,40 +140,6 @@ export async function resolveGaidFromPeers(
   return null;
 }
 
-/** Resolve a full resource from peers via /api/v1/resolve/:gaid */
-export async function resolveResourceFromPeers(
-  db: Database.Database,
-  gaid: string,
-  nodeId: string,
-): Promise<{ resource: unknown; source_node: string; source_url: string } | null> {
-  const peers = getHealthyPeers(db);
-  if (peers.length === 0) return null;
-
-  const results = await Promise.allSettled(
-    peers.map(async (peer) => {
-      const url = `${peer.url}/api/v1/resolve/${encodeURIComponent(gaid)}`;
-      const resp = await fetchPeer(url, nodeId);
-      if (!resp.ok) {
-        updatePeerStatus(db, peer.url, 'degraded');
-        return null;
-      }
-      updatePeerStatus(db, peer.url, 'healthy');
-      const data = await resp.json() as { resource?: unknown; source_node?: string };
-      if (!data.resource) return null;
-      return {
-        resource: data.resource,
-        source_node: data.source_node || peer.name || peer.url,
-        source_url: peer.url,
-      };
-    }),
-  );
-
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value) return result.value;
-  }
-  return null;
-}
-
 /** Resolve a GAID locally — check resources table by GAID, name, or DID */
 export function resolveGaidLocally(db: Database.Database, gaid: string): unknown | null {
   // Extract the name part from various GAID formats

@@ -1,0 +1,9 @@
+services:
+  duadp_discovery.service:
+    class: Drupal\duadp_discovery\DuadpDiscoveryService
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@entity_type.manager'
+      - '@logger.channel.duadp_discovery'
+      - '@plugin.manager.ai.provider'

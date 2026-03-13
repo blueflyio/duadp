@@ -12,8 +12,6 @@ export interface DuadpManifest {
     federation?: string;
     validate?: string;
     publish?: string;
-    resolve?: string;
-    inspect?: string;
     [key: string]: string | undefined;
   };
   capabilities?: string[];
@@ -23,14 +21,6 @@ export interface DuadpManifest {
   ossa_versions?: string[];
   federation?: FederationConfig;
   governance?: NodeGovernance;
-  profiles?: {
-    gitlab?: {
-      discovery_did: string;
-      runtime: 'gitlab';
-      authorization_endpoint: string;
-      required_checks: string[];
-    };
-  };
 }
 
 /** Node identity for DID-based verification */
@@ -201,7 +191,6 @@ export interface OssaResource {
   provenance?: ResourceProvenance;
   risk?: ResourceRisk;
   content_hash?: string;
-  gitlab?: GitLabToolMetadata;
 }
 
 /** OSSA Skill payload */
@@ -295,97 +284,6 @@ export interface ListParams {
 /** Query parameters for tools (extends ListParams with protocol filter) */
 export interface ToolListParams extends ListParams {
   protocol?: 'mcp' | 'a2a' | 'openai' | 'function' | 'langchain' | 'crewai' | 'autogen' | 'rest' | 'grpc';
-}
-
-export interface GitLabSecurityAttributes {
-  business_impact?: string;
-  application?: string;
-  business_unit?: string;
-  internet_exposure?: string;
-  location?: string;
-  [key: string]: string | string[] | undefined;
-}
-
-export interface GitLabCatalogQuery extends ToolListParams {
-  runtime?: 'gitlab';
-  action?: string;
-  project_path?: string;
-  group_path?: string;
-  frameworks?: string[];
-  security_attributes?: GitLabSecurityAttributes;
-}
-
-export interface GitLabToolMetadata {
-  component?: string;
-  stage?: string;
-  required_variables?: string[];
-  external_status_check?: string;
-  external_control?: string;
-  allowed_hosts?: string[];
-  frameworks?: string[];
-  actions?: string[];
-}
-
-export interface GitLabRequestContext {
-  runtime: 'gitlab';
-  action: string;
-  project_path: string;
-  group_path?: string;
-  project_id?: string | number;
-  merge_request_iid?: number | null;
-  pipeline_id?: string | number;
-  sha?: string;
-  source_branch?: string;
-  target_branch?: string;
-  pipeline_source?: string;
-  labels?: string[];
-  frameworks?: string[];
-  security_attributes?: GitLabSecurityAttributes;
-  actor?: {
-    id: string;
-    type: 'token' | 'gitlab-job' | 'gitlab-webhook' | 'system';
-  };
-}
-
-export interface AuthorizationCheck {
-  id: string;
-  mode: 'advisory' | 'blocking';
-  description: string;
-}
-
-export interface EvidenceObligation {
-  id: string;
-  framework?: string;
-  required: boolean;
-  description: string;
-}
-
-export interface AuthorizationDecision {
-  decision: 'Allow' | 'Deny';
-  decision_id: string;
-  actor: string;
-  frameworks: string[];
-  approved_tools: Array<{
-    name: string;
-    kind: 'Tool' | 'Skill';
-    description?: string;
-    gitlab: GitLabToolMetadata;
-  }>;
-  approved_skills: Array<{
-    name: string;
-    kind: 'Tool' | 'Skill';
-    description?: string;
-    gitlab: GitLabToolMetadata;
-  }>;
-  allowed_hosts: string[];
-  required_checks: AuthorizationCheck[];
-  evidence_obligations: EvidenceObligation[];
-  cedar: {
-    decision: 'Allow' | 'Deny';
-    reasons: string[];
-    errors: string[];
-    evaluation_ms: number;
-  };
 }
 
 /** WebFinger response */
@@ -606,142 +504,6 @@ export interface NodeHealth {
   tools?: number;
   peers?: number;
   last_sync?: string;
-}
-
-/** Single trust-tier verification check */
-export interface TrustCheck {
-  name: string;
-  tier: string;
-  passed: boolean;
-  detail: string;
-}
-
-/** Automated trust verification result */
-export interface TrustVerificationResult {
-  verified_tier: string;
-  claimed_tier: string;
-  checks: TrustCheck[];
-  passed: boolean;
-  downgraded: boolean;
-}
-
-/** Single signature verification check */
-export interface SignatureVerificationCheck {
-  check: string;
-  passed: boolean;
-  detail?: string;
-}
-
-/** Publisher signature verification result */
-export interface SignatureVerificationResult {
-  verified: boolean;
-  trustLevel: 'full' | 'partial' | 'none';
-  checks: SignatureVerificationCheck[];
-  requiresSignature: boolean;
-}
-
-/** Cedar evaluation diagnostics */
-export interface CedarDiagnostics {
-  reason: string[];
-  errors: string[];
-}
-
-/** Cedar authorization decision */
-export interface CedarEvaluationResult {
-  decision: 'Allow' | 'Deny';
-  diagnostics: CedarDiagnostics;
-  evaluation_ms: number;
-}
-
-/** Consolidated publish authorization result */
-export interface PublishAuthorizationResult {
-  principal_id: string;
-  context: Record<string, unknown>;
-  global_policy: CedarEvaluationResult;
-  manifest_policy: CedarEvaluationResult | null;
-  effective_decision: 'Allow' | 'Deny';
-}
-
-/** Runtime revocation record surfaced by the inspector */
-export interface RevocationRecord {
-  gaid: string;
-  kind: string;
-  name?: string;
-  reason: string;
-  revoked_by?: string;
-  origin_node?: string;
-  created_at: string;
-}
-
-/** Inspector DID resolution state */
-export interface InspectorDidState {
-  value?: string;
-  method?: string;
-  resolved: boolean;
-  self_verifying: boolean;
-  document_url?: string;
-  document?: Record<string, unknown>;
-  verification_method_count: number;
-  error?: string;
-}
-
-/** Provenance link emitted by the inspector */
-export interface InspectorProvenanceLink {
-  rel: string;
-  href: string;
-  label?: string;
-}
-
-/** Inspector provenance evidence */
-export interface InspectorProvenance {
-  publisher?: Record<string, unknown>;
-  license?: string;
-  source_url?: string;
-  links: InspectorProvenanceLink[];
-}
-
-/** Inspector policy outcomes */
-export interface InspectorPolicy {
-  anonymous_publish: PublishAuthorizationResult;
-  claimed_publisher_publish: PublishAuthorizationResult;
-}
-
-/** Resolution step emitted by /api/v1/inspect */
-export interface ResolutionTraceStep {
-  step: string;
-  status: 'passed' | 'failed';
-  detail: string;
-}
-
-/** GAID resolution response */
-export interface GaidResolveResponse {
-  resource: OssaResource | Record<string, unknown>;
-  source_node: string;
-  source_url?: string;
-  resolved: boolean;
-}
-
-/** Aggregated GAID inspection response */
-export interface InspectorResponse {
-  gaid: string;
-  resolved: boolean;
-  resolved_via: 'local' | 'peer';
-  source_node: string;
-  source_url?: string;
-  resource_kind: string;
-  resource_name: string;
-  resource_url?: string;
-  resource: OssaResource | Record<string, unknown>;
-  did: InspectorDidState;
-  trust_verification: TrustVerificationResult;
-  signature_verification: SignatureVerificationResult;
-  revocation: {
-    revoked: boolean;
-    record: RevocationRecord | null;
-  };
-  provenance: InspectorProvenance;
-  policy: InspectorPolicy;
-  resolution_trace?: ResolutionTraceStep[];
 }
 
 /** Facets returned alongside unified search results */

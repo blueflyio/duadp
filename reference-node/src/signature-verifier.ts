@@ -86,12 +86,15 @@ export async function verifyPublisherSignature(
 
   // Handle did:key locally (self-verifying Ed25519)
   const did = identity.did as string;
+  console.log(`[signature-verifier] Checking DID: ${did}`);
   if (did.startsWith('did:key:z') && resource.signature) {
     const sigBlock = resource.signature as Record<string, string>;
+    console.log(`[signature-verifier] Found did:key:z and signature. Algorithm: ${sigBlock.algorithm}`);
     if (sigBlock.algorithm === 'Ed25519' && sigBlock.value) {
       try {
         // Parse multicodec ed25519-pub (0xed01)
         const multicodec = decodeBase58Btc(did.replace('did:key:z', ''));
+        console.log(`[signature-verifier] Multicodec bytes: ${multicodec[0].toString(16)} ${multicodec[1].toString(16)}`);
         if (multicodec[0] === 0xed && multicodec[1] === 0x01) {
           const rawPubKey = multicodec.slice(2);
           

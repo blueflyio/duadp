@@ -389,7 +389,7 @@ docker compose up --build
 
 ## Verified Endpoint Status
 
-All endpoints tested and passing (reference node v0.1.5):
+All endpoints tested and passing (reference node v0.1.3):
 
 | Endpoint | Method | Status | Description |
 |----------|--------|--------|-------------|
@@ -402,8 +402,6 @@ All endpoints tested and passing (reference node v0.1.5):
 | `/api/v1/tools` | GET | **Verified** | List tools (3 seeded), with `?protocol=` filter |
 | `/api/v1/tools/:name` | GET | **Verified** | Get single tool by name |
 | `/api/v1/publish` | POST | **Verified** | Publish any resource (auth required) |
-| `/api/v1/resolve/:gaid` | GET | **Verified** | Resolve a GAID to the matching DUADP resource |
-| `/api/v1/inspect` | GET | **Verified** | Consolidated DID, trust, signature, provenance, revocation, and policy inspection |
 | `/api/v1/skills` | POST | **Verified** | Publish a skill (auth required) |
 | `/api/v1/skills/:name` | PUT | **Verified** | Update a skill (auth required) |
 | `/api/v1/skills/:name` | DELETE | **Verified** | Delete a skill (auth required) |
@@ -424,21 +422,18 @@ All endpoints tested and passing (reference node v0.1.5):
 
 ## SDK Test Suite
 
-The TypeScript SDK includes 157 tests across 10 test files:
+The TypeScript SDK includes 136 tests across 7 test files:
 
 ```
- ✓ circuit-breaker.test.ts        (12 tests)
- ✓ validate.test.ts               (22 tests)
- ✓ client-resolve-gaid.test.ts     (3 tests)
- ✓ trust-tier-gaid-matrix.test.ts (16 tests)
- ✓ dedup.test.ts                   (7 tests)
- ✓ crypto.test.ts                 (24 tests)
- ✓ did.test.ts                    (11 tests)
- ✓ e2e-crypto.test.ts             (24 tests)
- ✓ inspector-client.test.ts        (2 tests)
- ✓ integration.test.ts            (36 tests)
- ─────────────────────────────────────────
-   10 passed | 157 tests | ~800ms
+ ✓ circuit-breaker.test.ts   (12 tests)
+ ✓ validate.test.ts          (22 tests)
+ ✓ dedup.test.ts              (7 tests)
+ ✓ crypto.test.ts            (24 tests)
+ ✓ did.test.ts               (11 tests)
+ ✓ e2e-crypto.test.ts        (24 tests)
+ ✓ integration.test.ts       (36 tests)
+ ────────────────────────────────────────
+   7 passed | 136 tests | ~500ms
 ```
 
 Run tests:
@@ -451,8 +446,8 @@ cd sdk/typescript && npm test
 | Platform | Status | Description |
 |----------|--------|-------------|
 | [OSSA Reference Node](https://duadp.org/discover) | **Live** | SQLite-backed reference node ([`reference-node/`](reference-node/)) |
-| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.1.5** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
-| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.1.5** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
+| [`@bluefly/duadp`](https://www.npmjs.com/package/@bluefly/duadp) TypeScript SDK | **v0.1.3** | Client + Express server + CLI ([`sdk/typescript/`](sdk/typescript/)) |
+| [`duadp`](https://pypi.org/project/duadp/) Python SDK | **v0.1.3** | Client + FastAPI server + CLI ([`sdk/python/`](sdk/python/)) |
 | Drupal Agent Marketplace | In Progress | DUADP node with federation (Drupal module) |
 | Static JSON template | Planned | GitHub Pages starter |
 

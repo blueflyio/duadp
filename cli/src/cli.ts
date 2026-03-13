@@ -8,7 +8,6 @@
  *   duadp verify [file]     — Verify manifest trust tier
  *   duadp search <query>    — Federated search across all nodes
  *   duadp status            — Show registered agents and trust tiers
- *   duadp inspect <gaid>    — Resolve and inspect a GAID in one call
  *   duadp revocations       — List revoked resources
  *   duadp peers             — Show federation peers
  *   duadp health            — Check node health
@@ -51,10 +50,6 @@ function getFlag(name: string): string | undefined {
 
 function hasFlag(name: string): boolean {
   return args.includes(`--${name}`);
-}
-
-function getAuthToken(): string | undefined {
-  return getFlag('token') || process.env.DUADP_TOKEN;
 }
 
 function printTable(headers: string[], rows: string[][]) {
@@ -137,7 +132,7 @@ async function cmdPublish() {
     body: JSON.stringify(manifest),
     headers: {
       'Content-Type': 'application/json',
-      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+      ...(getFlag('token') ? { Authorization: `Bearer ${getFlag('token')}` } : {}),
     },
   });
 
@@ -274,76 +269,6 @@ async function cmdStatus() {
     printTable(['Name', 'Trust', 'GAID', 'Description'], rows);
   } else {
     console.log('No agents registered.');
-  }
-}
-
-async function cmdInspect() {
-  const gaid = args[1];
-  if (!gaid) {
-    console.error('Usage: duadp inspect <gaid> [--json]');
-    process.exit(1);
-  }
-
-  const qs = new URLSearchParams({ gaid });
-  const resp = await fetchNode(`/api/v1/inspect?${qs}`);
-  const result = await resp.json();
-
-  if (!resp.ok) {
-    console.error(`Inspect failed (${resp.status}):`, JSON.stringify(result, null, 2));
-    process.exit(1);
-  }
-
-  if (hasFlag('json')) {
-    console.log(JSON.stringify(result, null, 2));
-    return;
-  }
-
-  console.log(`GAID:      ${result.gaid}`);
-  console.log(`Resolved:  ${result.resolved ? 'yes' : 'no'} via ${result.resolved_via}`);
-  console.log(`Source:    ${result.source_node}${result.source_url ? ` (${result.source_url})` : ''}`);
-  console.log(`Resource:  ${result.resource_kind} ${result.resource_name}`);
-  console.log(`DID:       ${result.did?.value || 'none'}${result.did?.resolved ? '' : ' (unresolved)'}`);
-  console.log(
-    `Trust:     ${result.trust_verification?.verified_tier || 'unknown'}`
-    + ` (claimed: ${result.trust_verification?.claimed_tier || 'unknown'}`
-    + `${result.trust_verification?.downgraded ? ', downgraded' : ''})`,
-  );
-  console.log(
-    `Signature: ${result.signature_verification?.verified ? 'verified' : 'not verified'}`
-    + ` (${result.signature_verification?.trustLevel || 'none'})`,
-  );
-  console.log(`Revoked:   ${result.revocation?.revoked ? 'yes' : 'no'}`);
-  console.log(
-    `Policy:    anonymous=${result.policy?.anonymous_publish?.effective_decision || 'unknown'}, `
-    + `claimed=${result.policy?.claimed_publisher_publish?.effective_decision || 'unknown'}`,
-  );
-
-  if (Array.isArray(result.resolution_trace) && result.resolution_trace.length > 0) {
-    console.log('\nResolution trace:');
-    for (const step of result.resolution_trace) {
-      console.log(`  ${step.status === 'passed' ? '✓' : '✗'} ${step.step}: ${step.detail}`);
-    }
-  }
-
-  if (Array.isArray(result.trust_verification?.checks) && result.trust_verification.checks.length > 0) {
-    console.log('\nTrust checks:');
-    for (const check of result.trust_verification.checks) {
-      console.log(`  ${check.passed ? '✓' : '✗'} [${check.tier}] ${check.name}: ${check.detail}`);
-    }
-  }
-
-  if (Array.isArray(result.signature_verification?.checks) && result.signature_verification.checks.length > 0) {
-    console.log('\nSignature checks:');
-    for (const check of result.signature_verification.checks) {
-      console.log(`  ${check.passed ? '✓' : '✗'} ${check.check}${check.detail ? `: ${check.detail}` : ''}`);
-    }
-  }
-
-  if (Array.isArray(result.provenance?.links) && result.provenance.links.length > 0) {
-    console.log('\nProvenance links:');
-    for (const link of result.provenance.links) {
-      console.log(`  - ${link.rel}: ${link.href}`);
-    }
   }
 }
 
@@ -511,7 +436,6 @@ const COMMANDS: Record<string, () => Promise<void>> = {
   verify: cmdVerify,
   search: cmdSearch,
   status: cmdStatus,
-  inspect: cmdInspect,
   peers: cmdPeers,
   revocations: cmdRevocations,
   health: cmdHealth,
@@ -520,7 +444,7 @@ const COMMANDS: Record<string, () => Promise<void>> = {
 
 function printHelp() {
   console.log(`
-DUADP CLI v0.1.5 — Decentralized Universal AI Discovery Protocol
+DUADP CLI v0.1.3 — Decentralized Universal AI Discovery Protocol
 
 Usage: duadp <command> [options]
 
@@ -530,7 +454,6 @@ Commands:
   verify [file]       Verify manifest trust tier
   search <query>      Search across nodes (--federated for cross-node)
   status              Show node status and registered agents
-  inspect <gaid>      Resolve and inspect a GAID
   peers               Show federation peers
   protocol            Manage universal duadp:// protocol (register, handle)
   revocations         List revoked resources
@@ -538,9 +461,8 @@ Commands:
 
 Options:
   --node <url>        Target node (default: $DUADP_NODE or http://localhost:4200)
-  --token <token>     Authentication token (prefer $DUADP_TOKEN to avoid shell history)
+  --token <token>     Authentication token
   --federated, -f     Enable federated (cross-node) search
-  --json              Print raw JSON for inspect
   --force             Overwrite existing files
   --output <file>     Output file for init (default: ai.json)
   --help              Show this help

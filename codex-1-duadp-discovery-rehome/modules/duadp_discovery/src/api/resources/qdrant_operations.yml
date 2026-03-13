@@ -1,0 +1,104 @@
+operations:
+  CreateCollection:
+    httpMethod: "PUT"
+    uri: "collections/{collectionName}"
+    summary: "Create a collection for storing agent vectors."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      collectionName:
+        location: "uri"
+        description: "The collection name"
+        required: true
+        type: "string"
+      vectors:
+        type: "object"
+        location: "json"
+        description: "Vector configuration (size, distance)"
+
+  IndexPoints:
+    httpMethod: "PUT"
+    uri: "collections/{collectionName}/points"
+    summary: "Index agent capabilities as vectors."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      collectionName:
+        location: "uri"
+        description: "The collection name"
+        required: true
+        type: "string"
+      points:
+        type: "array"
+        location: "json"
+        description: "Array of points with id, vector, and payload"
+
+  SearchPoints:
+    httpMethod: "POST"
+    uri: "collections/{collectionName}/points/search"
+    summary: "Search for similar agents based on a query vector."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      collectionName:
+        location: "uri"
+        description: "The collection name"
+        required: true
+        type: "string"
+      vector:
+        type: "array"
+        location: "json"
+        description: "The query vector"
+      limit:
+        type: "integer"
+        location: "json"
+        description: "Maximum number of results"
+      with_payload:
+        type: "boolean"
+        location: "json"
+        description: "Include payload in results"
+      with_vector:
+        type: "boolean"
+        location: "json"
+        description: "Include vector in results"
+      filter:
+        type: "object"
+        location: "json"
+        description: "Optional filter conditions"
+
+  DeletePoints:
+    httpMethod: "POST"
+    uri: "collections/{collectionName}/points/delete"
+    summary: "Remove points from the collection."
+    parameters:
+      content-type:
+        location: "header"
+        default: "application/json"
+      collectionName:
+        location: "uri"
+        description: "The collection name"
+        required: true
+        type: "string"
+      points:
+        type: "array"
+        location: "json"
+        description: "Array of point IDs to delete"
+
+  GetCollectionInfo:
+    httpMethod: "GET"
+    uri: "collections/{collectionName}"
+    summary: "Get collection information."
+    parameters:
+      collectionName:
+        location: "uri"
+        description: "The collection name"
+        required: true
+        type: "string"
+
+  ListCollections:
+    httpMethod: "GET"
+    uri: "collections"
+    summary: "List all collections (health check)."

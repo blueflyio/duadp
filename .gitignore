@@ -1,20 +1,15 @@
 # Dependencies
-**/node_modules/
+node_modules/
 
 # Build output
-**/dist/
-**/*.tsbuildinfo
-*.tgz
+dist/
+*.tsbuildinfo
 
-# Runtime data
-**/*.db
-**/*.db-wal
-**/*.db-shm
-**/data/
-**/.pytest_cache/
-**/.venv*/
-**/__pycache__/
-**/*.pyc
+# Database
+*.db
+*.db-wal
+*.db-shm
+data/
 
 # Environment
 .env

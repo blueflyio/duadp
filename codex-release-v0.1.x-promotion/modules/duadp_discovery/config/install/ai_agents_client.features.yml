@@ -1,0 +1,40 @@
+# Feature Flags Configuration
+# Controls optional functionality based on contrib module availability
+
+features:
+  eca_integration:
+    label: 'ECA Workflow Integration'
+    description: 'Event-Condition-Action workflow automation for agent operations.'
+    enabled: false
+    required_modules:
+      - eca
+    category: 'automation'
+
+  mcp_integration:
+    label: 'MCP Tools Integration'
+    description: 'Model Context Protocol tools integration for agent communication.'
+    enabled: false
+    required_modules:
+      - mcp
+    category: 'protocol'
+
+  advanced_logging:
+    label: 'Advanced Logging'
+    description: 'Enhanced logging with structured log channels.'
+    enabled: true
+    required_modules: []
+    category: 'observability'
+
+categories:
+  automation:
+    label: 'Workflow Automation'
+    description: 'Automation and orchestration engines'
+    weight: 0
+  protocol:
+    label: 'Protocol Integration'
+    description: 'Communication protocol support'
+    weight: 1
+  observability:
+    label: 'Observability'
+    description: 'Logging, monitoring, and tracing'
+    weight: 2

@@ -1,0 +1,53 @@
+duadp.settings:
+  path: '/admin/config/services/duadp'
+  defaults:
+    _form: '\Drupal\system\Form\SiteInformationForm'
+    _title: 'DUADP Settings'
+  requirements:
+    _permission: 'administer site configuration'
+
+duadp.well_known:
+  path: '/.well-known/duadp.json'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpManifestController::manifest'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: TRUE
+
+duadp.registry.skills:
+  path: '/api/v1/skills'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpRegistryController::listSkills'
+  requirements:
+    _access: 'TRUE'
+
+duadp.registry.agents:
+  path: '/api/v1/agents'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpRegistryController::listAgents'
+  requirements:
+    _access: 'TRUE'
+
+duadp.federation.peers:
+  path: '/api/v1/federation'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpFederationController::listPeers'
+  requirements:
+    _access: 'TRUE'
+
+duadp.federation.register:
+  path: '/api/v1/federation'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpFederationController::registerPeer'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+
+duadp.federation.revocation:
+  path: '/api/v1/federation/revocations'
+  defaults:
+    _controller: '\Drupal\duadp\Controller\DuadpFederationController::receiveRevocation'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'

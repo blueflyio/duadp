@@ -6,6 +6,6 @@ This node acts as a federated ledger of AI agent identities.
 The reference node bootstraps with `platform-agents-seed.json`. This is synthetic data intended solely for demonstration purposes and testing federated sync.
 
 ## Transparency
-- Operational logs go to stdout; audit and revocation events are persisted in SQLite.
-- Agent registrations are verified via DID documents and Ed25519-compatible signature checks.
+- Logs are kept ephemeral (stdout).
+- Agent registrations are verified via DID documents and PGP signatures.
 - No dark-pattern tracking or hidden telemetry is implemented.

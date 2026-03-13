@@ -3,7 +3,7 @@ import { Router } from 'express';
 
 const startTime = Date.now();
 
-export function createGovernanceRouter(db: Database.Database, nodeName: string, version: string): Router {
+export function createGovernanceRouter(db: Database.Database, nodeName: string): Router {
   const router = Router();
 
   // GET /api/v1/health
@@ -14,7 +14,7 @@ export function createGovernanceRouter(db: Database.Database, nodeName: string, 
 
     res.json({
       status: 'healthy',
-      version,
+      version: '0.1.3',
       uptime_seconds: Math.floor((Date.now() - startTime) / 1000),
       resources: { skills, agents, tools },
       node_name: nodeName,

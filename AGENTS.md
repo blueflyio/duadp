@@ -15,11 +15,10 @@
 
 ```bash
 # TypeScript SDK
-cd sdk/typescript && npm ci && npm test    # 155 tests, ~800ms
+cd sdk/typescript && npm ci && npm test    # 136 tests, ~500ms
 
 # Reference Node
 cd reference-node && npm ci
-npm test
 npx tsx src/seed.ts && npx tsx src/index.ts  # Port 4200
 
 # Python SDK

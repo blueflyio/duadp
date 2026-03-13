@@ -1,6 +1,6 @@
 /**
  * Reads platform-agent OSSA manifests and generates a DUADP-compatible seed JSON.
- * Run: npx tsx src/tools/generate-platform-agents-seed.ts
+ * Run: npx tsx scripts/generate-platform-agents-seed.ts
  * Output: src/platform-agents-seed.json
  */
 import { readFileSync, readdirSync, writeFileSync, statSync, existsSync } from 'fs';

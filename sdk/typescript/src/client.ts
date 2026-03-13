@@ -33,8 +33,6 @@ import type {
     OrchestrationPlan,
     RewardEvent,
     NodeHealth,
-    GaidResolveResponse,
-    InspectorResponse,
     SearchResponse,
     AgentIndexRecord,
     BatchPublishRequest,
@@ -45,9 +43,6 @@ import type {
     CedarPolicy,
     PolicyListParams,
     PoliciesResponse,
-    AuthorizationDecision,
-    GitLabCatalogQuery,
-    GitLabRequestContext,
 } from './types.js';
 
 // --- Circuit Breaker ---
@@ -182,7 +177,7 @@ export class DuadpClient {
   // --- Skills ---
 
   /** List skills from the node */
-  async listSkills(params?: ListParams | GitLabCatalogQuery): Promise<PaginatedResponse<OssaSkill>> {
+  async listSkills(params?: ListParams): Promise<PaginatedResponse<OssaSkill>> {
     const endpoint = await this.resolveEndpoint('skills');
     const url = this.buildUrl(endpoint, params);
     return this.request(url) as Promise<PaginatedResponse<OssaSkill>>;
@@ -245,7 +240,7 @@ export class DuadpClient {
   // --- Tools ---
 
   /** List tools from the node */
-  async listTools(params?: ToolListParams | GitLabCatalogQuery): Promise<PaginatedResponse<OssaTool>> {
+  async listTools(params?: ToolListParams): Promise<PaginatedResponse<OssaTool>> {
     const endpoint = await this.resolveEndpoint('tools');
     const url = this.buildUrl(endpoint, params);
     if (params?.protocol) {
@@ -254,15 +249,6 @@ export class DuadpClient {
       return this.request(u.toString()) as Promise<PaginatedResponse<OssaTool>>;
     }
     return this.request(url) as Promise<PaginatedResponse<OssaTool>>;
-  }
-
-  /** Authorize a GitLab runtime context through the DUADP control plane */
-  async authorizeGitLabContext(context: GitLabRequestContext): Promise<AuthorizationDecision> {
-    const endpoint = await this.resolveEndpoint('control_plane');
-    return this.request(`${endpoint}/authorize`, {
-      method: 'POST',
-      body: JSON.stringify(context),
-    }) as Promise<AuthorizationDecision>;
   }
 
   /** Get a single tool by name */
@@ -448,34 +434,6 @@ export class DuadpClient {
       endpoint = new URL('/api/v1/health', this.baseUrl).toString();
     }
     return this.request(endpoint) as Promise<NodeHealth>;
-  }
-
-  /** Resolve a GAID to its resource payload and source node */
-  async resolveResource(gaid: string): Promise<GaidResolveResponse> {
-    let endpoint: string;
-    try {
-      endpoint = await this.resolveEndpoint('resolve');
-    } catch {
-      endpoint = new URL('/api/v1/resolve', this.baseUrl).toString();
-    }
-
-    const url = new URL(endpoint.endsWith('/') ? endpoint : `${endpoint}/`);
-    url.pathname = `${url.pathname.replace(/\/$/, '')}/${encodeURIComponent(gaid)}`;
-    return this.request(url.toString()) as Promise<GaidResolveResponse>;
-  }
-
-  /** Inspect a GAID and return resolution, trust, signature, provenance, and policy evidence */
-  async inspectGaid(gaid: string): Promise<InspectorResponse> {
-    let endpoint: string;
-    try {
-      endpoint = await this.resolveEndpoint('inspect');
-    } catch {
-      endpoint = new URL('/api/v1/inspect', this.baseUrl).toString();
-    }
-
-    const url = new URL(endpoint);
-    url.searchParams.set('gaid', gaid);
-    return this.request(url.toString()) as Promise<InspectorResponse>;
   }
 
   // --- Unified Search ---
@@ -705,7 +663,7 @@ export class DuadpClient {
     return endpoint;
   }
 
-  private buildUrl(base: string, params?: ListParams | GitLabCatalogQuery): string {
+  private buildUrl(base: string, params?: ListParams): string {
     const url = new URL(base);
     if (params?.search) url.searchParams.set('search', params.search);
     if (params?.category) url.searchParams.set('category', params.category);
@@ -714,18 +672,6 @@ export class DuadpClient {
     if (params?.federated) url.searchParams.set('federated', 'true');
     if (params?.page) url.searchParams.set('page', String(params.page));
     if (params?.limit) url.searchParams.set('limit', String(params.limit));
-    const gitlabParams = params as GitLabCatalogQuery | undefined;
-    if (gitlabParams?.runtime) url.searchParams.set('runtime', gitlabParams.runtime);
-    if (gitlabParams?.action) url.searchParams.set('action', gitlabParams.action);
-    if (gitlabParams?.project_path) url.searchParams.set('project_path', gitlabParams.project_path);
-    if (gitlabParams?.group_path) url.searchParams.set('group_path', gitlabParams.group_path);
-    if (gitlabParams?.frameworks?.length) url.searchParams.set('frameworks', gitlabParams.frameworks.join(','));
-    if (gitlabParams?.security_attributes) {
-      url.searchParams.set(
-        'security_attributes',
-        JSON.stringify(gitlabParams.security_attributes),
-      );
-    }
     return url.toString();
   }
 

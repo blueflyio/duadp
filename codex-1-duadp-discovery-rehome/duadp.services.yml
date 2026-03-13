@@ -1,0 +1,27 @@
+services:
+  duadp.federation_http_client:
+    parent: http_client_manager.client_base
+    arguments: ['duadp_federation']
+
+  duadp.federation_service:
+    class: Drupal\duadp\Service\DuadpFederationService
+    arguments:
+      - '@duadp.federation_http_client'
+      - '@logger.channel.duadp'
+      - '@config.factory'
+      - '@datetime.time'
+      - '@state'
+
+  # N8N integration: sends DUADP fleet events to N8N webhook workflows.
+  # Used by Fleet Manager (fleet.drupl.ai) to automate operations across
+  # 1000s of discovered Drupal sites via N8N + JSON API.
+  duadp.n8n_orchestration:
+    class: Drupal\duadp\Service\N8nOrchestrationService
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.factory'
+
+  logger.channel.duadp:
+    parent: logger.channel_base
+    arguments: ['duadp']

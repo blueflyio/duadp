@@ -12,9 +12,6 @@
     "seed": "npm run seed --prefix reference-node",
     "start": "npm run dev --prefix reference-node"
   },
-  "overrides": {
-    "hono": "4.12.7"
-  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "zod": "^4.3.6"

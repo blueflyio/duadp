@@ -1,0 +1,106 @@
+# Schema for bluefly_agent_platform config entities.
+
+bluefly_agent_platform.agent_definition.*:
+  type: config_entity
+  label: 'Agent definition'
+  mapping:
+    id:
+      type: string
+      label: 'Machine name'
+    label:
+      type: label
+      label: 'Label'
+    description:
+      type: text
+      label: 'Description'
+    status:
+      type: boolean
+      label: 'Enabled'
+    ossa_manifest:
+      type: mapping
+      label: 'OSSA manifest (JSON object)'
+    ossa_version:
+      type: string
+      label: 'OSSA spec version'
+    drupal_config_entity:
+      type: string
+      label: 'Drupal AI Agent config entity ID'
+      nullable: true
+    approval_policy:
+      type: string
+      label: 'Approval policy ID'
+      nullable: true
+    provider_profile:
+      type: string
+      label: 'Provider profile ID'
+      nullable: true
+    capabilities:
+      type: sequence
+      label: 'Capability grant labels'
+      sequence:
+        type: string
+
+bluefly_agent_platform.tool_binding.*:
+  type: config_entity
+  label: 'Tool binding'
+  mapping:
+    id:
+      type: string
+      label: 'Machine name'
+    agent_id:
+      type: string
+      label: 'Agent definition ID'
+    tool_plugin_id:
+      type: string
+      label: 'Tool API plugin ID'
+    label:
+      type: label
+      label: 'Label'
+    approval_required:
+      type: boolean
+      label: 'Approval required'
+    max_invocations:
+      type: integer
+      label: 'Max invocations per run'
+      nullable: true
+
+bluefly_agent_platform.approval_policy.*:
+  type: config_entity
+  label: 'Approval policy'
+  mapping:
+    id:
+      type: string
+      label: 'Machine name'
+    label:
+      type: label
+      label: 'Label'
+    default_level:
+      type: string
+      label: 'Default approval level'
+    rules:
+      type: sequence
+      label: 'Approval rules'
+      sequence:
+        type: mapping
+        mapping:
+          operation:
+            type: string
+            label: 'Operation type'
+          level:
+            type: string
+            label: 'Approval level (auto, review, explicit, deny)'
+
+bluefly_agent_platform.settings:
+  type: config_object
+  label: 'Agent Platform settings'
+  mapping:
+    dragonfly_url:
+      type: string
+      label: 'Dragonfly API URL'
+    dragonfly_api_token:
+      type: string
+      label: 'Dragonfly API token'
+    dragonfly_webhook_token:
+      type: string
+      label: 'Token for verifying Dragonfly webhook callbacks'
+
