@@ -193,26 +193,17 @@ describe('Policy 7: Read Access', () => {
 
 // =============================================================================
 // Policy 8: forbid-anonymous-writes
-// Cedar entity attribute: principal.id == "anonymous"
-// Cedar WASM evaluates entity ID from the TypeAndId passed to isAuthorized.
-// For community trust_tier, Policy 1 permits, but Policy 8 forbids anonymous.
+// The policy compares the principal entity directly, so anonymous writes
+// must be denied even without separately passing entity attributes.
 // =============================================================================
 describe('Policy 8: Anonymous Write Blocking', () => {
-  // NOTE: Policy 8 uses `principal.id == "anonymous"` which is an entity
-  // attribute check. Without explicit entity data in the isAuthorized call,
-  // Cedar WASM cannot evaluate this condition. In production, the server
-  // must pass entities with the principal's attributes for this to work.
-  // This test documents the current behavior (Allow) as a known gap.
-
-  test('anonymous publish with community tier — currently ALLOWED (entity attrs not passed)', async () => {
+  test('denies anonymous publish with community tier', async () => {
     const result = await evaluateCedar(makeRequest({
       principalId: 'anonymous',
       actionId: 'publish',
       context: { trust_tier: 'community' },
     }));
-    // Policy 8 forbids principal.id == "anonymous" but without entities,
-    // Cedar cant evaluate the entity attribute => forbid doesn't fire.
-    assert.equal(result.decision, 'Allow');
+    assert.equal(result.decision, 'Deny');
   });
 
   test('allows non-anonymous publish with community trust_tier', async () => {
@@ -234,9 +225,9 @@ describe('NIST Compliance Matrix: Trust Tier × Principal × Action', () => {
     assert.equal(r.decision, 'Allow');
   });
 
-  test('anonymous + community tier = ALLOW (Policy 8 needs entity attrs to enforce)', async () => {
+  test('anonymous + community tier = DENY', async () => {
     const r = await evaluateCedar(makeRequest({ principalId: 'anonymous', actionId: 'publish', context: { trust_tier: 'community' } }));
-    assert.equal(r.decision, 'Allow'); // See Policy 8 note above
+    assert.equal(r.decision, 'Deny');
   });
 
   test('authenticated + signed tier WITHOUT signature = DENY', async () => {

@@ -1,5 +1,7 @@
 import { generateDidKeyIdentity, signWithDidKey } from '@bluefly/duadp';
 
+// Manual integration check: requires a running DUADP node at DUADP_NODE or localhost:4200.
+
 const mockAgent = {
   apiVersion: 'ossa/v0.4',
   kind: 'Agent',

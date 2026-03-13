@@ -80,8 +80,13 @@ export async function evaluateCedar(
       }
     } else if (action === 'publish') {
       if (tier === 'community') {
-        decision = 'Allow';
-        reason = ['policy1:allow-publish-community'];
+        if (request.principal.id === 'anonymous') {
+          decision = 'Deny';
+          reason = ['policy8:forbid-anonymous-writes'];
+        } else {
+          decision = 'Allow';
+          reason = ['policy1:allow-publish-community'];
+        }
       } else if (['signed', 'verified-signature', 'verified', 'official'].includes(tier ?? '')) {
         if (!hasSig) {
           decision = 'Deny';

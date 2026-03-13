@@ -12,7 +12,7 @@ The protocol addresses a fundamental problem in the AI ecosystem: **there is no 
 - **OSSA-native payloads** in `.ajson` format with trust tiers, GAID identifiers, and governance metadata
 - **Protocol interop** bridging MCP tool servers and Google A2A agent cards into a unified registry
 
-This SDK provides both a **client** for consuming any DUADP node and a **server router** for turning your Express app into a fully compliant DUADP node — with validation, cryptographic signing, DID resolution, and conformance testing built in.
+This SDK provides both a **client** for consuming any DUADP node and a **server router** for turning your Express app into a fully compliant DUADP node — with validation, cryptographic signing, DID resolution, conformance testing, and a consolidated GAID inspector built in.
 
 [![npm](https://img.shields.io/npm/v/@bluefly/duadp)](https://www.npmjs.com/package/@bluefly/duadp)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://gitlab.com/blueflyio/duadp/duadp/-/blob/main/LICENSE)
@@ -40,7 +40,7 @@ npm install @bluefly/duadp
                     │  (your org) │
                     └─────────────┘
 
-This SDK provides 15 core protocol endpoints:
+This SDK provides the core protocol endpoints, including GAID resolution and inspection:
   GET  /.well-known/duadp.json         Discovery manifest
   GET  /.well-known/webfinger          WebFinger resolution
   GET  /api/v1/skills                 Paginated skill registry
@@ -50,6 +50,8 @@ This SDK provides 15 core protocol endpoints:
   GET  /api/v1/tools                  Paginated tool registry
   GET  /api/v1/tools/:name            Single tool detail
   POST /api/v1/publish                Publish any resource
+  GET  /api/v1/resolve/:gaid          Resolve a GAID to a resource
+  GET  /api/v1/inspect                Consolidated trust/policy inspection
   POST /api/v1/{kind}                 Create resource by kind
   PUT  /api/v1/{kind}/:name           Update resource
   DELETE /api/v1/{kind}/:name         Delete resource
@@ -79,6 +81,11 @@ const agents = await client.listAgents({ category: 'security' });
 
 // Find MCP-compatible tools
 const tools = await client.listTools({ protocol: 'mcp' });
+
+// Resolve and inspect a GAID with evidence-first output
+const resolved = await client.resolveResource('agent://discover.duadp.org/agents/code-reviewer');
+const inspection = await client.inspectGaid('agent://discover.duadp.org/agents/code-reviewer');
+console.log(resolved.source_node, inspection.trust_verification.verified_tier);
 ```
 
 ### Server — make your app a DUADP node
@@ -105,29 +112,29 @@ app.listen(4200);
 ### Validate OSSA resource manifests
 
 ```typescript
-import { validateResource } from '@bluefly/duadp/validate';
+import { validateManifest } from '@bluefly/duadp/validate';
 
-const result = validateResource(skillManifest);
+const result = validateManifest(skillManifest);
 if (!result.valid) console.error(result.errors);
 ```
 
 ### Cryptographic signing and verification
 
 ```typescript
-import { generateKeyPair, signResource, verifyResource } from '@bluefly/duadp/crypto';
+import { generateKeyPair, signResource, verifySignature } from '@bluefly/duadp/crypto';
 
 const keys = await generateKeyPair();                        // Ed25519
 const signed = await signResource(resource, keys.privateKey);
-const verified = await verifyResource(signed, keys.publicKey); // true/false
+const verified = await verifySignature(signed, keys.publicKey); // true/false
 ```
 
 ### DID resolution
 
 ```typescript
-import { resolveDid } from '@bluefly/duadp/did';
+import { resolveDID } from '@bluefly/duadp/did';
 
-const doc = await resolveDid('did:web:example.com');    // W3C DID Document
-const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
+const doc = await resolveDID('did:web:example.com');    // W3C DID Document
+const doc2 = await resolveDID('did:key:z6Mkf5rG...');   // did:key support
 ```
 
 ## Subpath Exports
@@ -135,11 +142,11 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 | Import | Description |
 |--------|-------------|
 | `@bluefly/duadp` | Core types — `DuadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `PaginatedResponse`, `Peer`, and 40+ more |
-| `@bluefly/duadp/client` | `DuadpClient` — typed HTTP client for any DUADP node with discovery, search, pagination, federation |
+| `@bluefly/duadp/client` | `DuadpClient` — typed HTTP client for discovery, search, GAID resolution, inspection, pagination, and federation |
 | `@bluefly/duadp/server` | `createDuadpRouter(config, provider)` — Express router mounting all 15 core protocol endpoints |
-| `@bluefly/duadp/validate` | `validateResource()` — OSSA manifest validation against the spec |
-| `@bluefly/duadp/crypto` | `generateKeyPair()`, `signResource()`, `verifyResource()` — Ed25519 cryptographic operations |
-| `@bluefly/duadp/did` | `resolveDid()` — W3C Decentralized Identifier resolution (`did:web`, `did:key`) |
+| `@bluefly/duadp/validate` | `validateManifest()` — OSSA manifest validation against the spec |
+| `@bluefly/duadp/crypto` | `generateKeyPair()`, `signResource()`, `verifySignature()` — Ed25519 cryptographic operations |
+| `@bluefly/duadp/did` | `resolveDID()` — W3C Decentralized Identifier resolution (`did:web`, `did:key`) |
 | `@bluefly/duadp/conformance` | `runConformanceTests(url)` — automated protocol compliance test suite |
 
 ## Key Concepts
@@ -155,7 +162,7 @@ const doc2 = await resolveDid('did:key:z6Mkf5rG...');   // did:key support
 
 ## Reference Node
 
-A complete reference implementation using this SDK ships in the same repository: [`reference-node/`](https://gitlab.com/blueflyio/duadp/duadp/-/tree/main/reference-node) — Express + SQLite, all protocol endpoints (15 SDK + 11 governance), Docker-ready, seeded with demo data.
+A complete reference implementation using this SDK ships in the same repository: [`reference-node/`](https://gitlab.com/blueflyio/duadp/duadp/-/tree/main/reference-node) — Express + SQLite, all protocol endpoints (17 SDK + governance), Docker-ready, seeded with demo data.
 
 ```bash
 cd reference-node
@@ -168,7 +175,7 @@ npx tsx src/seed.ts && npx tsx src/index.ts
 
 ```bash
 npm test
-# 136 tests across 7 suites: crypto, DID, validation, circuit-breaker, dedup, e2e-crypto, integration
+# 157 tests across 10 suites, including the inspector client surface
 ```
 
 ## Also Available

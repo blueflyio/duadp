@@ -87,6 +87,39 @@ export function listRevocations(
   };
 }
 
+/** Get the most recent revocation record for a GAID or resource name */
+export function getRevocationRecord(
+  db: Database.Database,
+  gaid: string,
+  name?: string,
+): RevocationRecord | null {
+  const row = db.prepare(
+    'SELECT * FROM revocations WHERE gaid = ? OR name = ? ORDER BY id DESC LIMIT 1',
+  ).get(gaid, name ?? gaid) as {
+    gaid: string;
+    kind: string;
+    name: string;
+    reason: string;
+    revoked_by: string | null;
+    origin_node: string | null;
+    created_at: string;
+  } | undefined;
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    gaid: row.gaid,
+    kind: row.kind,
+    name: row.name,
+    reason: row.reason,
+    revoked_by: row.revoked_by ?? undefined,
+    origin_node: row.origin_node ?? undefined,
+    created_at: row.created_at,
+  };
+}
+
 /** Propagate a revocation to all healthy peers via gossip */
 export async function propagateRevocation(
   db: Database.Database,

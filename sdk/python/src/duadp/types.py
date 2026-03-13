@@ -24,6 +24,8 @@ class DuadpEndpoints(BaseModel):
     federation: str | None = None
     validate_endpoint: str | None = Field(default=None, alias="validate", serialization_alias="validate")
     publish: str | None = None
+    resolve: str | None = None
+    inspect: str | None = None
     governance: str | None = None
     provenance: str | None = None
     revocations: str | None = None
@@ -563,6 +565,145 @@ class NodeHealth(BaseModel):
     tools: int | None = None
     peers: int | None = None
     last_sync: str | None = None
+
+
+class TrustCheck(BaseModel):
+    """Single trust-tier verification check."""
+    name: str
+    tier: str
+    passed: bool
+    detail: str
+
+
+class TrustVerificationResult(BaseModel):
+    """Automated trust verification result."""
+    verified_tier: str
+    claimed_tier: str
+    checks: list[TrustCheck]
+    passed: bool
+    downgraded: bool
+
+
+class SignatureVerificationCheck(BaseModel):
+    """Single signature verification check."""
+    check: str
+    passed: bool
+    detail: str | None = None
+
+
+class SignatureVerificationResult(BaseModel):
+    """Publisher signature verification result."""
+    verified: bool
+    trustLevel: Literal["full", "partial", "none"]
+    checks: list[SignatureVerificationCheck]
+    requiresSignature: bool
+
+
+class CedarDiagnostics(BaseModel):
+    """Diagnostics emitted by a Cedar evaluation."""
+    reason: list[str]
+    errors: list[str]
+
+
+class CedarEvaluationResult(BaseModel):
+    """Cedar authorization decision."""
+    decision: Literal["Allow", "Deny"]
+    diagnostics: CedarDiagnostics
+    evaluation_ms: float
+
+
+class PublishAuthorizationResult(BaseModel):
+    """Consolidated publish authorization result."""
+    principal_id: str
+    context: dict
+    global_policy: CedarEvaluationResult
+    manifest_policy: CedarEvaluationResult | None = None
+    effective_decision: Literal["Allow", "Deny"]
+
+
+class RevocationRecord(BaseModel):
+    """Runtime revocation record surfaced by the inspector."""
+    gaid: str
+    kind: str
+    name: str | None = None
+    reason: str
+    revoked_by: str | None = None
+    origin_node: str | None = None
+    created_at: str
+
+
+class InspectorDidState(BaseModel):
+    """Inspector DID resolution state."""
+    value: str | None = None
+    method: str | None = None
+    resolved: bool
+    self_verifying: bool
+    document_url: str | None = None
+    document: dict | None = None
+    verification_method_count: int
+    error: str | None = None
+
+
+class InspectorProvenanceLink(BaseModel):
+    """Link emitted by the inspector provenance surface."""
+    rel: str
+    href: str
+    label: str | None = None
+
+
+class InspectorProvenance(BaseModel):
+    """Inspector provenance evidence."""
+    publisher: dict | None = None
+    license: str | None = None
+    source_url: str | None = None
+    links: list[InspectorProvenanceLink] = Field(default_factory=list)
+
+
+class InspectorRevocationState(BaseModel):
+    """Revocation summary emitted by the inspector."""
+    revoked: bool
+    record: RevocationRecord | None = None
+
+
+class InspectorPolicy(BaseModel):
+    """Inspector policy outcomes for anonymous and claimed publishers."""
+    anonymous_publish: PublishAuthorizationResult
+    claimed_publisher_publish: PublishAuthorizationResult
+
+
+class ResolutionTraceStep(BaseModel):
+    """Single GAID resolution step."""
+    step: str
+    status: Literal["passed", "failed"]
+    detail: str
+
+
+class GaidResolveResponse(BaseModel):
+    """GAID resolution response."""
+    resource: OssaResource | dict
+    source_node: str
+    source_url: str | None = None
+    resolved: bool
+
+
+class InspectorResponse(BaseModel):
+    """Aggregated GAID inspection response."""
+    gaid: str
+    resolved: bool
+    resolved_via: Literal["local", "peer"]
+    source_node: str
+    source_url: str | None = None
+    resource_kind: str
+    resource_name: str
+    resource_url: str | None = None
+    resource: OssaResource | dict
+    did: InspectorDidState
+    trust_verification: TrustVerificationResult
+    signature_verification: SignatureVerificationResult
+    revocation: InspectorRevocationState
+    provenance: InspectorProvenance
+    policy: InspectorPolicy
+    resolution_trace: list[ResolutionTraceStep] | None = None
 
 
 class SearchFacets(BaseModel):

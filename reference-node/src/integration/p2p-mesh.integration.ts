@@ -1,8 +1,6 @@
-import fetch from 'node-fetch';
 import { spawn } from 'child_process';
-import path from 'path';
 
-// P2P integration test helper.
+// Manual integration check.
 // We stand up two DUADP nodes on different ports, configure Node 2 to peer with Node 1,
 // then publish an agent to Node 1 and ensure it replicates to Node 2 over the CRDT/GossipSub mesh.
 

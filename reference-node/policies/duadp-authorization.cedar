@@ -15,7 +15,7 @@ permit(
 ) when {
   context has trust_tier &&
   context.trust_tier == "community" &&
-  principal.id != "anonymous"
+  principal != DUADP::Principal::"anonymous"
 };
 
 // Policy 1b: Low-confidence community publishes still require ≥50 score or validation_passed
@@ -110,7 +110,7 @@ permit(
 );
 
 // Policy 8: Forbid anonymous access to write operations
-// FIX: checks principal entity attribute `id` (must be passed as entity data)
+// Compare the principal entity directly so enforcement works without entity attributes.
 @id("forbid-anonymous-writes")
 forbid(
   principal is DUADP::Principal,
@@ -121,7 +121,7 @@ forbid(
   ],
   resource is DUADP::Resource
 ) when {
-  principal.id == "anonymous"
+  principal == DUADP::Principal::"anonymous"
 };
 
 // =============================================================================

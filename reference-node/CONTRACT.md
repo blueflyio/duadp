@@ -7,8 +7,9 @@ This DUADP node enforces the Open Standard Agents (OSSA) compliance specificatio
 3. **Tier 3 (Verified)**: Valid cryptographic signature matching the DID public key.
 
 ## Federation Rules
-- Node accepts gossip packets from peers listed in `/api/v1/federation/peers`.
-- Malicious payloads trigger an immediate peer ban.
+- Node accepts peer registrations and gossip through `/api/v1/federation` and lists the current peer set at `/api/v1/federation/peers`.
+- Federation payloads that exceed `max_hops` or omit required fields are rejected and not persisted.
+- Revocations propagate through `/api/v1/federation/revocations`.
 
 ## Licensing
 Apache-2.0. This is public infrastructure.
