@@ -193,6 +193,10 @@ publish:npm:
     - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
     - npm ci --prefer-offline
     - npm publish --access public
+  environment:
+    name: npmjs-production
+    deployment_tier: production
+    url: https://www.npmjs.com/package/@bluefly/duadp
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
     - if: $CI_COMMIT_BRANCH == "main"
@@ -220,6 +224,10 @@ publish:pypi:
         --username __token__
         --password "$(python -m id PYPI)"
         dist/*
+  environment:
+    name: pypi-production
+    deployment_tier: production
+    url: https://pypi.org/project/duadp/
   rules:
     - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
     - if: $CI_COMMIT_BRANCH == "main"
@@ -260,7 +268,8 @@ deploy:k8s:
         --namespace=${K8S_NAMESPACE:-duadp} || echo "Deployment not found - apply manifests first"
   environment:
     name: production/duadp
-    url: https://duadp.duadp.org/api/v1/health
+    deployment_tier: production
+    url: https://discover.duadp.org/api/v1/health
   when: manual
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
