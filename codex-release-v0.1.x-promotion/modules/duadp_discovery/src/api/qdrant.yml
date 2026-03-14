@@ -1,5 +1,0 @@
-name: "AgentDash Qdrant Vector DB API"
-apiVersion: "2.0"
-description: "Guzzle service description for the Qdrant vector database API."
-imports:
-  - "resources/qdrant_operations.yml"

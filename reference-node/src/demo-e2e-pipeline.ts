@@ -3,7 +3,7 @@
  * Demonstrates the full "Agent Internet Stack" flow discovering and using the 3 OSSA-native agents.
  *
  * Usage:
- *   npx tsx scripts/demo-e2e-pipeline.ts
+ *   npx tsx src/demo-e2e-pipeline.ts
  */
 
 const DUADP_NODE = process.env.DUADP_NODE_URL || 'https://discover.duadp.org';

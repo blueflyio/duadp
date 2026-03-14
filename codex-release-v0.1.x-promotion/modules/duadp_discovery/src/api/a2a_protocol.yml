@@ -1,5 +1,0 @@
-name: "A2A Protocol Client"
-apiVersion: "2.0"
-description: "Client for outbound A2A protocol calls to remote agents."
-imports:
-  - "resources/a2a_operations.yml"

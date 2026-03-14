@@ -1,5 +1,0 @@
-name: "AgentDash Agent Mesh API"
-apiVersion: "2.0"
-description: "Guzzle service description for the BlueFly Agent Mesh API."
-imports:
-  - "resources/agent_mesh_operations.yml"

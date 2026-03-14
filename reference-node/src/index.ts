@@ -2,26 +2,30 @@ import type { DuadpManifest, FederationResponse } from '@bluefly/duadp';
 import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
-import { evaluateCedar, evaluateManifestCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
+import { evaluateCedar, type CedarEvaluationRequest } from './cedar-evaluator.js';
 import { confidenceGate, extractConfidenceScore } from './confidence-gate.js';
 import { createContentStore, type ContentStore } from './content-store.js';
 import { createCRDTRegistry, type CRDTRegistry } from './crdt-registry.js';
 import { initDb } from './db.js';
 import { Server } from 'node:http';
 import { createControlPlaneRouter } from './control-plane-routes.js';
+import { actorFromToken } from './auth-actor.js';
 import {
   deduplicateByGaid,
   federatedFetch,
   registerEnvPeers,
   resolveGaidFromPeers,
   resolveGaidLocally,
+  resolveResourceFromPeers,
   startHealthChecks,
 } from './federation.js';
 import { createGovernanceRouter } from './governance.js';
+import { buildInspectorResponse } from './inspector.js';
 import { createMcpRouter } from './mcp.js';
 import { createP2PNode, type P2PNode } from './p2p.js';
+import { authorizePublish } from './publish-authorization.js';
 import { createSqliteProvider } from './provider.js';
-import { isNameRevoked, isRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
+import { getRevocationRecord, isNameRevoked, isRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
 import { verifyPublisherSignature } from './signature-verifier.js';
 import { verifyTrustTier } from './trust.js';
 
@@ -30,6 +34,7 @@ const DB_PATH = process.env.DB_PATH || process.env.DUADP_DB_PATH || './data/duad
 const BASE_URL = process.env.BASE_URL || process.env.DUADP_BASE_URL || `http://localhost:${PORT}`;
 const NODE_NAME = process.env.NODE_NAME || process.env.DUADP_NODE_NAME || 'OSSA Reference Node';
 const NODE_ID = process.env.NODE_ID || process.env.DUADP_NODE_ID || 'did:web:localhost';
+const REFERENCE_NODE_VERSION = '0.1.5';
 
 const COMPLIANCE_ENGINE_URL = process.env.COMPLIANCE_ENGINE_URL || process.env.COMPLIANCE_API_URL || 'https://compliance.blueflyagents.com';
 // Note: COMPLIANCE_ENGINE_URL is passed to cedar-evaluator.ts via process.env — no local Cedar runs here.
@@ -59,6 +64,94 @@ const getToken = (req: Request): string | undefined => {
   return auth?.startsWith('Bearer ') ? auth.slice(7) : undefined;
 };
 
+async function publishResourceWithChecks(req: Request, res: Response, resource: Record<string, unknown>) {
+  const token = getToken(req);
+  const resourceName = (resource as any)?.metadata?.name;
+  const gaid = (resource as any)?.identity?.gaid || (resourceName ? `agent://${resourceName}` : null);
+
+  if (!token) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  if (gaid && isRevoked(db, gaid)) {
+    res.status(403).json({ error: 'Resource has been revoked and cannot be re-registered', gaid });
+    return;
+  }
+  if (resourceName && isNameRevoked(db, resourceName)) {
+    res.status(403).json({ error: 'Resource name has been revoked and cannot be re-registered', name: resourceName });
+    return;
+  }
+
+  const sigVerification = await verifyPublisherSignature(resource);
+  if (sigVerification.requiresSignature && !sigVerification.verified) {
+    res.status(403).json({
+      error: 'Publisher signature verification failed',
+      detail: 'Resources with trust_tier >= 3 must have a valid Ed25519 signature verifiable via DID resolution',
+      signature_verification: sigVerification,
+    });
+    return;
+  }
+
+  const policyOutcome = await authorizePublish(resource, actorFromToken(token));
+  if (policyOutcome.effective_decision === 'Deny') {
+    res.status(403).json({
+      error: 'Publish policy denied publication',
+      policy_outcome: policyOutcome,
+    });
+    return;
+  }
+
+  const confidenceScore = extractConfidenceScore(resource);
+  const trustTier = (resource as any)?.metadata?.trust_tier || 'community';
+  const validationPassed = !!((resource as any)?.metadata?.validation_passed);
+  const verdict = confidenceGate(confidenceScore, trustTier, validationPassed);
+
+  if (verdict.action === 'reject') {
+    res.status(403).json({
+      error: 'Confidence gate rejected publication',
+      confidence_verdict: verdict,
+      hint: 'Improve model confidence score (>=50) or ensure schema validation passes before publishing.',
+    });
+    return;
+  }
+
+  if (verdict.action === 'human_review') {
+    if ((resource as any).metadata && verdict.degraded_tier) {
+      (resource as any).metadata.trust_tier = verdict.degraded_tier;
+    }
+    const reviewResult = await provider.publishResource!(resource as any, token);
+    res.status(202).json({
+      ...reviewResult,
+      policy_outcome: policyOutcome,
+      confidence_verdict: verdict,
+      message: 'Resource published at degraded trust tier, pending human review.',
+    });
+    return;
+  }
+
+  const verification = await verifyTrustTier(resource as any);
+  if (verification.downgraded && (resource as any).metadata) {
+    (resource as any).metadata.trust_tier = verification.verified_tier;
+  }
+
+  const result = await provider.publishResource!(resource as any, token);
+
+  if (result.success && p2pNode) {
+    p2pNode.publishAgent(resource).catch(console.error);
+    const kind = (resource as any)?.kind || 'Agent';
+    crdtRegistry?.put(kind, resourceName || 'unknown', resource);
+    contentStore?.put(resource).catch(console.error);
+  }
+
+  res.status(result.success ? 201 : 400).json({
+    ...result,
+    policy_outcome: policyOutcome,
+    trust_verification: verification,
+    signature_verification: sigVerification,
+  });
+}
+
 const parseListParams = (req: Request) => ({
   search: (req.query as Record<string, string>).search,
   category: (req.query as Record<string, string>).category,
@@ -69,6 +162,101 @@ const parseListParams = (req: Request) => ({
   limit: Math.min(100, parseInt((req.query as Record<string, string>).limit || '50', 10)),
 });
 
+const parseJsonQuery = <T>(value: string | undefined, fallback: T): T => {
+  if (!value) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const parseGitLabListQuery = (req: Request) => ({
+  runtime: (req.query as Record<string, string>).runtime,
+  action: (req.query as Record<string, string>).action,
+  project_path: (req.query as Record<string, string>).project_path,
+  group_path: (req.query as Record<string, string>).group_path,
+  frameworks: ((req.query as Record<string, string>).frameworks || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean),
+  security_attributes: parseJsonQuery<Record<string, unknown>>(
+    (req.query as Record<string, string>).security_attributes,
+    {},
+  ),
+});
+
+const extractGitLabHosts = (resource: Record<string, any>): string[] => {
+  const candidates = [
+    resource?.spec?.endpoint,
+    resource?.identity?.operational?.endpoint,
+  ].filter((candidate: unknown): candidate is string => typeof candidate === 'string' && candidate.length > 0);
+
+  return [...new Set(candidates.map((candidate) => {
+    try {
+      return new URL(candidate).hostname;
+    } catch {
+      return '';
+    }
+  }).filter(Boolean))];
+};
+
+const extractResourceFrameworks = (resource: Record<string, any>): string[] => {
+  const metadataFrameworks = Array.isArray(resource?.metadata?.compliance_frameworks)
+    ? resource.metadata.compliance_frameworks
+    : [];
+  const gitlabFrameworks = Array.isArray(resource?.gitlab?.frameworks)
+    ? resource.gitlab.frameworks
+    : [];
+
+  return [...new Set([...metadataFrameworks, ...gitlabFrameworks].filter((value) => typeof value === 'string'))];
+};
+
+const attachGitLabMetadata = (resource: Record<string, any>, gitlabQuery: ReturnType<typeof parseGitLabListQuery>) => ({
+  ...resource,
+  gitlab: {
+    component: resource?.gitlab?.component ?? resource?.metadata?.name,
+    stage: resource?.gitlab?.stage ?? (resource?.kind === 'Tool' ? '.pipeline-policy-pre' : '.pipeline-policy-post'),
+    required_variables: resource?.gitlab?.required_variables ?? [
+      'BLUEFLY_FRAMEWORKS',
+      'BLUEFLY_FRAMEWORKS_JSON',
+      'BLUEFLY_SECURITY_ATTRIBUTES_JSON',
+    ],
+    external_status_check: resource?.gitlab?.external_status_check ?? (gitlabQuery.action?.includes('merge') ? 'DUADP Cedar Authorization' : undefined),
+    external_control: resource?.gitlab?.external_control ?? (gitlabQuery.frameworks.length > 0 ? 'DUADP Cedar Authorization' : undefined),
+    allowed_hosts: resource?.gitlab?.allowed_hosts ?? extractGitLabHosts(resource),
+    frameworks: resource?.gitlab?.frameworks ?? extractResourceFrameworks(resource),
+    actions: resource?.gitlab?.actions ?? (gitlabQuery.action ? [gitlabQuery.action] : []),
+  },
+});
+
+const filterGitLabCatalog = (
+  resources: Array<Record<string, any>>,
+  gitlabQuery: ReturnType<typeof parseGitLabListQuery>,
+) => {
+  if (gitlabQuery.runtime !== 'gitlab') {
+    return resources;
+  }
+
+  return resources
+    .map((resource) => attachGitLabMetadata(resource, gitlabQuery))
+    .filter((resource) => {
+      if (gitlabQuery.frameworks.length === 0) {
+        return true;
+      }
+
+      const resourceFrameworks = Array.isArray(resource.gitlab?.frameworks)
+        ? resource.gitlab.frameworks
+        : [];
+
+      return resourceFrameworks.length === 0 ||
+        gitlabQuery.frameworks.some((framework) => resourceFrameworks.includes(framework));
+    });
+};
+
 const config = {
   nodeName: NODE_NAME,
   nodeId: NODE_ID,
@@ -78,7 +266,16 @@ const config = {
 
 // /.well-known/duadp.json
 app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
-  const manifest: DuadpManifest = {
+  const manifest: DuadpManifest & {
+    profiles: {
+      gitlab: {
+        discovery_did: string;
+        runtime: string;
+        authorization_endpoint: string;
+        required_checks: string[];
+      };
+    };
+  } = {
     protocol_version: '0.1.3',
     node_id: config.nodeId,
     node_name: config.nodeName,
@@ -89,13 +286,27 @@ app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
       policies: `${config.baseUrl}/api/v1/policies`,
       federation: `${config.baseUrl}/api/v1/federation`,
       validate: `${config.baseUrl}/api/v1/validate`,
+      verify: `${config.baseUrl}/api/v1/verify`,
       publish: `${config.baseUrl}/api/v1/publish`,
       search: `${config.baseUrl}/api/v1/search`,
+      resolve: `${config.baseUrl}/api/v1/resolve`,
+      inspect: `${config.baseUrl}/api/v1/inspect`,
+      governance: `${config.baseUrl}/api/v1/governance`,
+      control_plane: `${config.baseUrl}/api/v1/control-plane`,
+      revocations: `${config.baseUrl}/api/v1/revocations`,
       health: `${config.baseUrl}/api/v1/health`,
     },
-    capabilities: ['skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing', 'trust-verification', 'revocations', 'cedar-authorization'],
+    capabilities: ['skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing', 'trust-verification', 'revocations', 'cedar-authorization', 'gitlab-profile', 'control-plane'],
     ossa_versions: ['v0.4', 'v0.5'],
     federation: config.federation,
+    profiles: {
+      gitlab: {
+        discovery_did: 'did:web:discover.duadp.org',
+        runtime: 'gitlab',
+        authorization_endpoint: `${config.baseUrl}/api/v1/control-plane/authorize`,
+        required_checks: ['duadp_cedar_authorization', 'framework_evidence', 'external_status_check', 'external_control_report'],
+      },
+    },
   };
   res.json(manifest);
 });
@@ -131,13 +342,14 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
     resources: resourceCount,
     policies: 'dynamic',
     peers: peerCount,
-    version: '0.1.3',
+    version: REFERENCE_NODE_VERSION,
   });
 });
 
 // Skills
 app.get('/api/v1/skills', async (req: Request, res: Response) => {
   const params = parseListParams(req);
+  const gitlabQuery = parseGitLabListQuery(req);
   const result = await provider.listSkills!(params);
   result.meta.node_name = NODE_NAME;
   result.meta.node_id = NODE_ID;
@@ -157,6 +369,8 @@ app.get('/api/v1/skills', async (req: Request, res: Response) => {
     (result.meta as any).peers_queried = peerMeta;
   }
 
+  result.data = filterGitLabCatalog(result.data as Array<Record<string, any>>, gitlabQuery) as any;
+  result.meta.total = result.data.length;
   res.json(result);
 });
 
@@ -210,6 +424,7 @@ app.get('/api/v1/tools', async (req: Request, res: Response) => {
     ...parseListParams(req),
     protocol: (req.query as Record<string, string>).protocol,
   };
+  const gitlabQuery = parseGitLabListQuery(req);
   const result = await provider.listTools!(params);
   result.meta.node_name = NODE_NAME;
   result.meta.node_id = NODE_ID;
@@ -230,6 +445,8 @@ app.get('/api/v1/tools', async (req: Request, res: Response) => {
     (result.meta as any).peers_queried = peerMeta;
   }
 
+  result.data = filterGitLabCatalog(result.data as Array<Record<string, any>>, gitlabQuery) as any;
+  result.meta.total = result.data.length;
   res.json(result);
 });
 
@@ -412,114 +629,12 @@ app.post('/api/v1/verify', async (req: Request, res: Response) => {
 
 // Publishing (with trust verification + revocation check + Cedar pre-auth)
 app.post('/api/v1/publish', async (req: Request, res: Response) => {
-  const token = getToken(req);
-  const resource = req.body;
-  const resourceName = resource?.metadata?.name;
-  const gaid = resource?.identity?.gaid || (resourceName ? `agent://${resourceName}` : null);
-
-  // Block re-registration of revoked resources
-  if (gaid && isRevoked(db, gaid)) {
-    res.status(403).json({ error: 'Resource has been revoked and cannot be re-registered', gaid });
-    return;
-  }
-  if (resourceName && isNameRevoked(db, resourceName)) {
-    res.status(403).json({ error: 'Resource name has been revoked and cannot be re-registered', name: resourceName });
-    return;
-  }
-
-  // Verify publisher signature (enforced for tier_3+ resources)
-  const sigVerification = await verifyPublisherSignature(resource);
-  if (sigVerification.requiresSignature && !sigVerification.verified) {
-    res.status(403).json({
-      error: 'Publisher signature verification failed',
-      detail: 'Resources with trust_tier >= 3 must have a valid Ed25519 signature verifiable via DID resolution',
-      signature_verification: sigVerification,
-    });
-    return;
-  }
-
-  // Cedar pre-authorization via Compliance service (compliance.blueflyagents.com/evaluate)
-  const principalId = token || 'anonymous';
-  const cedarResult = await evaluateManifestCedar(
-    resource,
-    { type: 'DUADP::Principal', id: principalId },
-    { type: 'DUADP::Action', id: 'publish' },
-    { type: 'DUADP::Resource', id: resourceName || 'unknown' },
-  );
-  if (cedarResult && cedarResult.decision === 'Deny') {
-    res.status(403).json({
-      error: 'Cedar policy denied publication',
-      cedar_decision: cedarResult,
-    });
-    return;
-  }
-
-  // Confidence gate — three-tier routing (≥90 auto, 50-89 review, <50 reject)
-  const confidenceScore = extractConfidenceScore(resource);
-  const trustTier = resource?.metadata?.trust_tier || 'community';
-  const validationPassed = !!(resource?.metadata?.validation_passed);
-  const verdict = confidenceGate(confidenceScore, trustTier, validationPassed);
-
-  if (verdict.action === 'reject') {
-    res.status(403).json({
-      error: 'Confidence gate rejected publication',
-      confidence_verdict: verdict,
-      hint: 'Improve model confidence score (≥50) or ensure schema validation passes before publishing.',
-    });
-    return;
-  }
-
-  if (verdict.action === 'human_review') {
-    // Downgrade trust tier while queuing for review
-    if (verdict.degraded_tier && resource.metadata) {
-      resource.metadata.trust_tier = verdict.degraded_tier;
-    }
-    // Return a 202 Accepted — resource published at degraded tier, pending review
-    const reviewResult = await provider.publishResource!(resource, token);
-    res.status(202).json({
-      ...reviewResult,
-      confidence_verdict: verdict,
-      message: 'Resource published at degraded trust tier, pending human review.',
-    });
-    return;
-  }
-
-  // Verify trust tier before publishing
-  const verification = await verifyTrustTier(resource);
-  if (verification.downgraded) {
-    // Override claimed tier with verified tier
-    if (resource.metadata) {
-      resource.metadata.trust_tier = verification.verified_tier;
-    }
-  }
-
-  const result = await provider.publishResource!(resource, token);
-
-  if (result.success && p2pNode) {
-    p2pNode.publishAgent(resource).catch(console.error);
-    const kind = resource?.kind || 'Agent';
-    crdtRegistry?.put(kind, resourceName || 'unknown', resource);
-    contentStore?.put(resource).catch(console.error);
-  }
-
-  res.status(result.success ? 201 : 400).json({
-    ...result,
-    trust_verification: verification,
-    signature_verification: sigVerification,
-  });
+  await publishResourceWithChecks(req, res, req.body);
 });
 
 for (const kind of ['skills', 'agents', 'tools']) {
   app.post(`/api/v1/${kind}`, async (req: Request, res: Response) => {
-    const token = getToken(req);
-    const result = await provider.publishResource!(req.body, token);
-    if (result.success && p2pNode) {
-      p2pNode.publishAgent(req.body).catch(console.error);
-      const resourceKind = req.body?.kind || (kind === 'skills' ? 'Skill' : kind === 'agents' ? 'Agent' : 'Tool');
-      crdtRegistry?.put(resourceKind, req.body?.metadata?.name || 'unknown', req.body);
-      contentStore?.put(req.body).catch(console.error);
-    }
-    res.status(result.success ? 201 : 400).json(result);
+    await publishResourceWithChecks(req, res, req.body);
   });
 
   app.put(`/api/v1/${kind}/:name`, async (req: Request, res: Response) => {
@@ -556,7 +671,7 @@ for (const kind of ['skills', 'agents', 'tools']) {
       kind: kind === 'skills' ? 'Skill' : kind === 'agents' ? 'Agent' : 'Tool',
       name,
       reason,
-      revoked_by: token ? `token:${token.slice(0, 8)}...` : 'system',
+      revoked_by: actorFromToken(token),
       origin_node: NODE_ID,
     };
     storeRevocation(db, revocationRecord);
@@ -698,6 +813,56 @@ app.get(/^\/api\/v1\/resolve\/(.+)$/, async (req: Request, res: Response) => {
   res.status(404).json({ error: 'GAID not found', gaid, resolved: false });
 });
 
+// Inspector — aggregate GAID resolution, DID state, trust, signature, provenance, revocation, and policy outcomes
+app.get('/api/v1/inspect', async (req: Request, res: Response) => {
+  const gaid = (req.query as Record<string, string>).gaid;
+  if (!gaid) {
+    res.status(400).json({ error: 'Missing required query parameter: gaid' });
+    return;
+  }
+
+  const resolutionTrace: Array<{ step: string; status: 'passed' | 'failed'; detail: string }> = [];
+
+  const local = resolveGaidLocally(db, gaid);
+  if (local) {
+    resolutionTrace.push({ step: 'local_lookup', status: 'passed', detail: 'Resolved from the local resources table' });
+    const localResource = local as Record<string, unknown>;
+    const revocation = getRevocationRecord(db, gaid, (localResource as any)?.metadata?.name);
+    const inspection = await buildInspectorResponse({
+      gaid,
+      resource: localResource,
+      sourceNode: NODE_NAME,
+      resolvedVia: 'local',
+      baseUrl: BASE_URL,
+      revocationRecord: revocation,
+    });
+    res.json({ ...inspection, resolution_trace: resolutionTrace });
+    return;
+  }
+
+  resolutionTrace.push({ step: 'local_lookup', status: 'failed', detail: 'No local resource matched the requested GAID' });
+
+  const peerResult = await resolveResourceFromPeers(db, gaid, NODE_ID);
+  if (peerResult) {
+    resolutionTrace.push({ step: 'peer_lookup', status: 'passed', detail: `Resolved from peer node ${peerResult.source_node}` });
+    const peerResource = peerResult.resource as Record<string, unknown>;
+    const revocation = getRevocationRecord(db, gaid, (peerResource as any)?.metadata?.name);
+    const inspection = await buildInspectorResponse({
+      gaid,
+      resource: peerResource,
+      sourceNode: peerResult.source_node,
+      resolvedVia: 'peer',
+      baseUrl: peerResult.source_url,
+      revocationRecord: revocation,
+    });
+    res.json({ ...inspection, resolution_trace: resolutionTrace });
+    return;
+  }
+
+  resolutionTrace.push({ step: 'peer_lookup', status: 'failed', detail: 'No healthy peer resolved the requested GAID' });
+  res.status(404).json({ error: 'GAID not found', gaid, resolved: false, resolution_trace: resolutionTrace });
+});
+
 // P2P Status endpoint
 app.get('/api/v1/p2p/status', (_req: Request, res: Response) => {
   if (!p2pNode) {
@@ -718,10 +883,15 @@ app.get('/api/v1/p2p/status', (_req: Request, res: Response) => {
 });
 
 // Governance & analytics
-app.use(createGovernanceRouter(db, NODE_NAME));
+app.use(createGovernanceRouter(db, NODE_NAME, REFERENCE_NODE_VERSION));
 
 // MCP Streaming
 app.use('/mcp', createMcpRouter(BASE_URL));
+app.use('/api/v1/control-plane', createControlPlaneRouter({
+  listTools: provider.listTools?.bind(provider),
+  listSkills: provider.listSkills?.bind(provider),
+  rolloutMode: process.env.DUADP_GITLAB_ROLLOUT_MODE === 'blocking' ? 'blocking' : 'advisory',
+}));
 
 app.listen(PORT, async () => {
   console.log(`DUADP Reference Node "${NODE_NAME}" running at ${BASE_URL}`);

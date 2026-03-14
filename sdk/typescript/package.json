@@ -1,6 +1,6 @@
 {
   "name": "@bluefly/duadp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "DUADP — Decentralized Universal AI Discovery Protocol SDK for TypeScript",
   "type": "module",
   "main": "dist/index.js",

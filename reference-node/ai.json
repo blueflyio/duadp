@@ -1,7 +1,7 @@
 {
   "protocol": "DUADP/1.0",
   "name": "duadp-reference-node",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "DUADP Reference Implementation",
   "capabilities": ["code-generation", "autonomous-research", "discovery", "federation"],
   "links": {
@@ -20,7 +20,7 @@
   },
   "endpoints": {
     "webfinger": "/.well-known/webfinger",
-    "duadp_well_known": "/.well-known/duadp",
+    "duadp_well_known": "/.well-known/duadp.json",
     "agents": "/api/v1/agents",
     "publish": "/api/v1/publish",
     "search": "/api/v1/search"

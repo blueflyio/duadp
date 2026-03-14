@@ -18,7 +18,13 @@ from .types import (
     WebhookFilter, WebhookSubscription,
     AgentDNSRecord, AgentServiceAcct, AgentKey, AgentIdentity,
     # Node Health & Search
-    NodeHealth, SearchFacets, ProtocolEndpoints, PricingInfo, SLAInfo,
+    NodeHealth, TrustCheck, TrustVerificationResult,
+    SignatureVerificationCheck, SignatureVerificationResult,
+    CedarDiagnostics, CedarEvaluationResult, PublishAuthorizationResult,
+    RevocationRecord, InspectorDidState, InspectorProvenanceLink,
+    InspectorProvenance, InspectorRevocationState, InspectorPolicy,
+    ResolutionTraceStep, GaidResolveResponse, InspectorResponse,
+    SearchFacets, ProtocolEndpoints, PricingInfo, SLAInfo,
     AgentIndexRecord,
     # Context Awareness & Token Efficiency
     ContextLayer, KnowledgeSource, ContextCacheRef, ContextNegotiation,
@@ -49,7 +55,7 @@ from .types import (
 from .client import DuadpClient, DuadpError, resolve_gaid
 from .validate import validate_manifest, validate_response
 
-__version__ = "0.1.3"
+__version__ = "0.1.5"
 __all__ = [
     # Client
     "DuadpClient", "DuadpError", "resolve_gaid",
@@ -72,7 +78,13 @@ __all__ = [
     "WebhookFilter", "WebhookSubscription",
     "AgentDNSRecord", "AgentServiceAcct", "AgentKey", "AgentIdentity",
     # Node Health & Search
-    "NodeHealth", "SearchFacets", "ProtocolEndpoints", "PricingInfo", "SLAInfo",
+    "NodeHealth", "TrustCheck", "TrustVerificationResult",
+    "SignatureVerificationCheck", "SignatureVerificationResult",
+    "CedarDiagnostics", "CedarEvaluationResult", "PublishAuthorizationResult",
+    "RevocationRecord", "InspectorDidState", "InspectorProvenanceLink",
+    "InspectorProvenance", "InspectorRevocationState", "InspectorPolicy",
+    "ResolutionTraceStep", "GaidResolveResponse", "InspectorResponse",
+    "SearchFacets", "ProtocolEndpoints", "PricingInfo", "SLAInfo",
     "AgentIndexRecord",
     # Context Awareness & Token Efficiency
     "ContextLayer", "KnowledgeSource", "ContextCacheRef", "ContextNegotiation",

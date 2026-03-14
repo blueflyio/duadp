@@ -1,9 +1,0 @@
-duadp_federation:
-  title: "DUADP Federation peer discovery"
-  api_path: src/api/duadp_federation.json
-  config:
-    base_uri: ""
-    timeout: 5
-    connect_timeout: 5
-    headers:
-      Accept: "application/json"

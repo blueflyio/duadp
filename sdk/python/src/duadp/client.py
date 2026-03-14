@@ -1,6 +1,6 @@
 """DUADP client for discovering and querying any DUADP node."""
 from __future__ import annotations
-from urllib.parse import urljoin, urlencode
+from urllib.parse import quote, urljoin, urlencode
 import httpx
 from .types import (
     DuadpManifest, OssaSkill, OssaAgent, OssaTool, OssaResource,
@@ -16,6 +16,7 @@ from .types import (
     BatchPublishResponse, A2AAgentCard, McpServerManifest,
     StructuredQuery,
     CedarPolicy, PolicyListParams, PoliciesResponse,
+    GaidResolveResponse, InspectorResponse,
 )
 
 
@@ -364,6 +365,27 @@ class DuadpClient:
         resp = await self._client.get(endpoint)
         resp.raise_for_status()
         return NodeHealth.model_validate(resp.json())
+
+    async def resolve_resource(self, gaid: str) -> GaidResolveResponse:
+        """Resolve a GAID to its resource payload and source node."""
+        try:
+            endpoint = await self._resolve_endpoint("resolve")
+        except DuadpError:
+            endpoint = f"{self.base_url}/api/v1/resolve"
+        encoded_gaid = quote(gaid, safe="")
+        resp = await self._client.get(f"{endpoint.rstrip('/')}/{encoded_gaid}")
+        resp.raise_for_status()
+        return GaidResolveResponse.model_validate(resp.json())
+
+    async def inspect_gaid(self, gaid: str) -> InspectorResponse:
+        """Inspect a GAID and return resolution, trust, signature, provenance, and policy evidence."""
+        try:
+            endpoint = await self._resolve_endpoint("inspect")
+        except DuadpError:
+            endpoint = f"{self.base_url}/api/v1/inspect"
+        resp = await self._client.get(endpoint, params={"gaid": gaid})
+        resp.raise_for_status()
+        return InspectorResponse.model_validate(resp.json())
 
     # --- Unified Search ---
 

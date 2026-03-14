@@ -52,6 +52,26 @@ validate:openapi:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
 
+validate:repo-hygiene:
+  stage: validate
+  image: alpine:3.21
+  script:
+    - |
+      set -eu
+      if git ls-files | grep -E '(^|/)(\.DS_Store|__pycache__/|.*\.pyc|\.pytest_cache/|\.venv|node_modules/|dist/|data/.*\.db|.*\.db-wal|.*\.db-shm|.*\.tgz|.*~|.*\.tmp|.*\.bak)$'; then
+        echo "Tracked junk or generated artifacts detected."
+        exit 1
+      fi
+      if [ -f .npmrc ] && grep -q '_authToken=' .npmrc; then
+        if grep '_authToken=' .npmrc | grep -Fv '${GITLAB_REGISTRY_NPM_TOKEN}' >/dev/null; then
+          echo ".npmrc contains a non-placeholder auth token."
+          exit 1
+        fi
+      fi
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH
+
 validate:cedar-policies:
   stage: validate
   image: rust:slim
@@ -119,7 +139,7 @@ test:reference-node:
     - cd reference-node
     - npm ci --prefer-offline
     - npm test
-    - echo "✅ All Cedar trust tier matrix tests passed (34/34)"
+    - echo "✅ Reference-node unit tests passed"
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
@@ -193,7 +213,7 @@ publish:pypi:
   script:
     - pip install build twine id
     - cd sdk/python
-    - rm -rf dist/
+    - python -c "import shutil; shutil.rmtree('dist', ignore_errors=True)"
     - python -m build
     - python -m twine upload
         --repository-url https://upload.pypi.org/legacy/

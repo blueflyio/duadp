@@ -11,6 +11,7 @@ import type {
 } from '@bluefly/duadp';
 import type { DuadpDataProvider } from '@bluefly/duadp/server';
 import type Database from 'better-sqlite3';
+import { actorFromToken } from './auth-actor.js';
 
 type ExtendedDuadpDataProvider = DuadpDataProvider & {
   getAgentCard?: (gaid: string) => Promise<Record<string, unknown> | null>;
@@ -185,7 +186,7 @@ export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataPr
         ).run(kind, name, data);
 
         const gaid = resource.identity?.gaid ?? `agent://${name}`;
-        auditLog(db, 'resource.created_or_updated', gaid, token ? `token:${token.slice(0, 8)}...` : 'system', {
+        auditLog(db, 'resource.created_or_updated', gaid, actorFromToken(token), {
           kind,
           name,
         });
@@ -222,7 +223,7 @@ export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataPr
       }
 
       const gaid = resource.identity?.gaid ?? `agent://${name}`;
-      auditLog(db, 'resource.updated', gaid, token ? `token:${token.slice(0, 8)}...` : 'system', {
+      auditLog(db, 'resource.updated', gaid, actorFromToken(token), {
         kind,
         name,
       });
@@ -241,7 +242,7 @@ export function createSqliteProvider(db: Database.Database): ExtendedDuadpDataPr
         return false;
       }
 
-      auditLog(db, 'resource.deleted', `agent://${name}`, token ? `token:${token.slice(0, 8)}...` : 'system', {
+      auditLog(db, 'resource.deleted', `agent://${name}`, actorFromToken(token), {
         kind,
         name,
       });

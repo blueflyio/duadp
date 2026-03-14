@@ -1,5 +1,0 @@
-name: "AgentDash Platform API"
-apiVersion: "2.0"
-description: "Guzzle service description for the BlueFly Platform API (compliance, brain, A2A)."
-imports:
-  - "resources/platform_api_operations.yml"

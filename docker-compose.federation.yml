@@ -1,6 +1,4 @@
-version: '3.8'
-
-# DUADP Federation — 3 nodes forming a federated discovery network
+# DUADP Federation — 4 nodes forming a federated discovery network
 # Usage: docker compose -f docker-compose.federation.yml up --build
 
 services:
@@ -14,12 +12,12 @@ services:
       DUADP_NODE_NAME: "DUADP Discovery Node"
       DUADP_NODE_ID: "did:web:discover.duadp.org"
       DUADP_BASE_URL: "http://duadp-discover:4200"
-      DB_PATH: "./data/duadp.db"
+      DB_PATH: "/data/duadp.db"
       DUADP_SEED_FILE: "/app/seeds/discover-seed.json"
       DUADP_SEED_DOMAIN: "discover.duadp.org"
       DUADP_PEERS: "http://duadp-registry:4201,http://duadp-drupal:4202"
     volumes:
-      - discover-data:/app/reference-node/data
+      - discover-data:/data
       - ./seeds:/app/seeds:ro
     networks:
       - duadp-federation
@@ -39,12 +37,12 @@ services:
       DUADP_NODE_NAME: "OSSA Registry Node"
       DUADP_NODE_ID: "did:web:registry.openstandardagents.org"
       DUADP_BASE_URL: "http://duadp-registry:4201"
-      DB_PATH: "./data/duadp.db"
+      DB_PATH: "/data/duadp.db"
       DUADP_SEED_FILE: "/app/seeds/registry-seed.json"
       DUADP_SEED_DOMAIN: "registry.openstandardagents.org"
       DUADP_PEERS: "http://duadp-discover:4200,http://duadp-drupal:4202"
     volumes:
-      - registry-data:/app/reference-node/data
+      - registry-data:/data
       - ./seeds:/app/seeds:ro
     networks:
       - duadp-federation
@@ -64,12 +62,12 @@ services:
       DUADP_NODE_NAME: "Drupal AI Discovery Node"
       DUADP_NODE_ID: "did:web:discover.drupl.ai"
       DUADP_BASE_URL: "http://duadp-drupal:4202"
-      DB_PATH: "./data/duadp.db"
+      DB_PATH: "/data/duadp.db"
       DUADP_SEED_FILE: "/app/seeds/drupal-seed.json"
       DUADP_SEED_DOMAIN: "discover.drupl.ai"
       DUADP_PEERS: "http://duadp-discover:4200,http://duadp-registry:4201"
     volumes:
-      - drupal-data:/app/reference-node/data
+      - drupal-data:/data
       - ./seeds:/app/seeds:ro
     networks:
       - duadp-federation
@@ -79,10 +77,34 @@ services:
       timeout: 5s
       retries: 3
 
+  # Node 4: Tool Registration Node (register.duadp.org)
+  duadp-register:
+    build: ./reference-node
+    ports:
+      - "4203:4203"
+    environment:
+      PORT: "4203"
+      DUADP_NODE_NAME: "DUADP Registration Node"
+      DUADP_NODE_ID: "did:web:register.duadp.org"
+      DUADP_BASE_URL: "http://duadp-register:4203"
+      DB_PATH: "/data/duadp.db"
+      DUADP_PEERS: "http://duadp-discover:4200,http://duadp-registry:4201,http://duadp-drupal:4202"
+    volumes:
+      - register-data:/data
+      - ./seeds:/app/seeds:ro
+    networks:
+      - duadp-federation
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4203/api/v1/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
 volumes:
   discover-data:
   registry-data:
   drupal-data:
+  register-data:
 
 networks:
   duadp-federation:

@@ -47,6 +47,8 @@ GET  /api/v1/skills                   Paginated skill registry
 GET  /api/v1/tools                    Paginated tool registry
 GET  /api/v1/search?q=...&facets=true Unified cross-type search
 POST /api/v1/publish                  Publish any OSSA resource
+GET  /api/v1/resolve/:gaid            Resolve a GAID to a resource
+GET  /api/v1/inspect?gaid=...         Consolidated trust/policy inspection
 POST /api/v1/validate                 Validate manifest against spec
 GET  /api/v1/federation               Peer node directory
 POST /api/v1/federation               Register as federation peer
@@ -58,11 +60,11 @@ GET  /api/v1/health                   Node health and resource count
 
 ### Client -- discover any node
 
+```python
 async with DuadpClient("https://duadp.org") as client:
     # Discovery
     manifest = await client.discover()
     print(f"{manifest.node_name} — {manifest.protocol_version}")
-    # => "DUADP Discovery Node — 0.1.3"
 
     # Browse resources
     agents = await client.list_agents()              # 57 agents
@@ -72,12 +74,19 @@ async with DuadpClient("https://duadp.org") as client:
     # Unified search across all types
     results = await client.search(q="security", facets=True)
 
+    # Resolve and inspect a GAID
+    resolved = await client.resolve_resource("agent://discover.duadp.org/agents/code-reviewer")
+    inspection = await client.inspect_gaid("agent://discover.duadp.org/agents/code-reviewer")
+
     # Publish (requires auth token)
     await client.publish_skill(my_skill_manifest)
+```
 
 # Resolve a GAID URI from any node on the web
+```python
 client, kind, name = resolve_gaid("agent://skills.sh/skills/web-search")
 skill = await client.get_skill(name)
+```
 ```
 
 ### Server -- turn your FastAPI app into a DUADP node
@@ -137,6 +146,8 @@ async with DuadpClient("https://duadp.org", token="...") as client:
     await client.get_health()                        # Node health + resource count
     await client.search(q="...", facets=True)        # Cross-type search
     await client.resolve_gaid(gaid)                  # WebFinger lookup
+    await client.resolve_resource(gaid)              # Resolve resource by GAID
+    await client.inspect_gaid(gaid)                  # Consolidated inspector payload
     await client.get_agent_index(gaid)               # .ajson index card
 
     # Resources — full CRUD
@@ -208,7 +219,7 @@ async with DuadpClient("https://duadp.org", token="...") as client:
 
 ## Types
 
-103 Pydantic models covering:
+Pydantic models covering:
 
 - **Core**: `DuadpManifest`, `OssaResource`, `OssaSkill`, `OssaAgent`, `OssaTool`, `ResourceIdentity`
 - **Discovery**: `WebFingerResponse`, `NodeHealth`, `AgentIndexRecord`, `ProtocolEndpoints`

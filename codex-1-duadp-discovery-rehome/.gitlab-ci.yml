@@ -1,9 +1,0 @@
-include:
-  - component: $CI_SERVER_FQDN/blueflyio/agent-platform/tools/gitlab_components/drupal-master@release/v0.1.x
-    inputs:
-      php_version: "8.3"
-      drupal_core: "11"
-      phpcs_enabled: "true"
-      composer_package: "true"
-      release_branch: "release/v0.1.x"
-
