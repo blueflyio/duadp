@@ -35,8 +35,11 @@
             "description": { "type": "string" },
             "uri": {
               "type": "string",
-              "pattern": "^agent://"
+              "pattern": "^agent://[a-z0-9-]+@[a-z0-9-]+/[a-zA-Z0-9.-]+/[a-z0-9-/]+$",
+              "description": "DUADP-compliant agent identity URI: agent://<tenant_id>@<site_id>/<authority>/<path>"
             },
+            "tenant_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+            "site_id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
             "trust_tier": {
               "type": "string",
               "enum": ["official", "verified-signature", "signed", "community", "experimental"]
