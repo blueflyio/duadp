@@ -29,6 +29,7 @@ import { getRevocationRecord, isNameRevoked, isRevoked, listRevocations, propaga
 import { verifyPublisherSignature } from './signature-verifier.js';
 import { verifyTrustTier } from './trust.js';
 import { handleIngest, fanOut, type IngestRequest } from './ingest-handler.js';
+import { buildContextPacks, getSkillBundle } from './context-packs.js';
 
 const PORT = parseInt(process.env.PORT || '4200');
 const DB_PATH = process.env.DB_PATH || process.env.DUADP_DB_PATH || './data/duadp.db';
@@ -297,7 +298,13 @@ app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
       revocations: `${config.baseUrl}/api/v1/revocations`,
       health: `${config.baseUrl}/api/v1/health`,
     },
-    capabilities: ['skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing', 'trust-verification', 'revocations', 'cedar-authorization', 'gitlab-profile', 'control-plane'],
+    capabilities: [
+      'skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing',
+      'trust-verification', 'revocations', 'cedar-authorization', 'gitlab-profile',
+      'control-plane',
+      // USIE Phase 2
+      'context-packs', 'skill-bundles', 'source-filter', 'ingest',
+    ],
     ossa_versions: ['v0.4', 'v0.5'],
     federation: config.federation,
     profiles: {
@@ -370,15 +377,43 @@ app.get('/api/v1/skills', async (req: Request, res: Response) => {
     (result.meta as any).peers_queried = peerMeta;
   }
 
+  // USIE Phase 2: ?source=<adapter-id> filter
+  const source = (req.query as Record<string, string>).source;
+  if (source) {
+    result.data = (result.data as any[]).filter((r: any) => {
+      const ann = r?.metadata?.annotations ?? {};
+      return ann['usie.source'] === source;
+    }) as any;
+    result.meta.total = result.data.length;
+    (result.meta as any).filtered_by_source = source;
+  }
+
   result.data = filterGitLabCatalog(result.data as Array<Record<string, any>>, gitlabQuery) as any;
   result.meta.total = result.data.length;
   res.json(result);
 });
 
-app.get('/api/v1/skills/:name', async (req: Request, res: Response) => {
-  const skill = await provider.getSkill!(req.params.name as string);
-  if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
-  res.json(skill);
+// USIE Phase 2: GET /api/v1/skills/:gaid/bundle — full manifest + adapter metadata
+app.get('/api/v1/skills/:gaid/bundle', async (req: Request, res: Response) => {
+  const gaid = decodeURIComponent(req.params.gaid as string);
+  const bundle = getSkillBundle(db, gaid);
+  if (!bundle) { res.status(404).json({ error: 'Skill not found', gaid }); return; }
+  res.json(bundle);
+});
+
+// USIE Phase 2: GET /api/v1/context_packs — skills grouped by adapter source
+// Used by marketplace and CLI for curated "packs" of related skills.
+app.get('/api/v1/context_packs', (_req: Request, res: Response) => {
+  const packs = buildContextPacks(db);
+  res.json({
+    data: packs,
+    meta: {
+      total: packs.length,
+      node_name: NODE_NAME,
+      node_id: NODE_ID,
+      description: 'Curated skill bundles grouped by source adapter',
+    },
+  });
 });
 
 // Agents
