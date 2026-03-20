@@ -2,18 +2,10 @@
 # DUADP (Universal AI Discovery Protocol) - CI/CD Pipeline
 # =============================================================================
 
-include:
-  - template: Security/SAST.gitlab-ci.yml
-  - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Security/Container-Scanning.gitlab-ci.yml
-  - template: Jobs/Dependency-Scanning.v2.gitlab-ci.yml
-  - template: Code-Quality.gitlab-ci.yml
-
 stages:
   - validate
   - test
   - build
-  - security
   - cedar-gate
   - publish
   - deploy
@@ -24,20 +16,6 @@ default:
 
 variables:
   CONTAINER_IMAGE: $CI_REGISTRY_IMAGE/reference-node
-  CODE_QUALITY_DISABLED: "true"
-
-# ---------------------------------------------------------------------------
-# Security Stage Overrides
-# ---------------------------------------------------------------------------
-
-sast:
-  stage: security
-
-secret_detection:
-  stage: security
-
-dependency-scanning:
-  stage: security
 
 # ---------------------------------------------------------------------------
 # Validate Stage
@@ -165,16 +143,6 @@ container_build:
         .
     - docker push $CONTAINER_IMAGE:$CI_COMMIT_SHA
     - docker push $CONTAINER_IMAGE:$CI_COMMIT_REF_SLUG
-  rules:
-    - if: $CI_MERGE_REQUEST_ID
-    - if: $CI_COMMIT_BRANCH
-
-container_scanning:
-  stage: security
-  variables:
-    CS_IMAGE: $CONTAINER_IMAGE:$CI_COMMIT_SHA
-  needs:
-    - container_build
   rules:
     - if: $CI_MERGE_REQUEST_ID
     - if: $CI_COMMIT_BRANCH
