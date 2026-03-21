@@ -14,6 +14,7 @@
     "test:integration:publish": "tsx src/integration/did-key-publish.integration.ts",
     "test:integration:p2p": "tsx src/integration/p2p-mesh.integration.ts",
     "seed": "tsx src/seed.ts",
+    "seed:adapters": "tsx src/seed-adapters.ts",
     "demo": "tsx src/demo-mcp-client.ts"
   },
   "overrides": {
