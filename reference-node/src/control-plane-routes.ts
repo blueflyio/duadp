@@ -11,6 +11,7 @@ import {
   type GitLabRequestContext,
   RunCreateRequest,
 } from './control-plane-schemas.js';
+import type { ZodIssue } from 'zod';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -41,6 +42,15 @@ interface ControlPlaneDeps {
     limit: number;
   }) => Promise<PaginatedResponse<OssaResource>>;
   rolloutMode?: 'advisory' | 'blocking';
+}
+
+export function extractValidationDetails(error: unknown): ZodIssue[] | string | undefined {
+  if (typeof error !== 'object' || error === null) {
+    return error instanceof Error ? error.message : undefined;
+  }
+
+  const zodLike = error as { issues?: ZodIssue[]; errors?: ZodIssue[]; message?: string };
+  return zodLike.issues ?? zodLike.errors ?? zodLike.message;
 }
 
 function extractHosts(resource: OssaResource): string[] {
@@ -284,7 +294,7 @@ export function createControlPlaneRouter(deps: ControlPlaneDeps = {}) {
         },
       });
     } catch (err: any) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors ?? err.message });
+      res.status(400).json({ error: 'Validation failed', details: extractValidationDetails(err) });
     }
   });
 

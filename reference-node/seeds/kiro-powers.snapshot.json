@@ -1,0 +1,77 @@
+[
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "kiro-web-search",
+      "description": "Web search capability using Kiro's browsing integration",
+      "version": "1.0.0",
+      "tags": ["search", "web", "browsing"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "kiro-powers",
+        "usie.source_url": "https://github.com/kirodotdev/powers/tree/main/packages/web-search",
+        "usie.skill_class": "mcp",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/kiro-powers/kiro-web-search"
+    },
+    "spec": {
+      "protocol": "mcp",
+      "capabilities": ["search", "browse"],
+      "runtime": "node"
+    }
+  },
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "kiro-steering",
+      "description": "Steering primitives for controlling Kiro agent behavior and task execution",
+      "version": "1.0.0",
+      "tags": ["steering", "control", "agent"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "kiro-powers",
+        "usie.source_url": "https://github.com/kirodotdev/powers/tree/main/packages/steering",
+        "usie.skill_class": "steering",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/kiro-powers/kiro-steering"
+    },
+    "spec": {
+      "protocol": "steering",
+      "capabilities": ["task-control", "behavior-shaping"],
+      "runtime": "node"
+    }
+  },
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "kiro-code-generation",
+      "description": "Structured code generation with spec-driven output via Kiro Powers",
+      "version": "1.0.0",
+      "tags": ["code", "generation", "typescript", "python"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "kiro-powers",
+        "usie.source_url": "https://github.com/kirodotdev/powers/tree/main/packages/code-gen",
+        "usie.skill_class": "workflow",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/kiro-powers/kiro-code-generation"
+    },
+    "spec": {
+      "protocol": "mcp",
+      "capabilities": ["codegen", "refactor", "review"],
+      "runtime": "node"
+    }
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "duadp-resolver": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "description": "DUADP federated discovery pipeline — resolves any seed (domain, GAID, manifest URL, MCP endpoint) into a DuadpNode"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+#!/bin/bash
+# Dev worktree pre-commit: block markdown files only (GitLab Wiki for docs)
+
+MD_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.md$" || true)
+
+if [ -n "$MD_FILES" ]; then
+  echo "❌ ERROR: Cannot commit markdown files — use GitLab Wiki."
+  echo "$MD_FILES" | sed 's/^/  ❌ /'
+  exit 1
+fi
+
+exit 0

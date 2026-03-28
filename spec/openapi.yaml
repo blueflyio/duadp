@@ -2042,59 +2042,188 @@ components:
             incidents:
               type: integer
 
-    # ─── New: Agent Card Schema ──────────────────────────────────────
+    # ─── Agent Card v1.0 (DUADP extension) ──────────────────────────────────
     AgentCard:
-      type: object
-      description: |
-        A universally understood, compact representation of an AI Agent.
-        Suitable for fast vetting, cross-registry handshakes, and third-party integrations
-        like Google A2A or MCP discovery.
-      required: [uuid, gaid, name, trust_tier]
-      properties:
-        uuid:
-          type: string
-          format: uuid
-          description: Version 5 UUID derived from the agent namespace and name.
-        gaid:
-          type: string
-          format: uri
-          description: Global Agent Identifier (DID) for verifiable identity tracing.
-        name:
-          type: string
-          description: Human-readable agent name.
-        description:
-          type: string
-          description: Summary of the agent's purpose.
-        trust_tier:
-          type: string
-          enum: [ tier_1_read, tier_2_write_limited, tier_3_write_elevated, tier_4_system_admin ]
-          description: Evaluated security trust tier.
-        capabilities:
-          type: array
-          items:
-            type: string
-          description: High-level capabilities (e.g., 'filesystem-read', 'network-outbound').
-        publisher:
-          type: object
+      allOf:
+        # --- Agent Card v1.0 fields (canonical, from api-schema-registry) ---
+        # Inline rather than $ref to keep the DUADP spec self-contained and
+        # avoid external bundle resolution issues during lint. Field set exactly
+        # mirrors api-schema-registry/openapi/openstandardagents/schemas/agent-card.schema.yaml
+        - type: object
+          required:
+            - schemaVersion
+            - humanReadableId
+            - agentVersion
+            - name
+            - description
+            - url
+            - capabilities
+            - authSchemes
           properties:
+            schemaVersion:
+              type: string
+              description: Version of the Agent Card schema.
+              enum: ["1.0"]
+              example: "1.0"
+            humanReadableId:
+              type: string
+              description: Unique namespace/agent identifier (e.g. "acme/weather-reporter").
+              pattern: '^[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'
+              example: "acme/weather-reporter"
+            agentVersion:
+              type: string
+              description: Semantic version (MAJOR.MINOR.PATCH) of the agent software.
+              example: "2.1.0"
             name:
               type: string
+              description: Human-readable display name.
+              example: "Advanced Weather Reporter"
+            description:
+              type: string
+              description: Purpose and capabilities of the agent.
             url:
               type: string
-        signature:
-          type: string
-          description: Base64-encoded signature of this specific card payload validating its provenance.
-        endpoints:
-          type: object
+              format: uri
+              description: Primary A2A endpoint URL (HTTPS required except localhost).
+            provider:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                support_contact:
+                  type: string
+            capabilities:
+              type: object
+              required: [a2aVersion]
+              properties:
+                a2aVersion:
+                  type: string
+                  example: "1.0"
+                mcpVersion:
+                  type: string
+                  example: "0.6"
+                supportedMessageParts:
+                  type: array
+                  items:
+                    type: string
+                    enum: [text, file, data, image, audio, video]
+                supportsPushNotifications:
+                  type: boolean
+                  default: false
+                teeDetails:
+                  type: object
+                  required: [type]
+                  properties:
+                    type:
+                      type: string
+                    attestationEndpoint:
+                      type: string
+                      format: uri
+                    publicKey:
+                      type: string
+                    description:
+                      type: string
+            authSchemes:
+              type: array
+              minItems: 1
+              items:
+                type: object
+                required: [scheme]
+                properties:
+                  scheme:
+                    type: string
+                    enum: [apiKey, oauth2, bearer, none]
+                  description:
+                    type: string
+                  tokenUrl:
+                    type: string
+                    format: uri
+                  scopes:
+                    type: array
+                    items:
+                      type: string
+                  service_identifier:
+                    type: string
+            skills:
+              type: array
+              items:
+                type: object
+                required: [id, name, description]
+                properties:
+                  id:
+                    type: string
+                    pattern: '^[a-z][a-z0-9_-]*$'
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  input_schema:
+                    type: object
+                    additionalProperties: true
+                  output_schema:
+                    type: object
+                    additionalProperties: true
+            tags:
+              type: array
+              items:
+                type: string
+            privacyPolicyUrl:
+              type: string
+              format: uri
+            termsOfServiceUrl:
+              type: string
+              format: uri
+            iconUrl:
+              type: string
+              format: uri
+            lastUpdated:
+              type: string
+              format: date-time
+
+        # --- DUADP-native identity and trust fields ---
+        - type: object
+          description: |
+            DUADP extensions on top of Agent Card v1.0.
+            These fields provide DUADP-specific identity, cryptographic verification,
+            and trust tier metadata.
+          required: [uuid, gaid, trust_tier]
           properties:
-            a2a:
+            uuid:
+              type: string
+              format: uuid
+              description: Version 5 UUID derived from the agent GAID namespace and name.
+            gaid:
               type: string
               format: uri
-            mcp:
+              description: Global Agent Identifier (DID) for verifiable identity tracing.
+            trust_tier:
               type: string
-              format: uri
-          description: Direct connection URIs for standard interoperability protocols.
-      additionalProperties: true
+              enum: [ tier_1_read, tier_2_write_limited, tier_3_write_elevated, tier_4_system_admin ]
+              description: Evaluated DUADP security trust tier.
+            signature:
+              type: string
+              description: Base64-encoded cryptographic signature of this card payload.
+            endpoints:
+              type: object
+              description: Additional DUADP multi-protocol endpoint map (complements url field).
+              properties:
+                a2a:
+                  type: string
+                  format: uri
+                mcp:
+                  type: string
+                  format: uri
+                ossa:
+                  type: string
+                  format: uri
+                openapi:
+                  type: string
+                  format: uri
+
 
     OssaResource:
       type: object

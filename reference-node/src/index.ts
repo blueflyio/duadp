@@ -28,6 +28,8 @@ import { createSqliteProvider } from './provider.js';
 import { getRevocationRecord, isNameRevoked, isRevoked, listRevocations, propagateRevocation, storeRevocation } from './revocation.js';
 import { verifyPublisherSignature } from './signature-verifier.js';
 import { verifyTrustTier } from './trust.js';
+import { handleIngest, fanOut, type IngestRequest } from './ingest-handler.js';
+import { buildContextPacks, getSkillBundle } from './context-packs.js';
 
 const PORT = parseInt(process.env.PORT || '4200');
 const DB_PATH = process.env.DB_PATH || process.env.DUADP_DB_PATH || './data/duadp.db';
@@ -296,7 +298,13 @@ app.get('/.well-known/duadp.json', (_req: Request, res: Response) => {
       revocations: `${config.baseUrl}/api/v1/revocations`,
       health: `${config.baseUrl}/api/v1/health`,
     },
-    capabilities: ['skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing', 'trust-verification', 'revocations', 'cedar-authorization', 'gitlab-profile', 'control-plane'],
+    capabilities: [
+      'skills', 'agents', 'tools', 'policies', 'federation', 'validation', 'publishing',
+      'trust-verification', 'revocations', 'cedar-authorization', 'gitlab-profile',
+      'control-plane',
+      // USIE Phase 2
+      'context-packs', 'skill-bundles', 'source-filter', 'ingest',
+    ],
     ossa_versions: ['v0.4', 'v0.5'],
     federation: config.federation,
     profiles: {
@@ -369,15 +377,43 @@ app.get('/api/v1/skills', async (req: Request, res: Response) => {
     (result.meta as any).peers_queried = peerMeta;
   }
 
+  // USIE Phase 2: ?source=<adapter-id> filter
+  const source = (req.query as Record<string, string>).source;
+  if (source) {
+    result.data = (result.data as any[]).filter((r: any) => {
+      const ann = r?.metadata?.annotations ?? {};
+      return ann['usie.source'] === source;
+    }) as any;
+    result.meta.total = result.data.length;
+    (result.meta as any).filtered_by_source = source;
+  }
+
   result.data = filterGitLabCatalog(result.data as Array<Record<string, any>>, gitlabQuery) as any;
   result.meta.total = result.data.length;
   res.json(result);
 });
 
-app.get('/api/v1/skills/:name', async (req: Request, res: Response) => {
-  const skill = await provider.getSkill!(req.params.name as string);
-  if (!skill) { res.status(404).json({ error: 'Skill not found' }); return; }
-  res.json(skill);
+// USIE Phase 2: GET /api/v1/skills/:gaid/bundle — full manifest + adapter metadata
+app.get('/api/v1/skills/:gaid/bundle', async (req: Request, res: Response) => {
+  const gaid = decodeURIComponent(req.params.gaid as string);
+  const bundle = getSkillBundle(db, gaid);
+  if (!bundle) { res.status(404).json({ error: 'Skill not found', gaid }); return; }
+  res.json(bundle);
+});
+
+// USIE Phase 2: GET /api/v1/context_packs — skills grouped by adapter source
+// Used by marketplace and CLI for curated "packs" of related skills.
+app.get('/api/v1/context_packs', (_req: Request, res: Response) => {
+  const packs = buildContextPacks(db);
+  res.json({
+    data: packs,
+    meta: {
+      total: packs.length,
+      node_name: NODE_NAME,
+      node_id: NODE_ID,
+      description: 'Curated skill bundles grouped by source adapter',
+    },
+  });
 });
 
 // Agents
@@ -631,6 +667,116 @@ app.post('/api/v1/verify', async (req: Request, res: Response) => {
 app.post('/api/v1/publish', async (req: Request, res: Response) => {
   await publishResourceWithChecks(req, res, req.body);
 });
+
+// ── POST /api/v1/ingest — "Ingest Anything" ────────────────────────────────
+// Demo: POST { "url": "https://github.com/someone/repo", "adapter": "auto" }
+// Auto-detects: POWER.md → kiro, SKILL.md → skills-sh, else → git-repo
+// Runs full auth/Cedar/trust/revocation pipeline, then fans out to
+// brain (Qdrant), gkg, n8n, and a2a-stream — all fire-and-forget.
+app.post('/api/v1/ingest', async (req: Request, res: Response) => {
+  const body = req.body as IngestRequest;
+  if (!body?.url) {
+    res.status(400).json({ error: 'Missing required field: url (must be a GitHub repository URL)' });
+    return;
+  }
+
+  // 1. Fetch + normalize via auto-detected USIE adapter
+  let skill: Awaited<ReturnType<typeof handleIngest>>['skill'];
+  let adapterUsed: string;
+  try {
+    ({ skill, adapterUsed } = await handleIngest(body));
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[ingest] fetch/normalize error:', msg);
+    res.status(422).json({ error: 'Failed to ingest repository', detail: msg });
+    return;
+  }
+
+  const resource = skill as unknown as Record<string, unknown>;
+  const token = getToken(req);
+
+  if (!token) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  // 2. Revocation check
+  const gaid = (skill.identity?.gaid) ?? `agent://skills.openstandardagents.org/${adapterUsed}/${skill.metadata.name}`;
+  const resourceName = skill.metadata.name;
+  if (isRevoked(db, gaid)) {
+    res.status(403).json({ error: 'Resource has been revoked and cannot be re-registered', gaid });
+    return;
+  }
+  if (isNameRevoked(db, resourceName)) {
+    res.status(403).json({ error: 'Resource name has been revoked', name: resourceName });
+    return;
+  }
+
+  // 3. Signature verification
+  const sigVerification = await verifyPublisherSignature(resource);
+  if (sigVerification.requiresSignature && !sigVerification.verified) {
+    res.status(403).json({ error: 'Publisher signature verification failed', signature_verification: sigVerification });
+    return;
+  }
+
+  // 4. Cedar authorization
+  const policyOutcome = await authorizePublish(resource, actorFromToken(token));
+  if (policyOutcome.effective_decision === 'Deny') {
+    res.status(403).json({ error: 'Publish policy denied', policy_outcome: policyOutcome });
+    return;
+  }
+
+  // 5. Confidence gate
+  const confidenceScore = extractConfidenceScore(resource);
+  const trustTier = (resource as any)?.metadata?.trust_tier || 'community';
+  const validationPassed = !!((resource as any)?.metadata?.validation_passed);
+  const verdict = confidenceGate(confidenceScore, trustTier, validationPassed);
+  if (verdict.action === 'reject') {
+    res.status(403).json({ error: 'Confidence gate rejected publication', confidence_verdict: verdict });
+    return;
+  }
+  if (verdict.action === 'human_review' && verdict.degraded_tier) {
+    (resource as any).metadata.trust_tier = verdict.degraded_tier;
+  }
+
+  // 6. Trust tier verification
+  const verification = await verifyTrustTier(resource as any);
+  if (verification.downgraded && (resource as any).metadata) {
+    (resource as any).metadata.trust_tier = verification.verified_tier;
+  }
+
+  // 7. Publish to DUADP node
+  const result = await provider.publishResource!(resource as any, token);
+
+  if (result.success) {
+    // P2P gossip + CRDT + content store
+    if (p2pNode) {
+      p2pNode.publishAgent(resource).catch(console.error);
+      crdtRegistry?.put('Skill', resourceName, resource);
+      contentStore?.put(resource).catch(console.error);
+    }
+
+    // 8. Fire-and-forget fan-out to all downstream services
+    const marketplaceUrl = `${process.env.MARKETPLACE_URL || 'https://marketplace.blueflyagents.com'}/skills/${encodeURIComponent(resourceName)}`;
+    fanOut(skill).catch((err) => console.warn('[ingest] fanOut error:', err));
+    console.info(`[ingest] ✅ ${gaid} via ${adapterUsed} → brain, gkg, n8n, a2a`);
+
+    res.status(201).json({
+      ...result,
+      gaid,
+      name: resourceName,
+      adapter_used: adapterUsed,
+      trust_tier: (resource as any)?.metadata?.trust_tier || 'community',
+      marketplace_url: marketplaceUrl,
+      policy_outcome: policyOutcome,
+      trust_verification: verification,
+      signature_verification: sigVerification,
+    });
+  } else {
+    res.status(400).json({ ...result, policy_outcome: policyOutcome });
+  }
+});
+
 
 for (const kind of ['skills', 'agents', 'tools']) {
   app.post(`/api/v1/${kind}`, async (req: Request, res: Response) => {

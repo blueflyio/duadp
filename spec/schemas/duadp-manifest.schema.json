@@ -37,6 +37,8 @@
         "skills": { "type": "string", "description": "URL for /api/v1/skills" },
         "agents": { "type": "string", "description": "URL for /api/v1/agents" },
         "tools": { "type": "string", "description": "URL for /api/v1/tools" },
+        "context_packs": { "type": "string", "description": "URL for /api/v1/context_packs" },
+        "execution_profiles": { "type": "string", "description": "URL for /api/v1/execution_profiles" },
         "federation": { "type": "string", "description": "URL for /api/v1/federation" },
         "validate": { "type": "string", "description": "URL for /api/v1/validate" },
         "publish": { "type": "string", "description": "URL for /api/v1/publish" },
@@ -50,7 +52,9 @@
       "anyOf": [
         { "required": ["skills"] },
         { "required": ["agents"] },
-        { "required": ["tools"] }
+        { "required": ["tools"] },
+        { "required": ["context_packs"] },
+        { "required": ["execution_profiles"] }
       ],
       "additionalProperties": { "type": "string" }
     },
@@ -58,7 +62,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["skills", "agents", "tools", "federation", "validation", "publishing", "governance", "provenance", "revocations", "audit", "events", "identity"]
+        "enum": ["skills", "agents", "tools", "context_packs", "execution_profiles", "federation", "validation", "publishing", "governance", "provenance", "revocations", "audit", "events", "identity"]
       },
       "description": "List of supported DUADP capabilities."
     },

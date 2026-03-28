@@ -1,0 +1,77 @@
+[
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "skills-sh-rag-retrieval",
+      "description": "Retrieval-augmented generation skill for context injection from skills.sh registry",
+      "version": "1.0.0",
+      "tags": ["rag", "retrieval", "context", "embeddings"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "skills-sh",
+        "usie.source_url": "https://github.com/skills-sh/skills/tree/main/rag-retrieval",
+        "usie.skill_class": "rag",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/skills-sh/rag-retrieval"
+    },
+    "spec": {
+      "protocol": "mcp",
+      "capabilities": ["vector-search", "context-injection"],
+      "runtime": "python"
+    }
+  },
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "skills-sh-workflow-orchestrator",
+      "description": "Multi-step workflow orchestration skill from the skills.sh open registry",
+      "version": "1.0.0",
+      "tags": ["workflow", "orchestration", "multi-step"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "skills-sh",
+        "usie.source_url": "https://github.com/skills-sh/skills/tree/main/workflow",
+        "usie.skill_class": "workflow",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/skills-sh/workflow-orchestrator"
+    },
+    "spec": {
+      "protocol": "mcp",
+      "capabilities": ["dag-execution", "retry-handling", "state-management"],
+      "runtime": "node"
+    }
+  },
+  {
+    "kind": "Skill",
+    "apiVersion": "ossa/v0.5.0",
+    "metadata": {
+      "name": "skills-sh-github-toolkit",
+      "description": "GitHub API integration toolkit — PRs, issues, code review from skills.sh",
+      "version": "1.0.0",
+      "tags": ["github", "git", "pr", "review"],
+      "trust_tier": "community",
+      "annotations": {
+        "usie.source": "skills-sh",
+        "usie.source_url": "https://github.com/skills-sh/skills/tree/main/github-toolkit",
+        "usie.skill_class": "mcp",
+        "usie.seeded": "true"
+      }
+    },
+    "identity": {
+      "gaid": "agent://skills.openstandardagents.org/skills-sh/github-toolkit"
+    },
+    "spec": {
+      "protocol": "mcp",
+      "capabilities": ["pr-review", "issue-management", "code-search"],
+      "runtime": "node"
+    }
+  }
+]
